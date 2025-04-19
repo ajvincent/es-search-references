@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2024"],
+    "module": "NodeNext",
+    "target": "ES2024",
+    "moduleResolution": "NodeNext",
+    "declaration": false,
+
+    "baseUrl": ".",
+  },
+
+  "include": [
+    "./Gulpfile.ts",
+  ],
+
+  "extends": "@tsconfig/node22/tsconfig.json"
+}
