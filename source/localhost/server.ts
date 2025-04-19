@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath, } from "node:url";
 import express from "express";
 
-const projectRoot = path.normalize(path.join(fileURLToPath(import.meta.url), "../../.."));
+const projectRoot = path.normalize(path.join(fileURLToPath(import.meta.url), "../../../.."));
 console.log(projectRoot);
 
 const app = express();

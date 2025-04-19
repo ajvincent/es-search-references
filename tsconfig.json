@@ -1,21 +1,4 @@
 {
-  "compilerOptions": {
-    "lib": ["ES2024"],
-    "module": "NodeNext",
-    "target": "ES2024",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "sourceMap": false,
-    "declaration": true,
-
-    "baseUrl": ".",
-    "rootDir": ".",
-    "outDir": "dist"
-  },
-
-  "include": [
-    "source/**/*.ts",
-  ],
-
-  "extends": "@tsconfig/node22/tsconfig.json"
+  "extends": "/Users/ajvincent/membranes/es-search-references/tsconfig-localhost.json",
+  "exclude": []
 }

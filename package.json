@@ -14,7 +14,7 @@
     "debug": "npm run clean && npm run tsc-buildsystem && node --inspect-brk --no-experimental-require-module node_modules/gulp/bin/gulp.js",
     "tasks": "npm run clean && npm run tsc-buildsystem && node --no-experimental-require-module node_modules/gulp/bin/gulp.js --tasks",
     "is-repo-clean": "node --no-experimental-require-module ./gulp-utilities/assertRepoIsClean.js",
-    "localhost": "node --no-experimental-require-module ./dist/source/localhost.js "
+    "localhost": "node --no-experimental-require-module ./dist/source/localhost/server.js "
   },
   "repository": {
     "type": "git",
