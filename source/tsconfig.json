@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "lib": ["ES2024", "DOM"],
+    "module": "NodeNext",
+    "target": "ES2024",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "sourceMap": false,
+    "declaration": false,
+
+    "baseUrl": ".",
+    "rootDir": ".",
+    "outDir": "../docs"
+  },
+
+  "include": [
+    "scripts/*.ts",
+  ],
+
+  "extends": "@tsconfig/node22/tsconfig.json"
+}
