@@ -82,4 +82,5 @@ declare class LoggingConfiguration implements Required<SearchConfiguration> {
 
 declare function runSearchesInGuestEngine(inputs: GuestRealmInputs, searchConfiguration?: SearchConfiguration): Promise<ReadonlyMap<string, Graph | null>>;
 
-export { LoggingConfiguration, type SearchConfiguration, runSearchesInGuestEngine };
+export { LoggingConfiguration, runSearchesInGuestEngine };
+export type { GuestRealmInputs, SearchConfiguration };
