@@ -251,12 +251,12 @@ class ObjectGraphImpl {
     #graph = new graphlib.Graph({ directed: true, multigraph: true });
     #nodeCounter = new StringCounter;
     #edgeCounter = new StringCounter;
-    #weakKeyToIdMap = new WeakMap;
+    #weakKeyToIdMap = buildSymbolWeakMap();
     #idToWeakKeyMap = new Map;
     #edgeIdToMetadataMap = new Map;
     #ownershipSetsTracker = new StrongOwnershipSetsTracker(this.#ownershipResolver.bind(this));
     #edgeIdTo_IsStrongReference_Map = new Map;
-    #weakKeyHeldStronglyMap = new WeakMap;
+    #weakKeyHeldStronglyMap = buildSymbolWeakMap();
     #weakKeyIdsToVisit = new Set;
     #edgeIdToJointOwnersMap_Weak = new Map;
     #edgeIdToJointOwnersMap_Strong = new Map;
@@ -649,6 +649,21 @@ class ObjectGraphImpl {
             }
         }
     }
+}
+let supportsWeakSymbolKeys;
+function buildSymbolWeakMap() {
+    if (supportsWeakSymbolKeys === undefined) {
+        supportsWeakSymbolKeys = false;
+        try {
+            void new WeakMap([
+                [Symbol(), "success"]
+            ]);
+            supportsWeakSymbolKeys = true;
+        }
+        catch (ex) {
+        }
+    }
+    return supportsWeakSymbolKeys ? new WeakMap : new Map;
 }
 
 class InstanceGetterTracking {
@@ -1627,8 +1642,6 @@ class RealmDriver {
         const cachedModule = this.#specifierToModuleRecordMap.get(resolvedSpecifier);
         if (cachedModule)
             return cachedModule;
-        if (!resolvedSpecifier.startsWith("file://"))
-            return GuestEngine.Throw("Error", "CouldNotResolveModule", targetSpecifier);
         const contents = this.#realmInputs.contentsGetter(resolvedSpecifier);
         let module = referrer.Realm.compileModule(contents, { specifier: resolvedSpecifier });
         if (module instanceof GuestEngine.NormalCompletion)
