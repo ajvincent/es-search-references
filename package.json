@@ -4,6 +4,9 @@
   "main": "index.js",
   "type": "module",
   "private": "true",
+  "engines": {
+    "node": ">=22.13"
+  },
   "directories": {
     "doc": "docs"
   },
