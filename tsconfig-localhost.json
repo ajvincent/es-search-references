@@ -14,6 +14,8 @@
   },
 
   "include": [
+    "fixtures/**/*.ts",
+    "reference-spec/**/*.ts",
     "source/localhost/*.ts",
   ],
 
