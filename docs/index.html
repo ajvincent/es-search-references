@@ -9,5 +9,40 @@
   <p>This is a starting point for Alex Vincent's es-search-references webpage.  It's probably going to be a single page.</p>
   <p><button id="testButton">Click me!</button></p>
   <script type="module" src="./scripts/hasRunSearches.js"></script>
+
+  <div id="workbench">
+    <label class="lastRun">Last run: April 22, 2025 @ 12:05:53 AM</label>
+    <tab-bar>
+      <label>Graph</label>
+      <label>Logs</label>
+      <label>UI Logs</label>
+    </tab-bar>
+
+    <report-selector>
+      Report selector pane
+    </report-selector>
+
+    <tab-panels class="output-logs">
+      <div class="active">Hello World</div>
+      <div>Goodbye cruel world</div>
+    </tab-panels>
+
+    <select id="workspace-selector">
+      <option>simple</option>
+    </select>
+
+    <button id="runSearchesButton">Run Searches!</button>
+
+    <file-system>
+      File system pane
+    </file-system>
+
+    <tab-panels class="codemirror-panels">
+      <div class="active">Hello World</div>
+      <div>Goodbye cruel world</div>
+    </tab-panels>
+
+    <workbench-footer>This is a footer.</footer>
+  </div>
  </body>
 </html>

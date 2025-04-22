@@ -2,3 +2,95 @@ body {
   background-color: yellow;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
+
+#workbench {
+  min-width: 1040px;
+  display: grid;
+  grid-template-columns: 30px 1fr 30px 4fr;
+  grid-template-rows: 30px 450px 30px 450px 30px;
+}
+
+#workbench > * {
+  border: 1px dashed black;
+  row-gap: 5px;
+  column-gap: 5px;
+  margin: 2px;
+  padding: 2px;
+}
+
+.lastRun {
+  grid-column-start: 1;
+  grid-column-end: 4;
+  grid-row: 1;
+}
+
+tab-bar {
+  grid-column-start: 4;
+  grid-column-end: 5;
+  grid-row: 1;
+  width: 100%;
+}
+
+report-selector {
+  grid-column-start: 1;
+  grid-column-end: 4;
+  grid-row: 2;
+  min-width: 200px;
+  min-height: 450px;
+}
+
+tab-panels {
+  grid-column-start: 4;
+  grid-column-end: 5;
+
+  min-width: 800px;
+  width: 100%;
+  height: 100%;
+}
+
+tab-panels > :not(.active) {
+  display: none;
+}
+
+.output-logs {
+  grid-row: 2;
+}
+
+#workspace-selector {
+  grid-column-start: 1;
+  grid-column-end: 3;
+  grid-row: 3;
+}
+
+#runSearchesButton {
+  grid-column-start: 4;
+  grid-column-end: 5;
+  grid-row: 3;
+}
+
+report-selector {
+  grid-column-start: 1;
+  grid-column-end: 4;
+  grid-row: 2;
+  min-width: 200px;
+  min-height: 450px;
+}
+
+file-system {
+  grid-column-start: 1;
+  grid-column-end: 4;
+  width: 100;
+  height: 100%;
+}
+
+.codemirror-panels {
+  grid-row: 4;
+}
+
+workbench-footer {
+  grid-column-start: 1;
+  grid-column-end: 5;
+  grid-row: 5;
+  width: 100%;
+  display: block;
+}
