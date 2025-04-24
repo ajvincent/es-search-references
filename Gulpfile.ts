@@ -37,28 +37,23 @@ function installEngine262(): Promise<void> {
   );
 }
 
-async function installGraphLib(): Promise<void> {
-  const rollupLocation = path.join(projectRoot, "node_modules/rollup/dist/bin/rollup");
-  const pathToConfig = path.join(projectRoot, "graphlib-rollup.config.js");
-  await asyncFork(rollupLocation, [
-      "--config",
-      pathToConfig,
-    ],
-    projectRoot
-  );
-}
-
 function installSearchReferencesJs() {
   return src("es-search-references/dist/core-host/runSearchesInGuestEngine.js")
     .pipe(replace("@engine262/engine262", "./engine262.mjs"))
-    .pipe(replace("@dagrejs/graphlib", "./graphlib.mjs"))
+    .pipe(replace(
+      `import graphlib from '@dagrejs/graphlib';\n`,
+      `
+await import("../../lib/packages/dagre.js");
+const { graphlib } = dagre;
+      `.trim() + "\n"
+    ))
     .pipe(dest("docs/lib/packages"));
 }
 
 function installSearchReferences_d_ts() {
   return src("es-search-references/dist/core-host/runSearchesInGuestEngine.d.ts")
     .pipe(replace("@engine262/engine262", "./engine262.mjs"))
-    .pipe(replace("@dagrejs/graphlib", "./graphlib.mjs"))
+    .pipe(replace("@dagrejs/graphlib", "./dagre.js"))
     .pipe(dest("source/lib/packages"));
 }
 
@@ -89,7 +84,6 @@ export default series([
   buildLocalhost,
   parallel([
     installEngine262,
-    installGraphLib,
     installSearchReferencesJs,
     installSearchReferences_d_ts,
     installReferenceSpecs,
