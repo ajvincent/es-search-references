@@ -8,6 +8,7 @@ export abstract class TreeRowElement extends HTMLElement {
   }
 
   protected abstract getCellElements(): HTMLElement[];
+  public abstract get labelElement(): HTMLLabelElement | null;
 
   public addRow(row: this): void {
     this.#childrenWrapper.append(row);

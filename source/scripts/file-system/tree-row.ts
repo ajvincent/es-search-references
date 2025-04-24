@@ -5,6 +5,9 @@ import {
 export class FileTreeRow extends TreeRowElement {
   readonly #label: string;
   readonly #fullPath?: string;
+
+  #labelElement: HTMLLabelElement | null = null;
+
   constructor(label: string, fullPath?: string) {
     super();
     this.#label = label;
@@ -42,6 +45,7 @@ export class FileTreeRow extends TreeRowElement {
   #buildLabelElement(): HTMLLabelElement {
     const label = new HTMLLabelElement();
     label.append(this.#label);
+    this.#labelElement = label;
     return label;
   }
 
@@ -50,5 +54,9 @@ export class FileTreeRow extends TreeRowElement {
     radio.type = "radio";
     radio.name = "currentRow";
     return radio;
+  }
+
+  get labelElement(): HTMLLabelElement | null {
+    return this.#labelElement
   }
 }
