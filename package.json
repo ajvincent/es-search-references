@@ -35,6 +35,7 @@
     "@engine262/engine262": "^0.0.1-0bd9a5fb33988b1e4a3a7bc9560c242fa8fe7393"
   },
   "devDependencies": {
+    "@dagrejs/dagre": "^1.1.4",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@tsconfig/node22": "^22.0.1",
