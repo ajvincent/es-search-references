@@ -11,7 +11,7 @@ export class FileTreeRow extends TreeRowElement {
     this.#fullPath = fullPath;
   }
 
-  public getCellElements(): HTMLElement[] {
+  protected getCellElements(): HTMLElement[] {
     const elements: HTMLElement[] = [];
 
     if (this.#fullPath) {
