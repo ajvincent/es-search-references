@@ -17,6 +17,10 @@ tree-row.depth-even {
   --depth-even: calc(var(--depth-odd) + 1);
 }
 
+tree-grid > tree-row.depth-even {
+  --depth-even: 0;
+}
+
 tree-row {
   display: contents;
 }

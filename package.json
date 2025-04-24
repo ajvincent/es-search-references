@@ -46,6 +46,7 @@
     "gulp-replace": "^1.1.4",
     "rollup": "^4.40.0",
     "rollup-plugin-dts": "^6.2.1",
+    "type-fest": "^4.40.0",
     "typescript": "^5.8.3"
   }
 }
