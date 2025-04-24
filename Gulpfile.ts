@@ -68,14 +68,14 @@ async function installReferenceSpecs(): Promise<void> {
   );
 
   const fileEntries: [string, string][] = await PromiseAllParallel(files, async f => [
-    "virtual://home/" + f, await fs.readFile(path.join(projectRoot, "dist", f), { encoding: "utf-8"})
+    "home/" + f, await fs.readFile(path.join(projectRoot, "dist", f), { encoding: "utf-8"})
   ]);
 
   const serialized = JSON.stringify(fileEntries);
   const moduleSource = `export const ReferenceSpecFileMap = new Map(JSON.parse(${serialized}));\n`;
 
   await fs.writeFile(
-    path.join(projectRoot, "docs/scripts/ReferenceSpecFileMap.js"),
+    path.join(projectRoot, "docs/scripts/reference-spec/FileMap.js"),
     moduleSource,
     { encoding: "utf-8"}
   );

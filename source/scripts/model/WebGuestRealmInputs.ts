@@ -14,8 +14,11 @@ export class WebGuestRealmInputs implements GuestRealmInputs {
   contentsGetter(specifier: string): string {
     if (specifier === "es-search-references/guest")
       return `export {};`;
+    if (!specifier.startsWith("virtual://")) {
+      throw new Error("specifier must start with virtual://");
+    }
 
-    const contents = this.#filesMap.get(specifier);
+    const contents = this.#filesMap.get(specifier.substr(10));
     if (!contents) {
       throw new Error("no contents found for specifier: " + specifier);
     }

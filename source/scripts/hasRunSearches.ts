@@ -25,7 +25,7 @@ searchReferences("target symbol in held values", symbolTarget, heldValues, true)
 
 document.getElementById("testButton")!.onclick = async function(evt) {
   const inputs = new WebGuestRealmInputs("virtual://main.js", new Map([
-    ["virtual://main.js", sampleScript]
+    ["main.js", sampleScript]
   ]));
 
   const config = new LoggingConfiguration;

@@ -1,14 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
  <head>
-  <title>Hello World!</title>
+  <title>Search for Object References in engine262</title>
   <link type="text/css" href="css/index.css" rel="stylesheet">
  </head>
  <body>
-  <h1>Hello World!</h1>
+  <h1>Search for Object References in engine262</h1>
+  <!--
   <p>This is a starting point for Alex Vincent's es-search-references webpage.  It's probably going to be a single page.</p>
   <p><button id="testButton">Click me!</button></p>
   <script type="module" src="./scripts/hasRunSearches.js"></script>
+  -->
 
   <div id="workbench">
     <label class="lastRun">Last run: April 22, 2025 @ 12:05:53 AM</label>
@@ -28,21 +30,49 @@
     </tab-panels>
 
     <select id="workspace-selector">
-      <option>simple</option>
+      <option value="reference-spec">Example Reference specifications</option>
+      <option value="local-storage"></option>
     </select>
 
     <button id="runSearchesButton">Run Searches!</button>
 
-    <file-system>
-      File system pane
+    <file-system id="filesystem:reference-spec">
+      <tree-grid>
+        <span>Search</span>
+        <span>File</span>
+        <span>Show</span>
+        <tree-row>
+          <span></span>
+          <span class="indent">virtual://</span>
+          <input type="radio" name="current-row"/>
+          <tree-row class="depth-odd">
+            <span></span>
+            <span class="indent">home</span>
+            <input type="radio" name="current-row"/>
+            <tree-row class="depth-even">
+              <span></span>
+              <span class="indent">foo</span>
+              <input type="radio" name="current-row"/>
+              <tree-row class="depth-odd">
+                <input type="checkbox" name="files-selected" value="virtual://home/foo/bar.js">
+                <span class="indent">bar.js</span>
+                <input type="radio" name="current-row"/>
+              </tree-row>
+            </tree-row>
+          </tree-row>
+        </tree-row>
+      </tree-grid>
     </file-system>
+    <file-system id="filesystem:local-storage" class="hidden"></file-system>
 
     <tab-panels class="codemirror-panels">
       <div class="active">Hello World</div>
       <div>Goodbye cruel world</div>
     </tab-panels>
 
-    <workbench-footer>This is a footer.</footer>
+    <workbench-footer>This is a footer.</workbench-footer>
   </div>
+
+  <script type="module" src="./scripts/workbench.js"></script>
  </body>
 </html>

@@ -1,0 +1,44 @@
+tree-grid {
+  display: grid;
+  grid-template-columns:
+    [file-select] 80px
+    [file-names] 300px
+    [current-row] 30px
+  ;
+
+  --depth-even: 0;
+}
+
+tree-row.depth-odd {
+  --depth-odd: calc(var(--depth-even) + 1);
+}
+
+tree-row.depth-even {
+  --depth-even: calc(var(--depth-odd) + 1);
+}
+
+tree-row {
+  display: contents;
+}
+
+tree-row > :first-child {
+  grid-column-start: file-select;
+}
+
+tree-row > .indent::before {
+  padding-left: calc(max(var(--depth-odd), var(--depth-even)) * 10px);
+  content: "- ";
+}
+
+tree-row.collapsed > .indent::before {
+  content: "+ ";
+}
+
+tree-grid > tree-row > .indent::before {
+  padding-left: 0;
+  content: "  ";
+}
+
+tree-row.collapsed > tree-row {
+  display: none;
+}
