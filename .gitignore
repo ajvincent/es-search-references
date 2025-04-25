@@ -1,3 +1,6 @@
-node_modules
-dist/*
 Gulpfile.js
+dist/*
+docs/playground.html
+docs/scripts/playground
+node_modules
+source/scripts/playground
