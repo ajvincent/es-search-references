@@ -1,20 +1,34 @@
-import { FileMap as ReferenceSpecFileMap } from "./reference-spec/FileMap.js";
+import { ReferenceSpecFileMap } from "./reference-spec/FileMap.js";
+import { FileSystemController } from "./file-system/controller.js";
 class Workbench_Base {
-    #fsSelector;
+    /*
+    readonly #fsSelector: HTMLSelectElement;
+    */
     #fileMap;
+    #refSpecFS;
     constructor() {
-        this.#fsSelector = document.getElementById("workspace-selector");
+        /*
+        this.#fsSelector = document.getElementById("workspace-selector") as HTMLSelectElement;
+        */
         this.#fileMap = ReferenceSpecFileMap;
-        this.#attachEvents();
+        window.onload = () => this.#initialize();
     }
-    #attachEvents() {
-        this.#fsSelector.onchange = () => this.#onWorkspaceSelect();
+    fileSelected(pathToFile) {
+        console.log("fileSelected: pathToFile = " + pathToFile);
     }
-    #onWorkspaceSelect() {
-        const { value } = this.#fsSelector;
-        if (value === "reference-spec") {
-            this.#fileMap = ReferenceSpecFileMap;
-        }
+    fileCheckToggled(pathToFile, isChecked) {
+        console.log("fileCheckToggled: pathToFile = " + pathToFile + ", isChecked = " + isChecked);
+    }
+    #initialize() {
+        this.#attachTestEvent();
+    }
+    #attachTestEvent() {
+        document.getElementById("testButton").onclick = () => this.#doTestAction();
+    }
+    #doTestAction() {
+        debugger;
+        this.#refSpecFS = new FileSystemController("filesystem:reference-spec", this);
+        this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
     }
 }
 const Workbench = new Workbench_Base();

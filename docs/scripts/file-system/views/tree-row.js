@@ -1,8 +1,10 @@
-import { TreeRowElement } from "../tree/views/tree-row.js";
+import { TreeRowElement } from "../../tree/views/tree-row.js";
 export class FileTreeRow extends TreeRowElement {
     #label;
     #fullPath;
+    #checkboxElement = null;
     #labelElement = null;
+    #radioElement = null;
     constructor(label, fullPath) {
         super();
         this.#label = label;
@@ -25,11 +27,21 @@ export class FileTreeRow extends TreeRowElement {
         }
         return elements;
     }
+    get checkboxElement() {
+        return this.#checkboxElement;
+    }
+    get labelElement() {
+        return this.#labelElement;
+    }
+    get radioElement() {
+        return this.#radioElement;
+    }
     #buildCheckbox() {
         const checkbox = new HTMLInputElement;
         checkbox.type = "checkbox";
         checkbox.name = "filesSelected";
         checkbox.value = this.#fullPath;
+        this.#checkboxElement = checkbox;
         return checkbox;
     }
     #buildLabelElement() {
@@ -43,8 +55,5 @@ export class FileTreeRow extends TreeRowElement {
         radio.type = "radio";
         radio.name = "currentRow";
         return radio;
-    }
-    get labelElement() {
-        return this.#labelElement;
     }
 }

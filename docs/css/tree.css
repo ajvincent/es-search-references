@@ -1,11 +1,5 @@
 tree-grid {
   display: grid;
-  grid-template-columns:
-    [file-select] 80px
-    [file-names] 300px
-    [current-row] 30px
-  ;
-
   --depth-even: 0;
 }
 
@@ -23,10 +17,6 @@ tree-grid > tree-row.depth-even {
 
 tree-row {
   display: contents;
-}
-
-tree-row > :first-child {
-  grid-column-start: file-select;
 }
 
 tree-row > .indent::before {

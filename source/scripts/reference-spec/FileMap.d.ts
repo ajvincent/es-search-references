@@ -1,1 +1,1 @@
-export const FileMap: ReadonlyMap<string, string>;
+export const ReferenceSpecFileMap: ReadonlyMap<string, string>;

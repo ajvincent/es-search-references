@@ -10,6 +10,9 @@
   <p>This is a starting point for Alex Vincent's es-search-references webpage.  It's probably going to be a single page.</p>
   <p><button id="testButton">Click me!</button></p>
   <script type="module" src="./scripts/hasRunSearches.js"></script>
+  <!--
+  <script type="module" src="./scripts/workbench.js"></script>
+  -->
 
   <div id="workbench">
     <label class="lastRun">Last run: April 22, 2025 @ 12:05:53 AM</label>
@@ -74,6 +77,14 @@
     <workbench-footer>This is a footer.</workbench-footer>
   </div>
 
+  <template id="shadow-filesystem-css">
+    <link type="text/css" href="./css/file-tree.css" rel="stylesheet">
+  </template>
+  <template id="shadow-filesystem-treeheader">
+    <span>Search</span>
+    <span>File</span>
+    <span>Show</span>
+  </template>
   <script type="module" src="./scripts/workbench.js"></script>
 </body>
 </html>

@@ -17,7 +17,7 @@ export class TreeGridElement<
   constructor(
     RowBuilder: Class<RowElement, Arguments>,
     rootArguments: Arguments,
-    headerRow?: HTMLElement[]
+    headerRow?: DocumentFragment
   )
   {
     super();
@@ -27,7 +27,14 @@ export class TreeGridElement<
     this.#rowMap.set("", [0, rootRow]);
     this.append(rootRow);
     if (headerRow)
-      rootRow.before(...headerRow);
+      rootRow.before(headerRow);
+  }
+
+  getRow(key: string): RowElement | undefined {
+    const depthAndRow = this.#rowMap.get(key);
+    if (depthAndRow)
+      return depthAndRow[1];
+    return undefined;
   }
 
   public addRow(
@@ -67,6 +74,11 @@ export class TreeGridElement<
 
     existingRowAndDepth[1].remove();
     this.#rowMap.delete(key);
+  }
+
+  public clearRows(): void {
+    this.lastElementChild?.replaceChildren();
+    this.#rowMap.clear();
   }
 }
 

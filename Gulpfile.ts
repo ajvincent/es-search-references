@@ -67,7 +67,7 @@ async function installReferenceSpecs(): Promise<void> {
   ]);
 
   const serialized = JSON.stringify(fileEntries);
-  const moduleSource = `export const ReferenceSpecFileMap = new Map(JSON.parse(${serialized}));\n`;
+  const moduleSource = `export const ReferenceSpecFileMap = new Map(${serialized});\n`;
 
   await fs.writeFile(
     path.join(projectRoot, "docs/scripts/reference-spec/FileMap.js"),

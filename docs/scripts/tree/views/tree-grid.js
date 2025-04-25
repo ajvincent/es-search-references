@@ -8,7 +8,13 @@ export class TreeGridElement extends HTMLElement {
         this.#rowMap.set("", [0, rootRow]);
         this.append(rootRow);
         if (headerRow)
-            rootRow.before(...headerRow);
+            rootRow.before(headerRow);
+    }
+    getRow(key) {
+        const depthAndRow = this.#rowMap.get(key);
+        if (depthAndRow)
+            return depthAndRow[1];
+        return undefined;
     }
     addRow(parentKey, childKey, rowArguments) {
         if (this.#rowMap.has(childKey))
@@ -37,6 +43,10 @@ export class TreeGridElement extends HTMLElement {
             throw new Error("No row found for key " + key);
         existingRowAndDepth[1].remove();
         this.#rowMap.delete(key);
+    }
+    clearRows() {
+        this.lastElementChild?.replaceChildren();
+        this.#rowMap.clear();
     }
 }
 window.customElements.define("tree-grid", TreeGridElement);
