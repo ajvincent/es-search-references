@@ -38,35 +38,7 @@
 
     <button id="runSearchesButton">Run Searches!</button>
 
-    <file-system id="filesystem:reference-spec">
-      <!--
-      <tree-grid>
-        <span>Search</span>
-        <span>File</span>
-        <span>Show</span>
-        <tree-row>
-          <span></span>
-          <span class="indent">virtual://</span>
-          <input type="radio" name="current-row"/>
-          <tree-row class="depth-odd">
-            <span></span>
-            <span class="indent">home</span>
-            <input type="radio" name="current-row"/>
-            <tree-row class="depth-even">
-              <span></span>
-              <span class="indent">foo</span>
-              <input type="radio" name="current-row"/>
-              <tree-row class="depth-odd">
-                <input type="checkbox" name="files-selected" value="virtual://home/foo/bar.js">
-                <span class="indent">bar.js</span>
-                <input type="radio" name="current-row"/>
-              </tree-row>
-            </tree-row>
-          </tree-row>
-        </tree-row>
-      </tree-grid>
-      -->
-    </file-system>
+    <file-system id="filesystem:reference-spec"></file-system>
     <file-system id="filesystem:local-storage" class="hidden"></file-system>
 
     <tab-panels class="codemirror-panels">
@@ -77,14 +49,16 @@
     <workbench-footer>This is a footer.</workbench-footer>
   </div>
 
-  <template id="shadow-filesystem-css">
+  <template id="shadow-filesystem-base">
     <link type="text/css" href="./css/file-tree.css" rel="stylesheet">
+    <tree-grid id="tree-root" class="filesystem">
+      <span>Search</span>
+      <span>File</span>
+      <span>Show</span>
+      <tree-rows id="tree-rows"></tree-rows>
+    </tree-grid>
   </template>
-  <template id="shadow-filesystem-treeheader">
-    <span>Search</span>
-    <span>File</span>
-    <span>Show</span>
-  </template>
+
   <script type="module" src="./scripts/workbench.js"></script>
 </body>
 </html>

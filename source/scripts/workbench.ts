@@ -32,6 +32,9 @@ class Workbench_Base implements FileSystemCallbacks {
   }
 
   #initialize(): void {
+    this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
+    this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
+
     this.#attachTestEvent();
   }
 
@@ -40,9 +43,6 @@ class Workbench_Base implements FileSystemCallbacks {
   }
 
   #doTestAction(): void {
-    debugger;
-    this.#refSpecFS = new FileSystemController("filesystem:reference-spec", this);
-    this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
   }
 
   /*

@@ -2,10 +2,13 @@
 
 tree-grid.filesystem {
   grid-template-columns:
-    [file-select] 80px
-    [file-names] 300px
-    [current-row] 30px
+    [file-select] 60px
+    [file-names] 1fr
+    [current-row] 40px
   ;
+
+  max-height: 100%;
+  overflow: scroll;
 }
 
 tree-grid.filesystem tree-row > :first-child {

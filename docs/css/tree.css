@@ -11,25 +11,24 @@ tree-row.depth-even {
   --depth-even: calc(var(--depth-odd) + 1);
 }
 
-tree-grid > tree-row.depth-even {
-  --depth-even: 0;
-}
-
-tree-row {
+tree-rows, tree-row {
   display: contents;
 }
 
 tree-row > .indent::before {
   padding-left: calc(max(var(--depth-odd), var(--depth-even)) * 10px);
+}
+
+tree-row.is-collapsible > .indent::before {
   content: "- ";
 }
 
-tree-row.collapsed > .indent::before {
+tree-row.is-collapsible.collapsed > .indent::before {
   content: "+ ";
 }
 
+tree-row:not(.is-collapsible) > .indent::before,
 tree-grid > tree-row > .indent::before {
-  padding-left: 0;
   content: "  ";
 }
 

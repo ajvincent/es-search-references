@@ -1,31 +1,60 @@
 import {
-  FileSystemElement,
- } from "./views/file-system.js";
+  FileRowView
+} from "./views/file-row.js";
 
- import {
-  FileTreeRow
-} from "./views/tree-row.js";
+import {
+  DirectoryRowView
+} from "./views/directory-row.js";
+
+import type {
+  TreeRowView
+} from "../tree/views/tree-row.js";
+
+import {
+  FileSystemElement
+} from "./elements/file-system.js";
 
 export interface FileSystemCallbacks {
   fileSelected(pathToFile: string): void;
   fileCheckToggled(pathToFile: string, isChecked: boolean): void;
 }
 
-void(FileSystemElement); // force the import
+class RowMetadata {
+  readonly view: TreeRowView;
+  constructor(view: TreeRowView) {
+    this.view = view;
+  }
+}
+
+void(FileSystemElement); // force the custom element upgrade
 
 export class FileSystemController {
+  static #getParentAndLeaf(key: string): [string, string] {
+    let lastSlash = key.lastIndexOf("/");
+    if (lastSlash === -1) {
+      return ["", key];
+    }
+    const parent = key.substring(0, lastSlash);
+    const leaf = key.substring(lastSlash + 1);
+    return [parent, leaf];
+  }
+
+  #isReadOnly: boolean;
+  #rootElement: FileSystemElement;
+
   #fileMap: ReadonlyMap<string, string> = new Map<string, string>;
   readonly #callbacks: FileSystemCallbacks;
 
-  readonly #view: FileSystemElement;
-  readonly #fileToRowMap = new Map<string, FileTreeRow>;
+  readonly #fileToRowMap = new Map<string, RowMetadata>;
 
   constructor(
     id: string,
+    isReadonly: boolean,
     callbacks: FileSystemCallbacks
   )
   {
-    this.#view = document.getElementById(id) as FileSystemElement;
+    this.#rootElement = document.getElementById(id) as FileSystemElement;
+    this.#isReadOnly = isReadonly;
     this.#callbacks = callbacks;
   }
 
@@ -33,10 +62,12 @@ export class FileSystemController {
     fileMap: ReadonlyMap<string, string>
   ): void
   {
-    this.#view.clearRows();
     this.#fileToRowMap.clear();
+    this.#rootElement.treeRows!.replaceChildren();
 
-    this.#fileMap = fileMap;
+    const fileEntries = Array.from(fileMap.entries());
+    fileEntries.sort((a, b) => a[0].localeCompare(b[0]));
+    this.#fileMap = new Map(fileEntries);
 
     const directoriesSet = new Set<string>;
     for (const key of this.#fileMap.keys()) {
@@ -45,36 +76,54 @@ export class FileSystemController {
   }
 
   #addFileKey(key: string, directoriesSet: Set<string>): void {
-    const lastSlash = key.lastIndexOf("/");
-    const parent = key.substring(0, lastSlash);
+    const [parent, leaf] = FileSystemController.#getParentAndLeaf(key);
     if (parent && directoriesSet.has(parent) === false) {
       this.#addDirectoryKey(parent, directoriesSet);
     }
-    const leaf = key.substring(lastSlash + 1);
-    const row: FileTreeRow = this.#view.addRow(parent, leaf, [leaf, key]);
 
-    this.#fileToRowMap.set(key, row);
+    const parentRowData = this.#fileToRowMap.get(parent)!
+    const view = new FileRowView(parentRowData.view.depth + 1, leaf, key);
+    const rowData = new RowMetadata(view);
+    this.#fileToRowMap.set(key, rowData);
 
-    row.checkboxElement!.onclick = (ev: MouseEvent): void => {
-      ev.stopPropagation();
-      this.#callbacks.fileCheckToggled(key, row.checkboxElement!.checked);
+    view.checkboxElement!.onclick = (ev: MouseEvent): void => {
+      this.#callbacks.fileCheckToggled(key, view.checkboxElement!.checked);
     };
-    row.radioElement!.onselect = (ev: Event): void => {
-      ev.stopPropagation();
+    view.radioElement!.onclick = (ev: Event): void => {
       this.#callbacks.fileSelected(key);
     };
+
+    view.rowElement!.onclick = (ev: MouseEvent): void => {
+      ev.stopPropagation();
+    }
+
+    this.#fileToRowMap.get(parent)!.view.addRow(view);
   }
 
   #addDirectoryKey(key: string, directoriesSet: Set<string>): void {
-    let lastSlash = key.lastIndexOf("/");
-    if (lastSlash === -1)
-      lastSlash = 0;
-    const parent = key.substring(0, lastSlash);
+    let [parent, leaf] = FileSystemController.#getParentAndLeaf(key);
     if (parent && directoriesSet.has(parent) === false) {
       this.#addDirectoryKey(parent, directoriesSet);
     }
-    const leaf = key.substring(lastSlash + 1);
-    const row = this.#view.addRow(parent, leaf, [leaf]);
-    row.onclick = () => row.toggleCollapsed();
+
+    let depth: number
+    if (parent === "") {
+      depth = 0;
+      leaf = "virtual://";
+    } else {
+      depth = this.#fileToRowMap.get(parent)!.view.depth + 1
+    }
+
+    const view = new DirectoryRowView(depth, leaf);
+    const rowData = new RowMetadata(view);
+    this.#fileToRowMap.set(key, rowData);
+
+    if (depth > 0) {
+      view.registerCollapseClick();
+      this.#fileToRowMap.get(parent)!.view.addRow(view);
+    } else {
+      this.#rootElement.treeRows!.append(view.rowElement!);
+    }
+    directoriesSet.add(key);
   }
 }

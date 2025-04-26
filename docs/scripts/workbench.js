@@ -20,15 +20,14 @@ class Workbench_Base {
         console.log("fileCheckToggled: pathToFile = " + pathToFile + ", isChecked = " + isChecked);
     }
     #initialize() {
+        this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
+        this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
         this.#attachTestEvent();
     }
     #attachTestEvent() {
         document.getElementById("testButton").onclick = () => this.#doTestAction();
     }
     #doTestAction() {
-        debugger;
-        this.#refSpecFS = new FileSystemController("filesystem:reference-spec", this);
-        this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
     }
 }
 const Workbench = new Workbench_Base();

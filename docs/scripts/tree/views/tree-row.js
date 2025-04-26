@@ -1,23 +1,45 @@
-class TreeRowElement extends HTMLElement {
-    #childrenWrapper = document.createElement("tree-children");
-    constructor() {
-        super();
+import { TreeRowElement } from "../elements/tree-row.js";
+export class TreeRowView {
+    rowElement;
+    RowConstructor = TreeRowElement;
+    depth;
+    isCollapsible;
+    primaryLabel;
+    childRowViews = [];
+    constructor(depth, isCollapisble, primaryLabel) {
+        this.depth = depth;
+        this.isCollapsible = isCollapisble;
+        this.primaryLabel = primaryLabel;
     }
-    connectedCallback() {
-        this.append(...this.getCellElements(), this.#childrenWrapper);
+    initialize() {
+        this.rowElement = new this.RowConstructor(this.depth, this.isCollapsible, this.getCellElements());
     }
-    getCellElements() {
-        return [];
+    removeAndDispose() {
+        this.rowElement?.remove();
+        return this.#disposeAllViews();
     }
-    get labelElement() {
-        return null;
+    #disposeAllViews() {
+        this.rowElement = undefined;
+        const collectedViews = [this];
+        for (const view of this.childRowViews) {
+            collectedViews.push(...view.#disposeAllViews());
+        }
+        return collectedViews;
     }
-    addRow(row) {
-        this.#childrenWrapper.append(row);
+    buildPrimaryLabelElement() {
+        const label = document.createElement("label");
+        label.classList.add("indent");
+        label.append(this.primaryLabel);
+        return label;
+    }
+    addRow(rowView) {
+        this.rowElement.addRow(rowView.rowElement);
+        this.childRowViews.push(rowView);
+    }
+    get isCollapsed() {
+        return this.rowElement.isCollapsed;
     }
     toggleCollapsed() {
-        this.classList.toggle("collapsed");
+        this.rowElement.toggleCollapsed();
     }
 }
-window.customElements.define("tree-row", TreeRowElement);
-export { TreeRowElement };
