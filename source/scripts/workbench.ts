@@ -1,6 +1,6 @@
 import {
-  ReferenceSpecFileMap
-} from "./reference-spec/FileMap.js";
+  graphlib
+} from "./dagre-imports.js";
 
 import {
   FileSystemCallbacks,
@@ -11,6 +11,18 @@ import {
   TabPanelsView,
 } from "./other/tab-panels-view.js";
 
+import {
+  ReferenceSpecFileMap
+} from "./reference-spec/FileMap.js";
+
+import {
+  SearchDriver
+} from "./search/Driver.js";
+
+import type {
+  SearchResults
+} from "./search/Results.js";
+
 class Workbench_Base implements FileSystemCallbacks {
   /*
   readonly #fsSelector: HTMLSelectElement;
@@ -20,12 +32,14 @@ class Workbench_Base implements FileSystemCallbacks {
   #refSpecFS?: FileSystemController;
   #outputLogsView?: TabPanelsView;
   #codeMirrorView?: TabPanelsView;
+  #filesCheckedMap = new WeakMap<ReadonlyMap<string, string>, Set<string>>;
 
   constructor() {
     /*
     this.#fsSelector = document.getElementById("workspace-selector") as HTMLSelectElement;
     */
     this.#fileMap = ReferenceSpecFileMap;
+    this.#filesCheckedMap.set(ReferenceSpecFileMap, new Set);
 
     window.onload = () => this.#initialize();
   }
@@ -34,7 +48,11 @@ class Workbench_Base implements FileSystemCallbacks {
     console.log("fileSelected: pathToFile = " + pathToFile);
   }
   fileCheckToggled(pathToFile: string, isChecked: boolean): void {
-    console.log("fileCheckToggled: pathToFile = " + pathToFile + ", isChecked = " + isChecked);
+    const fileSet = this.#filesCheckedMap.get(this.#fileMap)!;
+    if (isChecked)
+      fileSet.add(pathToFile);
+    else
+      fileSet.delete(pathToFile);
   }
 
   #initialize(): void {
@@ -44,7 +62,54 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#outputLogsView = new TabPanelsView("output-logs");
     this.#codeMirrorView = new TabPanelsView("codemirror-panels");
 
+    this.#attachEvents();
     document.getElementById("testButton")!.onclick = () => this.#doTestAction();
+  }
+
+  #attachEvents(): void {
+    document.getElementById("runSearchesButton")!.onclick = this.#runSearches.bind(this);
+  }
+
+  async #runSearches(event: MouseEvent): Promise<void> {
+    event.preventDefault();
+    event.stopPropagation();
+
+    this.#outputLogsView!.clearPanels();
+
+    const driver = new SearchDriver(this.#fileMap);
+    const fileSet = this.#filesCheckedMap.get(this.#fileMap)!;
+    const resultsMap: ReadonlyMap<string, ReadonlyMap<string, SearchResults>> = await driver.run(Array.from(fileSet));
+
+    resultsMap.forEach((innerResults, pathToFile) => {
+      innerResults.forEach((result, searchKey) => {
+        this.#addLogPanel(pathToFile, searchKey, result);
+        this.#addRawGraphPanel(pathToFile, searchKey, result);
+      });
+    });
+  }
+
+  #addLogPanel(pathToFile: string, searchKey: string, result: SearchResults): string {
+    const serializedLog = result.logs.join("\n");
+    const pre = document.createElement("pre");
+    pre.append(serializedLog);
+
+    const hash = JSON.stringify({pathToFile, searchKey, tabKey: "searchLog"});
+    const view = { displayElement: pre };
+    this.#outputLogsView!.addPanel(hash, view);
+    this.#outputLogsView!.activeViewKey = hash;
+    return hash;
+  }
+
+  #addRawGraphPanel(pathToFile: string, searchKey: string, result: SearchResults): string {
+    const serializedGraph = result.graph ? JSON.stringify(graphlib.json.write(result.graph), null, 2) : "(null)";
+    const pre = document.createElement("pre");
+    pre.append(serializedGraph);
+
+    const hash = JSON.stringify({pathToFile, searchKey, tabKey: "searchResults"});
+    const view = { displayElement: pre };
+    this.#outputLogsView!.addPanel(hash, view);
+    this.#outputLogsView!.activeViewKey = hash;
+    return hash;
   }
 
   #doTestAction(): void {
