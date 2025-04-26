@@ -4,8 +4,12 @@ import {
 
 import {
   FileSystemCallbacks,
-  FileSystemController
+  FileSystemController,
 } from "./file-system/controller.js";
+
+import {
+  TabPanelsView,
+} from "./other/tab-panels-view.js";
 
 class Workbench_Base implements FileSystemCallbacks {
   /*
@@ -14,6 +18,8 @@ class Workbench_Base implements FileSystemCallbacks {
 
   #fileMap: ReadonlyMap<string, string>;
   #refSpecFS?: FileSystemController;
+  #outputLogsView?: TabPanelsView;
+  #codeMirrorView?: TabPanelsView;
 
   constructor() {
     /*
@@ -35,14 +41,23 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
     this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
 
-    this.#attachTestEvent();
-  }
+    this.#outputLogsView = new TabPanelsView("output-logs");
+    this.#codeMirrorView = new TabPanelsView("codemirror-panels");
 
-  #attachTestEvent(): void {
     document.getElementById("testButton")!.onclick = () => this.#doTestAction();
   }
 
   #doTestAction(): void {
+    /*
+    const panel = document.createElement("output-panel");
+    const date = new Date();
+    panel.append(`This is child number ${
+      document.getElementById("output-logs")!.children.length
+    }, created at ${date.toISOString()}.`);
+    const key = "foo-" + date.toISOString();
+    this.#outputLogsView!.addPanel(key, {displayElement: panel});
+    this.#outputLogsView!.activeViewKey = key;
+    */
   }
 
   /*

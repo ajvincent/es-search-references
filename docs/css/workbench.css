@@ -52,7 +52,7 @@ tab-panels > :not(.active) {
   display: none;
 }
 
-.output-logs {
+#output-logs {
   grid-row: 2;
 }
 
@@ -75,7 +75,7 @@ file-system {
   font-family: 'Courier New', Courier, monospace;
 }
 
-.codemirror-panels {
+#codemirror-panels {
   grid-column: main-display;
   grid-row: 4;
 }
