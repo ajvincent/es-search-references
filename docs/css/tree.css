@@ -1,6 +1,7 @@
 tree-grid {
   display: grid;
   --depth-even: 0;
+  --depth-odd: -2;
 }
 
 tree-row.depth-odd {
@@ -29,7 +30,11 @@ tree-row.is-collapsible.collapsed > .indent::before {
 
 tree-row:not(.is-collapsible) > .indent::before,
 tree-grid > tree-row > .indent::before {
-  content: "  ";
+  content: none;
+}
+
+tree-row:not(.is-collapsible) > .indent {
+  padding-left: calc((max(var(--depth-odd), var(--depth-even)) + 2) * 10px );
 }
 
 tree-row.collapsed > tree-row {

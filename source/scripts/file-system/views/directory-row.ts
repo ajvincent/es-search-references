@@ -4,7 +4,7 @@ import {
 
 export class DirectoryRowView extends TreeRowView {
   constructor(depth: number, primaryLabel: string) {
-    super(depth, true, primaryLabel);
+    super(depth, depth > 0, primaryLabel);
     this.initialize();
   }
 
