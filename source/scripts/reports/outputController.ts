@@ -13,7 +13,7 @@ import type {
 import {
   BaseView,
   TabPanelsView
-} from "./tab-panels-view.js";
+} from "../tab-panels/tab-panels-view.js";
 
 export class OutputController {
   static #createPreformattedView(contents: string): BaseView {

@@ -6,6 +6,10 @@ import {
   DirectoryRowView
 } from "./views/directory-row.js";
 
+import {
+  FileSystemView
+} from "./views/file-system.js";
+
 import type {
   TreeRowView
 } from "../tree/views/tree-row.js";
@@ -17,13 +21,6 @@ import {
 export interface FileSystemCallbacks {
   fileSelected(pathToFile: string): void;
   fileCheckToggled(pathToFile: string, isChecked: boolean): void;
-}
-
-class RowMetadata {
-  readonly view: TreeRowView;
-  constructor(view: TreeRowView) {
-    this.view = view;
-  }
 }
 
 void(FileSystemElement); // force the custom element upgrade
@@ -45,17 +42,20 @@ export class FileSystemController {
   #fileMap: ReadonlyMap<string, string> = new Map<string, string>;
   readonly #callbacks: FileSystemCallbacks;
 
-  readonly #fileToRowMap = new Map<string, RowMetadata>;
+  readonly #fileToRowMap = new Map<string, TreeRowView>;
+  readonly #fileSystemView: FileSystemView<DirectoryRowView, FileRowView>;
 
   constructor(
-    id: string,
+    rootId: string,
     isReadonly: boolean,
-    callbacks: FileSystemCallbacks
+    callbacks: FileSystemCallbacks,
   )
   {
-    this.#rootElement = document.getElementById(id) as FileSystemElement;
+    this.#rootElement = document.getElementById(rootId) as FileSystemElement;
     this.#isReadOnly = isReadonly;
     this.#callbacks = callbacks;
+
+    this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.#rootElement.treeRows!)
   }
 
   setFileMap(
@@ -76,15 +76,8 @@ export class FileSystemController {
   }
 
   #addFileKey(key: string, directoriesSet: Set<string>): void {
-    const [parent, leaf] = FileSystemController.#getParentAndLeaf(key);
-    if (parent && directoriesSet.has(parent) === false) {
-      this.#addDirectoryKey(parent, directoriesSet);
-    }
-
-    const parentRowData = this.#fileToRowMap.get(parent)!
-    const view = new FileRowView(parentRowData.view.depth + 1, leaf, key);
-    const rowData = new RowMetadata(view);
-    this.#fileToRowMap.set(key, rowData);
+    const view: FileRowView = this.#fileSystemView.addFileKey(key, directoriesSet);
+    this.#fileToRowMap.set(key, view);
 
     view.checkboxElement!.onclick = (ev: MouseEvent): void => {
       this.#callbacks.fileCheckToggled(key, view.checkboxElement!.checked);
@@ -96,34 +89,5 @@ export class FileSystemController {
     view.rowElement!.onclick = (ev: MouseEvent): void => {
       ev.stopPropagation();
     }
-
-    this.#fileToRowMap.get(parent)!.view.addRow(view);
-  }
-
-  #addDirectoryKey(key: string, directoriesSet: Set<string>): void {
-    let [parent, leaf] = FileSystemController.#getParentAndLeaf(key);
-    if (parent && directoriesSet.has(parent) === false) {
-      this.#addDirectoryKey(parent, directoriesSet);
-    }
-
-    let depth: number
-    if (parent === "") {
-      depth = 0;
-      leaf = "virtual://";
-    } else {
-      depth = this.#fileToRowMap.get(parent)!.view.depth + 1
-    }
-
-    const view = new DirectoryRowView(depth, leaf);
-    const rowData = new RowMetadata(view);
-    this.#fileToRowMap.set(key, rowData);
-
-    if (depth > 0) {
-      view.registerCollapseClick();
-      this.#fileToRowMap.get(parent)!.view.addRow(view);
-    } else {
-      this.#rootElement.treeRows!.append(view.rowElement!);
-    }
-    directoriesSet.add(key);
   }
 }

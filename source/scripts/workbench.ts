@@ -21,7 +21,11 @@ import type {
 
 import {
   OutputController
-} from "./tab-panels/outputController.js";
+} from "./reports/outputController.js";
+
+import {
+  ReportSelectController
+} from "./reports/selectController.js";
 
 class Workbench_Base implements FileSystemCallbacks {
   /*
@@ -30,7 +34,8 @@ class Workbench_Base implements FileSystemCallbacks {
 
   #fileMap: ReadonlyMap<string, string>;
   #refSpecFS?: FileSystemController;
-  readonly #outputController = new OutputController;
+  #outputController?: OutputController;
+  #reportSelectorController?: ReportSelectController;
   #codeMirrorView?: TabPanelsView;
   #filesCheckedMap = new WeakMap<ReadonlyMap<string, string>, Set<string>>;
 
@@ -60,6 +65,10 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
 
     this.#codeMirrorView = new TabPanelsView("codemirror-panels");
+    this.#outputController = new OutputController;
+    this.#reportSelectorController = new ReportSelectController(
+      "report-selector", this.#outputController
+    );
 
     this.#attachEvents();
     document.getElementById("testButton")!.onclick = () => this.#doTestAction();
@@ -73,13 +82,14 @@ class Workbench_Base implements FileSystemCallbacks {
     event.preventDefault();
     event.stopPropagation();
 
-    this.#outputController.clearResults();
+    this.#outputController!.clearResults();
 
     const driver = new SearchDriver(this.#fileMap);
     const fileSet = this.#filesCheckedMap.get(this.#fileMap)!;
     const resultsMap: ReadonlyMap<string, ReadonlyMap<string, SearchResults>> = await driver.run(Array.from(fileSet));
 
-    this.#outputController.addResults(resultsMap);
+    this.#outputController!.addResults(resultsMap);
+    this.#reportSelectorController!.refreshTree();
   }
 
   #doTestAction(): void {

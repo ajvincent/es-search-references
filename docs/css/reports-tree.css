@@ -1,0 +1,23 @@
+@import url("./tree.css");
+
+tree-grid.reports {
+  grid-template-columns:
+    [label] 1fr
+  ;
+
+  max-height: 100%;
+  overflow: scroll;
+}
+
+tree-grid.reports tree-row > :first-child {
+  grid-column-start: label;
+}
+
+tree-grid.reports tree-row.searchkey {
+  font-family: initial;
+}
+
+tree-grid.reports tree-row.searchkey.selected > label{
+  background-color: #cccccc;
+  color: #000000;
+}

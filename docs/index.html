@@ -18,7 +18,7 @@
       <label>UI Logs</label>
     </tab-bar>
 
-    <report-selector>
+    <report-selector id="report-selector">
       Report selector pane
     </report-selector>
 
@@ -45,6 +45,13 @@
       <span>Search</span>
       <span>&nbsp;&nbsp;File</span>
       <span>Show</span>
+      <tree-rows id="tree-rows"></tree-rows>
+    </tree-grid>
+  </template>
+
+  <template id="shadow-reports-base">
+    <link type="text/css" href="./css/reports-tree.css" rel="stylesheet">
+    <tree-grid id="tree-root" class="reports">
       <tree-rows id="tree-rows"></tree-rows>
     </tree-grid>
   </template>

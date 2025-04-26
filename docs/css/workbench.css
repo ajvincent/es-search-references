@@ -41,6 +41,14 @@ report-selector {
   min-height: 450px;
 }
 
+report-selector, file-system {
+  width: 100%;
+  height: 100%;
+  background-color: #000066;
+  color: #ffff00;
+  font-family: 'Courier New', Courier, monospace;
+}
+
 tab-panels {
   grid-column: main-display;
   min-width: 800px;
@@ -69,11 +77,6 @@ tab-panels > :not(.active) {
 
 file-system {
   grid-row: 4;
-  width: 100%;
-  height: 100%;
-  background-color: #000066;
-  color: #ffff00;
-  font-family: 'Courier New', Courier, monospace;
 }
 
 #codemirror-panels {

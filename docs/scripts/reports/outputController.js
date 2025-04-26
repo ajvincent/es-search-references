@@ -1,7 +1,7 @@
 var _a;
 import { graphlib } from "../dagre-imports.js";
 import { DefaultMap } from "../search/DefaultMap.js";
-import { TabPanelsView } from "./tab-panels-view.js";
+import { TabPanelsView } from "../tab-panels/tab-panels-view.js";
 export class OutputController {
     static #createPreformattedView(contents) {
         const pre = document.createElement("pre");

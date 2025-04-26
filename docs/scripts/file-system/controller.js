@@ -1,13 +1,7 @@
-var _a;
 import { FileRowView } from "./views/file-row.js";
 import { DirectoryRowView } from "./views/directory-row.js";
+import { FileSystemView } from "./views/file-system.js";
 import { FileSystemElement } from "./elements/file-system.js";
-class RowMetadata {
-    view;
-    constructor(view) {
-        this.view = view;
-    }
-}
 void (FileSystemElement); // force the custom element upgrade
 export class FileSystemController {
     static #getParentAndLeaf(key) {
@@ -24,10 +18,12 @@ export class FileSystemController {
     #fileMap = new Map;
     #callbacks;
     #fileToRowMap = new Map;
-    constructor(id, isReadonly, callbacks) {
-        this.#rootElement = document.getElementById(id);
+    #fileSystemView;
+    constructor(rootId, isReadonly, callbacks) {
+        this.#rootElement = document.getElementById(rootId);
         this.#isReadOnly = isReadonly;
         this.#callbacks = callbacks;
+        this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.#rootElement.treeRows);
     }
     setFileMap(fileMap) {
         this.#fileToRowMap.clear();
@@ -41,14 +37,8 @@ export class FileSystemController {
         }
     }
     #addFileKey(key, directoriesSet) {
-        const [parent, leaf] = _a.#getParentAndLeaf(key);
-        if (parent && directoriesSet.has(parent) === false) {
-            this.#addDirectoryKey(parent, directoriesSet);
-        }
-        const parentRowData = this.#fileToRowMap.get(parent);
-        const view = new FileRowView(parentRowData.view.depth + 1, leaf, key);
-        const rowData = new RowMetadata(view);
-        this.#fileToRowMap.set(key, rowData);
+        const view = this.#fileSystemView.addFileKey(key, directoriesSet);
+        this.#fileToRowMap.set(key, view);
         view.checkboxElement.onclick = (ev) => {
             this.#callbacks.fileCheckToggled(key, view.checkboxElement.checked);
         };
@@ -58,32 +48,5 @@ export class FileSystemController {
         view.rowElement.onclick = (ev) => {
             ev.stopPropagation();
         };
-        this.#fileToRowMap.get(parent).view.addRow(view);
-    }
-    #addDirectoryKey(key, directoriesSet) {
-        let [parent, leaf] = _a.#getParentAndLeaf(key);
-        if (parent && directoriesSet.has(parent) === false) {
-            this.#addDirectoryKey(parent, directoriesSet);
-        }
-        let depth;
-        if (parent === "") {
-            depth = 0;
-            leaf = "virtual://";
-        }
-        else {
-            depth = this.#fileToRowMap.get(parent).view.depth + 1;
-        }
-        const view = new DirectoryRowView(depth, leaf);
-        const rowData = new RowMetadata(view);
-        this.#fileToRowMap.set(key, rowData);
-        if (depth > 0) {
-            view.registerCollapseClick();
-            this.#fileToRowMap.get(parent).view.addRow(view);
-        }
-        else {
-            this.#rootElement.treeRows.append(view.rowElement);
-        }
-        directoriesSet.add(key);
     }
 }
-_a = FileSystemController;

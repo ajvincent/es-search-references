@@ -2,14 +2,16 @@ import { FileSystemController, } from "./file-system/controller.js";
 import { TabPanelsView, } from "./tab-panels/tab-panels-view.js";
 import { ReferenceSpecFileMap } from "./reference-spec/FileMap.js";
 import { SearchDriver } from "./search/Driver.js";
-import { OutputController } from "./tab-panels/outputController.js";
+import { OutputController } from "./reports/outputController.js";
+import { ReportSelectController } from "./reports/selectController.js";
 class Workbench_Base {
     /*
     readonly #fsSelector: HTMLSelectElement;
     */
     #fileMap;
     #refSpecFS;
-    #outputController = new OutputController;
+    #outputController;
+    #reportSelectorController;
     #codeMirrorView;
     #filesCheckedMap = new WeakMap;
     constructor() {
@@ -34,6 +36,8 @@ class Workbench_Base {
         this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
         this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
         this.#codeMirrorView = new TabPanelsView("codemirror-panels");
+        this.#outputController = new OutputController;
+        this.#reportSelectorController = new ReportSelectController("report-selector", this.#outputController);
         this.#attachEvents();
         document.getElementById("testButton").onclick = () => this.#doTestAction();
     }
@@ -48,6 +52,7 @@ class Workbench_Base {
         const fileSet = this.#filesCheckedMap.get(this.#fileMap);
         const resultsMap = await driver.run(Array.from(fileSet));
         this.#outputController.addResults(resultsMap);
+        this.#reportSelectorController.refreshTree();
     }
     #doTestAction() {
         /*

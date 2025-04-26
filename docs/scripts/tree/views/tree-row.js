@@ -1,18 +1,17 @@
 import { TreeRowElement } from "../elements/tree-row.js";
 export class TreeRowView {
     rowElement;
-    RowConstructor = TreeRowElement;
     depth;
     isCollapsible;
     primaryLabel;
     childRowViews = [];
-    constructor(depth, isCollapisble, primaryLabel) {
+    constructor(depth, isCollapsible, primaryLabel) {
         this.depth = depth;
-        this.isCollapsible = isCollapisble;
+        this.isCollapsible = isCollapsible;
         this.primaryLabel = primaryLabel;
     }
     initialize() {
-        this.rowElement = new this.RowConstructor(this.depth, this.isCollapsible, this.getCellElements());
+        this.rowElement = new TreeRowElement(this.depth, this.isCollapsible, this.getCellElements());
     }
     removeAndDispose() {
         this.rowElement?.remove();

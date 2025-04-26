@@ -2,21 +2,20 @@ import { TreeRowElement } from "../elements/tree-row.js";
 
 export abstract class TreeRowView {
   public rowElement?: TreeRowElement;
-  protected readonly RowConstructor = TreeRowElement;
 
   public readonly depth: number;
   public readonly isCollapsible: boolean;
   public readonly primaryLabel: string;
   public readonly childRowViews: TreeRowView[] = [];
 
-  constructor(depth: number, isCollapisble: boolean, primaryLabel: string) {
+  constructor(depth: number, isCollapsible: boolean, primaryLabel: string) {
     this.depth = depth;
-    this.isCollapsible = isCollapisble;
+    this.isCollapsible = isCollapsible;
     this.primaryLabel = primaryLabel;
   }
 
   public initialize() {
-    this.rowElement = new this.RowConstructor(this.depth, this.isCollapsible, this.getCellElements());
+    this.rowElement = new TreeRowElement(this.depth, this.isCollapsible, this.getCellElements());
   }
 
   public removeAndDispose(): TreeRowView[] {

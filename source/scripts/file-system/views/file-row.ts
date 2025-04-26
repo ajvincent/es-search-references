@@ -1,17 +1,11 @@
 import {
-  TreeRowView
-} from "../../tree/views/tree-row.js";
+  BaseFileRowView
+} from "./base-file-row.js";
 
-export class FileRowView extends TreeRowView {
-  private readonly fullPath: string;
+export class FileRowView extends BaseFileRowView {
 
-  public checkboxElement: HTMLInputElement | null = null;
-  public radioElement: HTMLInputElement | null = null;
-
-  constructor(depth: number, label: string, fullPath: string) {
-    super(depth, false, label);
-    this.fullPath = fullPath;
-    this.initialize();
+  constructor(depth: number, isCollapsible: boolean, label: string, fullPath: string) {
+    super(depth, isCollapsible, label, fullPath);
   }
 
   protected getCellElements(): HTMLElement[] {
@@ -22,12 +16,18 @@ export class FileRowView extends TreeRowView {
     ];
   }
 
+  public get checkboxElement(): HTMLInputElement | null {
+    return this.rowElement!.querySelector(`:scope > input[type="checkbox"]`);
+  }
+  public get radioElement(): HTMLInputElement | null {
+    return this.rowElement!.querySelector(`:scope > input[type="radio"]`);
+  }
+
   private buildCheckbox(): HTMLInputElement {
     const checkbox: HTMLInputElement = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.name = "filesSelected";
     checkbox.value = this.fullPath!;
-    this.checkboxElement = checkbox;
     return checkbox;
   }
 
@@ -35,7 +35,6 @@ export class FileRowView extends TreeRowView {
     const radio: HTMLInputElement = document.createElement("input");
     radio.type = "radio";
     radio.name = "currentRow";
-    this.radioElement = radio;
     return radio;
   }
 }
