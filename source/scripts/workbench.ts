@@ -1,15 +1,11 @@
 import {
-  graphlib
-} from "./dagre-imports.js";
-
-import {
   FileSystemCallbacks,
   FileSystemController,
 } from "./file-system/controller.js";
 
 import {
   TabPanelsView,
-} from "./other/tab-panels-view.js";
+} from "./tab-panels/tab-panels-view.js";
 
 import {
   ReferenceSpecFileMap
@@ -23,6 +19,10 @@ import type {
   SearchResults
 } from "./search/Results.js";
 
+import {
+  OutputController
+} from "./tab-panels/outputController.js";
+
 class Workbench_Base implements FileSystemCallbacks {
   /*
   readonly #fsSelector: HTMLSelectElement;
@@ -30,7 +30,7 @@ class Workbench_Base implements FileSystemCallbacks {
 
   #fileMap: ReadonlyMap<string, string>;
   #refSpecFS?: FileSystemController;
-  #outputLogsView?: TabPanelsView;
+  readonly #outputController = new OutputController;
   #codeMirrorView?: TabPanelsView;
   #filesCheckedMap = new WeakMap<ReadonlyMap<string, string>, Set<string>>;
 
@@ -59,7 +59,6 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
     this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
 
-    this.#outputLogsView = new TabPanelsView("output-logs");
     this.#codeMirrorView = new TabPanelsView("codemirror-panels");
 
     this.#attachEvents();
@@ -74,42 +73,13 @@ class Workbench_Base implements FileSystemCallbacks {
     event.preventDefault();
     event.stopPropagation();
 
-    this.#outputLogsView!.clearPanels();
+    this.#outputController.clearResults();
 
     const driver = new SearchDriver(this.#fileMap);
     const fileSet = this.#filesCheckedMap.get(this.#fileMap)!;
     const resultsMap: ReadonlyMap<string, ReadonlyMap<string, SearchResults>> = await driver.run(Array.from(fileSet));
 
-    resultsMap.forEach((innerResults, pathToFile) => {
-      innerResults.forEach((result, searchKey) => {
-        this.#addLogPanel(pathToFile, searchKey, result);
-        this.#addRawGraphPanel(pathToFile, searchKey, result);
-      });
-    });
-  }
-
-  #addLogPanel(pathToFile: string, searchKey: string, result: SearchResults): string {
-    const serializedLog = result.logs.join("\n");
-    const pre = document.createElement("pre");
-    pre.append(serializedLog);
-
-    const hash = JSON.stringify({pathToFile, searchKey, tabKey: "searchLog"});
-    const view = { displayElement: pre };
-    this.#outputLogsView!.addPanel(hash, view);
-    this.#outputLogsView!.activeViewKey = hash;
-    return hash;
-  }
-
-  #addRawGraphPanel(pathToFile: string, searchKey: string, result: SearchResults): string {
-    const serializedGraph = result.graph ? JSON.stringify(graphlib.json.write(result.graph), null, 2) : "(null)";
-    const pre = document.createElement("pre");
-    pre.append(serializedGraph);
-
-    const hash = JSON.stringify({pathToFile, searchKey, tabKey: "searchResults"});
-    const view = { displayElement: pre };
-    this.#outputLogsView!.addPanel(hash, view);
-    this.#outputLogsView!.activeViewKey = hash;
-    return hash;
+    this.#outputController.addResults(resultsMap);
   }
 
   #doTestAction(): void {
