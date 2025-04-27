@@ -69,16 +69,6 @@ class Workbench_Base {
         this.#outputController?.selectTabKey(tabKey);
     }
     #doTestAction() {
-        /*
-        const panel = document.createElement("output-panel");
-        const date = new Date();
-        panel.append(`This is child number ${
-          document.getElementById("output-logs")!.children.length
-        }, created at ${date.toISOString()}.`);
-        const key = "foo-" + date.toISOString();
-        this.#outputLogsView!.addPanel(key, {displayElement: panel});
-        this.#outputLogsView!.activeViewKey = key;
-        */
     }
 }
 const Workbench = new Workbench_Base();

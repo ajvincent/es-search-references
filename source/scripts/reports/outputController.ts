@@ -15,6 +15,10 @@ import {
   TabPanelsView
 } from "../tab-panels/tab-panels-view.js";
 
+import {
+  createLayoutGraph
+} from "./dagreLayout.js";
+
 export class OutputController {
   public static readonly tabsSelector = "#output-tabbar > label";
 
@@ -92,6 +96,7 @@ export class OutputController {
 
         this.#addRawGraphPanel(pathToFile, searchKey, results);
         this.#addLogPanel(pathToFile, searchKey, results);
+        this.#addLayoutPanel(pathToFile, searchKey, results);
       }
     }
   }
@@ -103,7 +108,7 @@ export class OutputController {
   ): void
   {
     const serializedGraph = result.graph ? JSON.stringify(graphlib.json.write(result.graph), null, 2) : "(null)";
-    const view = OutputController.#createPreformattedView(serializedGraph);
+    const view: BaseView = OutputController.#createPreformattedView(serializedGraph);
     this.#addPanel(pathToFile, searchKey, "searchResults", view);
   }
 
@@ -113,11 +118,30 @@ export class OutputController {
     result: SearchResults
   ): void
   {
-    const view = OutputController.#createPreformattedView(
+    const view: BaseView = OutputController.#createPreformattedView(
       result.logs.join("\n")
     );
 
     this.#addPanel(pathToFile, searchKey, "searchLog", view);
+  }
+
+  #addLayoutPanel(
+    pathToFile: string,
+    searchKey: string,
+    result: SearchResults
+  ): void
+  {
+    let view: BaseView;
+    if (result.graph) {
+      const graph: graphlib.Graph = createLayoutGraph(result.graph);
+
+      const serializedGraph = JSON.stringify(graph, null, 2);
+      view = OutputController.#createPreformattedView(serializedGraph);
+    } else {
+      view = OutputController.#createPreformattedView("(null)");
+    }
+
+    this.#addPanel(pathToFile, searchKey, "dagre-layout", view);
   }
 
   #addPanel(

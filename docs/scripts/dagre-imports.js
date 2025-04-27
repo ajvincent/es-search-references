@@ -1,3 +1,3 @@
 await import("../../lib/packages/dagre.js");
-const { graphlib } = dagre;
-export { graphlib };
+const { graphlib, layout } = dagre;
+export { graphlib, layout };

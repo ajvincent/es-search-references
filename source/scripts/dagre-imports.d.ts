@@ -1,1 +1,1 @@
-export { graphlib } from "@dagrejs/dagre";
+export { graphlib, layout } from "@dagrejs/dagre";
