@@ -36,7 +36,7 @@ class Workbench_Base implements FileSystemCallbacks {
   #refSpecFS?: FileSystemController;
   #outputController?: OutputController;
   #reportSelectorController?: ReportSelectController;
-  #codeMirrorView?: TabPanelsView;
+  #codeMirrorPanels?: TabPanelsView;
   #filesCheckedMap = new WeakMap<ReadonlyMap<string, string>, Set<string>>;
   #lastRunSpan?: HTMLElement;
 
@@ -66,7 +66,7 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
     this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
 
-    this.#codeMirrorView = new TabPanelsView("codemirror-panels");
+    this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
     this.#outputController = new OutputController;
     this.#reportSelectorController = new ReportSelectController(
       "report-selector", this.#outputController

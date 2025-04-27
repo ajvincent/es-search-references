@@ -4,8 +4,9 @@ const { ModuleKind, ModuleResolutionKind, ScriptTarget } = pkg;
 import {
   nodeResolve
 } from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import dts from "rollup-plugin-dts";
+
+import typescript_plugin from '@rollup/plugin-typescript';
+import dts_plugin from "rollup-plugin-dts";
 
 const compilerOptions = {
   "lib": ["lib.es2024.d.ts"],
@@ -23,31 +24,30 @@ const compilerOptions = {
 
 const RollupOptions = [
   {
-    input: "./node_modules/@dagrejs/graphlib/index.js",
+    input: "./exports.mts",
     output: {
-      file: "./docs/lib/packages/graphlib.mjs",
+      file: "../docs/lib/packages/CodeMirror.mjs",
       format: "es",
     },
     plugins: [
+      typescript_plugin(),
       nodeResolve(),
-      commonjs(),
     ],
   },
 
   {
-    input: "./node_modules/@dagrejs/graphlib/index.d.ts",
+    input: "./exports.mts",
     output: {
-      file: "./source/lib/packages/graphlib.d.mts",
+      file: "../source/lib/packages/CodeMirror.d.mts",
       format: "es",
     },
     plugins: [
-      dts(
+      dts_plugin(
         {
           "compilerOptions": {...compilerOptions},
         }
       ),
       nodeResolve(),
-      commonjs(),
     ],
   },
 ];

@@ -12,7 +12,7 @@ class Workbench_Base {
     #refSpecFS;
     #outputController;
     #reportSelectorController;
-    #codeMirrorView;
+    #codeMirrorPanels;
     #filesCheckedMap = new WeakMap;
     #lastRunSpan;
     constructor() {
@@ -36,7 +36,7 @@ class Workbench_Base {
     #initialize() {
         this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
         this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
-        this.#codeMirrorView = new TabPanelsView("codemirror-panels");
+        this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
         this.#outputController = new OutputController;
         this.#reportSelectorController = new ReportSelectController("report-selector", this.#outputController);
         this.#lastRunSpan = document.getElementById("lastRun");

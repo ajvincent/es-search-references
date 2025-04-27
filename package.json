@@ -31,13 +31,17 @@
   "homepage": "https://github.com/ajvincent/es-search-references#readme",
   "description": "",
   "dependencies": {
+    "@codemirror/lang-javascript": "^6.2.3",
+    "@codemirror/lang-json": "^6.0.1",
     "@dagrejs/graphlib": "^2.2.4",
-    "@engine262/engine262": "^0.0.1-0bd9a5fb33988b1e4a3a7bc9560c242fa8fe7393"
+    "@engine262/engine262": "^0.0.1-0bd9a5fb33988b1e4a3a7bc9560c242fa8fe7393",
+    "codemirror": "^6.0.1"
   },
   "devDependencies": {
     "@dagrejs/dagre": "^1.1.4",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.2",
     "@tsconfig/node22": "^22.0.1",
     "@types/express": "^5.0.1",
     "@types/gulp": "^4.0.17",
@@ -47,6 +51,7 @@
     "gulp-replace": "^1.1.4",
     "rollup": "^4.40.0",
     "rollup-plugin-dts": "^6.2.1",
+    "tslib": "^2.8.1",
     "type-fest": "^4.40.0",
     "typescript": "^5.8.3"
   }

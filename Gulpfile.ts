@@ -76,6 +76,17 @@ async function installReferenceSpecs(): Promise<void> {
   );
 }
 
+async function installCodeMirror(): Promise<void> {
+  const rollupLocation = path.join(projectRoot, "node_modules/rollup/dist/bin/rollup");
+  const pathToConfig = path.join(projectRoot, "codemirror/rollup.config.js");
+  await asyncFork(rollupLocation, [
+      "--config",
+      pathToConfig,
+    ],
+    path.join(projectRoot, "codemirror")
+  );
+}
+
 async function buildScripts(): Promise<void> {
   await InvokeTSC(path.join(projectRoot, "source/tsconfig.json"), []);
 }
@@ -87,6 +98,7 @@ export default series([
     installSearchReferencesJs,
     installSearchReferences_d_ts,
     installReferenceSpecs,
+    installCodeMirror,
     buildScripts,
   ]),
 ]);
