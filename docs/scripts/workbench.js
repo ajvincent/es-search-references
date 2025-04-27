@@ -14,6 +14,7 @@ class Workbench_Base {
     #reportSelectorController;
     #codeMirrorView;
     #filesCheckedMap = new WeakMap;
+    #lastRunSpan;
     constructor() {
         /*
         this.#fsSelector = document.getElementById("workspace-selector") as HTMLSelectElement;
@@ -38,6 +39,7 @@ class Workbench_Base {
         this.#codeMirrorView = new TabPanelsView("codemirror-panels");
         this.#outputController = new OutputController;
         this.#reportSelectorController = new ReportSelectController("report-selector", this.#outputController);
+        this.#lastRunSpan = document.getElementById("lastRun");
         this.#attachEvents();
     }
     #attachEvents() {
@@ -47,7 +49,7 @@ class Workbench_Base {
             tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey);
         }
         /*
-        document.getElementById("testButton")!.onclick = () => this.#doTestAction();
+        document.getElementById("testButton")?.onclick = () => this.#doTestAction();
         */
     }
     async #runSearches(event) {
@@ -59,6 +61,7 @@ class Workbench_Base {
         const resultsMap = await driver.run(Array.from(fileSet));
         this.#outputController.addResults(resultsMap);
         this.#reportSelectorController.refreshTree();
+        this.#lastRunSpan.replaceChildren((new Date()).toLocaleString());
     }
     #selectOutputReportTab(tabKey, event) {
         event.preventDefault();

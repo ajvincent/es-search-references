@@ -38,6 +38,7 @@ class Workbench_Base implements FileSystemCallbacks {
   #reportSelectorController?: ReportSelectController;
   #codeMirrorView?: TabPanelsView;
   #filesCheckedMap = new WeakMap<ReadonlyMap<string, string>, Set<string>>;
+  #lastRunSpan?: HTMLElement;
 
   constructor() {
     /*
@@ -52,6 +53,7 @@ class Workbench_Base implements FileSystemCallbacks {
   fileSelected(pathToFile: string): void {
     console.log("fileSelected: pathToFile = " + pathToFile);
   }
+
   fileCheckToggled(pathToFile: string, isChecked: boolean): void {
     const fileSet = this.#filesCheckedMap.get(this.#fileMap)!;
     if (isChecked)
@@ -69,6 +71,8 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#reportSelectorController = new ReportSelectController(
       "report-selector", this.#outputController
     );
+
+    this.#lastRunSpan = document.getElementById("lastRun")!;
 
     this.#attachEvents();
   }
@@ -97,6 +101,8 @@ class Workbench_Base implements FileSystemCallbacks {
 
     this.#outputController!.addResults(resultsMap);
     this.#reportSelectorController!.refreshTree();
+
+    this.#lastRunSpan!.replaceChildren((new Date()).toLocaleString());
   }
 
   #selectOutputReportTab(tabKey: string, event: MouseEvent): void {
@@ -106,16 +112,6 @@ class Workbench_Base implements FileSystemCallbacks {
   }
 
   #doTestAction(): void {
-    /*
-    const panel = document.createElement("output-panel");
-    const date = new Date();
-    panel.append(`This is child number ${
-      document.getElementById("output-logs")!.children.length
-    }, created at ${date.toISOString()}.`);
-    const key = "foo-" + date.toISOString();
-    this.#outputLogsView!.addPanel(key, {displayElement: panel});
-    this.#outputLogsView!.activeViewKey = key;
-    */
   }
 
   /*
