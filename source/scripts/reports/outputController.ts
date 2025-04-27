@@ -16,6 +16,8 @@ import {
 } from "../tab-panels/tab-panels-view.js";
 
 export class OutputController {
+  public static readonly tabsSelector = "#output-tabbar > label";
+
   static #createPreformattedView(contents: string): BaseView {
     const pre = document.createElement("pre");
     pre.append(contents);
@@ -36,6 +38,7 @@ export class OutputController {
   readonly tabKeys: ReadonlySet<string> = this.#tabKeys;
 
   clearResults(): void {
+    this.selectTabKey("");
     this.#outputLogsView.clearPanels();
     this.#selected.pathToFile = "";
     this.#selected.searchKey = "";
@@ -55,13 +58,28 @@ export class OutputController {
   }
 
   selectTabKey(tabKey: string): void {
+    if (this.#selected.tabKey) {
+      this.#setTabSelected(this.#selected.tabKey, false);
+    }
     this.#selected.tabKey = tabKey;
+    this.#setTabSelected(this.#selected.tabKey, true);
     this.#updateSelectedPanel();
   }
 
   #updateSelectedPanel() {
     const hash = JSON.stringify(this.#selected);
     this.#outputLogsView.activeViewKey = hash;
+  }
+
+  #setTabSelected(tabKey: string, isSelected: boolean): void {
+    const tab = document.querySelector(`${OutputController.tabsSelector}[data-tabkey="${tabKey}"]`);
+    if (!tab)
+      return;
+    if (isSelected) {
+      tab.classList.add("selected");
+    } else {
+      tab.classList.remove("selected");
+    }
   }
 
   addResults(

@@ -71,11 +71,18 @@ class Workbench_Base implements FileSystemCallbacks {
     );
 
     this.#attachEvents();
-    document.getElementById("testButton")!.onclick = () => this.#doTestAction();
   }
 
   #attachEvents(): void {
     document.getElementById("runSearchesButton")!.onclick = this.#runSearches.bind(this);
+    const tabs = Array.from(document.querySelectorAll(OutputController.tabsSelector)) as HTMLElement[];
+    for (const tab of tabs) {
+      tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey!);
+    }
+
+    /*
+    document.getElementById("testButton")?.onclick = () => this.#doTestAction();
+    */
   }
 
   async #runSearches(event: MouseEvent): Promise<void> {
@@ -92,6 +99,12 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#reportSelectorController!.refreshTree();
   }
 
+  #selectOutputReportTab(tabKey: string, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.#outputController?.selectTabKey(tabKey);
+  }
+
   #doTestAction(): void {
     /*
     const panel = document.createElement("output-panel");
@@ -106,10 +119,6 @@ class Workbench_Base implements FileSystemCallbacks {
   }
 
   /*
-  #attachEvents() {
-    this.#fsSelector.onchange = () => this.#onWorkspaceSelect();
-  }
-
   #onWorkspaceSelect(): void {
     const { value } = this.#fsSelector;
     if (value === "reference-spec") {

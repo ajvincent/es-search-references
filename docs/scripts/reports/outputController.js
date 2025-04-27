@@ -3,6 +3,7 @@ import { graphlib } from "../dagre-imports.js";
 import { DefaultMap } from "../search/DefaultMap.js";
 import { TabPanelsView } from "../tab-panels/tab-panels-view.js";
 export class OutputController {
+    static tabsSelector = "#output-tabbar > label";
     static #createPreformattedView(contents) {
         const pre = document.createElement("pre");
         pre.append(contents);
@@ -19,6 +20,7 @@ export class OutputController {
     #tabKeys = new Set;
     tabKeys = this.#tabKeys;
     clearResults() {
+        this.selectTabKey("");
         this.#outputLogsView.clearPanels();
         this.#selected.pathToFile = "";
         this.#selected.searchKey = "";
@@ -32,12 +34,27 @@ export class OutputController {
         this.#updateSelectedPanel();
     }
     selectTabKey(tabKey) {
+        if (this.#selected.tabKey) {
+            this.#setTabSelected(this.#selected.tabKey, false);
+        }
         this.#selected.tabKey = tabKey;
+        this.#setTabSelected(this.#selected.tabKey, true);
         this.#updateSelectedPanel();
     }
     #updateSelectedPanel() {
         const hash = JSON.stringify(this.#selected);
         this.#outputLogsView.activeViewKey = hash;
+    }
+    #setTabSelected(tabKey, isSelected) {
+        const tab = document.querySelector(`${_a.tabsSelector}[data-tabkey="${tabKey}"]`);
+        if (!tab)
+            return;
+        if (isSelected) {
+            tab.classList.add("selected");
+        }
+        else {
+            tab.classList.remove("selected");
+        }
     }
     addResults(resultsMap) {
         for (const [pathToFile, innerMap] of resultsMap) {

@@ -39,10 +39,16 @@ class Workbench_Base {
         this.#outputController = new OutputController;
         this.#reportSelectorController = new ReportSelectController("report-selector", this.#outputController);
         this.#attachEvents();
-        document.getElementById("testButton").onclick = () => this.#doTestAction();
     }
     #attachEvents() {
         document.getElementById("runSearchesButton").onclick = this.#runSearches.bind(this);
+        const tabs = Array.from(document.querySelectorAll(OutputController.tabsSelector));
+        for (const tab of tabs) {
+            tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey);
+        }
+        /*
+        document.getElementById("testButton")!.onclick = () => this.#doTestAction();
+        */
     }
     async #runSearches(event) {
         event.preventDefault();
@@ -53,6 +59,11 @@ class Workbench_Base {
         const resultsMap = await driver.run(Array.from(fileSet));
         this.#outputController.addResults(resultsMap);
         this.#reportSelectorController.refreshTree();
+    }
+    #selectOutputReportTab(tabKey, event) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.#outputController?.selectTabKey(tabKey);
     }
     #doTestAction() {
         /*

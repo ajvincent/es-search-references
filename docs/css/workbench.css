@@ -34,6 +34,15 @@ tab-bar {
   width: 100%;
 }
 
+tab-bar > label {
+  outline: 2px solid black;
+  background-color: #cccccc;
+}
+
+tab-bar > label.selected {
+  background-color: #ffffff;
+}
+
 report-selector {
   grid-column: file-names;
   grid-row: 2;
