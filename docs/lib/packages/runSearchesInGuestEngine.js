@@ -1,5 +1,5 @@
 import * as GuestEngine from './engine262.mjs';
-await import("../../lib/packages/dagre.js");
+await import("./dagre.js");
 const { graphlib } = dagre;
 
 function* EnsureTypeOrThrow(guestEvaluator) {

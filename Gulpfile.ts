@@ -43,7 +43,7 @@ function installSearchReferencesJs() {
     .pipe(replace(
       `import graphlib from '@dagrejs/graphlib';\n`,
       `
-await import("../../lib/packages/dagre.js");
+await import("./dagre.js");
 const { graphlib } = dagre;
       `.trim() + "\n"
     ))
