@@ -1,3 +1,4 @@
+import { FileMapView } from "./codemirror/views/FileMapView.js";
 import { FileSystemController, } from "./file-system/controller.js";
 import { TabPanelsView, } from "./tab-panels/tab-panels-view.js";
 import { ReferenceSpecFileMap } from "./reference-spec/FileMap.js";
@@ -13,6 +14,7 @@ class Workbench_Base {
     #outputController;
     #reportSelectorController;
     #codeMirrorPanels;
+    #fileMapView;
     #filesCheckedMap = new WeakMap;
     #lastRunSpan;
     constructor() {
@@ -24,7 +26,7 @@ class Workbench_Base {
         window.onload = () => this.#initialize();
     }
     fileSelected(pathToFile) {
-        console.log("fileSelected: pathToFile = " + pathToFile);
+        this.#fileMapView.selectFile(pathToFile);
     }
     fileCheckToggled(pathToFile, isChecked) {
         const fileSet = this.#filesCheckedMap.get(this.#fileMap);
@@ -37,6 +39,9 @@ class Workbench_Base {
         this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
         this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
         this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
+        this.#fileMapView = new FileMapView(this.#fileMap, "reference-spec-editors");
+        this.#codeMirrorPanels.addPanel("reference-spec", this.#fileMapView);
+        this.#codeMirrorPanels.activeViewKey = "reference-spec";
         this.#outputController = new OutputController;
         this.#reportSelectorController = new ReportSelectController("report-selector", this.#outputController);
         this.#lastRunSpan = document.getElementById("lastRun");
@@ -56,12 +61,16 @@ class Workbench_Base {
         event.preventDefault();
         event.stopPropagation();
         this.#outputController.clearResults();
+        this.#updateFileMap();
         const driver = new SearchDriver(this.#fileMap);
         const fileSet = this.#filesCheckedMap.get(this.#fileMap);
         const resultsMap = await driver.run(Array.from(fileSet));
         this.#outputController.addResults(resultsMap);
         this.#reportSelectorController.refreshTree();
         this.#lastRunSpan.replaceChildren((new Date()).toLocaleString());
+    }
+    #updateFileMap() {
+        this.#fileMapView.updateFileMap();
     }
     #selectOutputReportTab(tabKey, event) {
         event.preventDefault();

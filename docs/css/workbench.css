@@ -1,5 +1,5 @@
 body {
-  background-color: yellow;
+  background-color: #ffff00;
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
@@ -72,6 +72,8 @@ tab-panels > :not(.active) {
 
 #output-logs {
   grid-row: 2;
+
+  background-color: #ffffff;
 }
 
 #workspace-selector {
@@ -91,6 +93,8 @@ file-system {
 #codemirror-panels {
   grid-column: main-display;
   grid-row: 4;
+
+  background-color: #ffffff;
 }
 
 workbench-footer {

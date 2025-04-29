@@ -26,16 +26,6 @@ export interface FileSystemCallbacks {
 void(FileSystemElement); // force the custom element upgrade
 
 export class FileSystemController {
-  static #getParentAndLeaf(key: string): [string, string] {
-    let lastSlash = key.lastIndexOf("/");
-    if (lastSlash === -1) {
-      return ["", key];
-    }
-    const parent = key.substring(0, lastSlash);
-    const leaf = key.substring(lastSlash + 1);
-    return [parent, leaf];
-  }
-
   #isReadOnly: boolean;
   #rootElement: FileSystemElement;
 

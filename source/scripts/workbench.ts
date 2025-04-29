@@ -1,4 +1,8 @@
 import {
+  FileMapView
+} from "./codemirror/views/FileMapView.js";
+
+import {
   FileSystemCallbacks,
   FileSystemController,
 } from "./file-system/controller.js";
@@ -32,11 +36,14 @@ class Workbench_Base implements FileSystemCallbacks {
   readonly #fsSelector: HTMLSelectElement;
   */
 
-  #fileMap: ReadonlyMap<string, string>;
+  #fileMap: Map<string, string>;
   #refSpecFS?: FileSystemController;
   #outputController?: OutputController;
   #reportSelectorController?: ReportSelectController;
+
   #codeMirrorPanels?: TabPanelsView;
+  #fileMapView?: FileMapView;
+
   #filesCheckedMap = new WeakMap<ReadonlyMap<string, string>, Set<string>>;
   #lastRunSpan?: HTMLElement;
 
@@ -51,7 +58,7 @@ class Workbench_Base implements FileSystemCallbacks {
   }
 
   fileSelected(pathToFile: string): void {
-    console.log("fileSelected: pathToFile = " + pathToFile);
+    this.#fileMapView!.selectFile(pathToFile);
   }
 
   fileCheckToggled(pathToFile: string, isChecked: boolean): void {
@@ -67,6 +74,10 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
 
     this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
+    this.#fileMapView = new FileMapView(this.#fileMap, "reference-spec-editors");
+    this.#codeMirrorPanels.addPanel("reference-spec", this.#fileMapView);
+    this.#codeMirrorPanels.activeViewKey = "reference-spec";
+
     this.#outputController = new OutputController;
     this.#reportSelectorController = new ReportSelectController(
       "report-selector", this.#outputController
@@ -94,6 +105,7 @@ class Workbench_Base implements FileSystemCallbacks {
     event.stopPropagation();
 
     this.#outputController!.clearResults();
+    this.#updateFileMap();
 
     const driver = new SearchDriver(this.#fileMap);
     const fileSet = this.#filesCheckedMap.get(this.#fileMap)!;
@@ -103,6 +115,10 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#reportSelectorController!.refreshTree();
 
     this.#lastRunSpan!.replaceChildren((new Date()).toLocaleString());
+  }
+
+  #updateFileMap(): void {
+    this.#fileMapView!.updateFileMap();
   }
 
   #selectOutputReportTab(tabKey: string, event: MouseEvent): void {

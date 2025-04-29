@@ -4,15 +4,6 @@ import { FileSystemView } from "./views/file-system.js";
 import { FileSystemElement } from "./elements/file-system.js";
 void (FileSystemElement); // force the custom element upgrade
 export class FileSystemController {
-    static #getParentAndLeaf(key) {
-        let lastSlash = key.lastIndexOf("/");
-        if (lastSlash === -1) {
-            return ["", key];
-        }
-        const parent = key.substring(0, lastSlash);
-        const leaf = key.substring(lastSlash + 1);
-        return [parent, leaf];
-    }
     #isReadOnly;
     #rootElement;
     #fileMap = new Map;
