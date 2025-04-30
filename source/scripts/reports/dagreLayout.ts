@@ -5,5 +5,11 @@ import {
 
 export function createLayoutGraph(graph: graphlib.Graph): graphlib.Graph {
   graph = graphlib.json.read(graphlib.json.write(graph));
+  graph.setGraph({"rankdir": "LR"});
+  graph.nodes().forEach(v => {
+    graph.node(v).width = 200;
+    graph.node(v).height = 200;
+  })
+  layout(graph);
   return graph;
 }
