@@ -1,6 +1,6 @@
 import {
-  graphlib
-} from "../dagre-imports.js";
+  dagre
+} from "../../lib/packages/dagre-imports.js";
 
 import {
   DefaultMap
@@ -107,7 +107,7 @@ export class OutputController {
     result: SearchResults
   ): void
   {
-    const serializedGraph = result.graph ? JSON.stringify(graphlib.json.write(result.graph), null, 2) : "(null)";
+    const serializedGraph = result.graph ? JSON.stringify(dagre.graphlib.json.write(result.graph), null, 2) : "(null)";
     const view: BaseView = OutputController.#createPreformattedView(serializedGraph);
     this.#addPanel(pathToFile, searchKey, "searchResults", view);
   }
@@ -133,7 +133,7 @@ export class OutputController {
   {
     let view: BaseView;
     if (result.graph) {
-      const graph: graphlib.Graph = createLayoutGraph(result.graph);
+      const graph: dagre.graphlib.Graph = createLayoutGraph(result.graph);
 
       const serializedGraph = JSON.stringify(graph, null, 2);
       view = OutputController.#createPreformattedView(serializedGraph);

@@ -1,5 +1,5 @@
 var _a;
-import { graphlib } from "../dagre-imports.js";
+import { dagre } from "../../lib/packages/dagre-imports.js";
 import { DefaultMap } from "../search/DefaultMap.js";
 import { TabPanelsView } from "../tab-panels/tab-panels-view.js";
 import { createLayoutGraph } from "./dagreLayout.js";
@@ -68,7 +68,7 @@ export class OutputController {
         }
     }
     #addRawGraphPanel(pathToFile, searchKey, result) {
-        const serializedGraph = result.graph ? JSON.stringify(graphlib.json.write(result.graph), null, 2) : "(null)";
+        const serializedGraph = result.graph ? JSON.stringify(dagre.graphlib.json.write(result.graph), null, 2) : "(null)";
         const view = _a.#createPreformattedView(serializedGraph);
         this.#addPanel(pathToFile, searchKey, "searchResults", view);
     }

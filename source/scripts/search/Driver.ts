@@ -1,4 +1,6 @@
-import type { graphlib } from "@dagrejs/dagre";
+import type {
+  dagre
+} from "../../lib/packages/dagre-imports.js";
 
 import {
   SearchLogsConfiguration,
@@ -47,7 +49,7 @@ export class SearchDriver {
   {
     const config = new SearchLogsConfiguration;
     const inputs = new WebGuestRealmInputs("virtual://" + pathToFile, this.#fileMap);
-    const allSearches: ReadonlyMap<string, graphlib.Graph | null> = await runSearchesInGuestEngine(inputs, config);
+    const allSearches: ReadonlyMap<string, dagre.graphlib.Graph | null> = await runSearchesInGuestEngine(inputs, config);
 
     const resultsMap = new DefaultMap<string, SearchResults>(() => new SearchResults);
     allSearches.forEach((graphOrNull, key) => {

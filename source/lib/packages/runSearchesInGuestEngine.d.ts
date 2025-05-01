@@ -1,4 +1,4 @@
-import { Graph } from './dagre.js';
+import { Graph } from './dagre-d3.js';
 
 interface GuestRealmInputs {
   readonly startingSpecifier: string;

@@ -38,11 +38,11 @@
     "codemirror": "^6.0.1"
   },
   "devDependencies": {
-    "@dagrejs/dagre": "^1.1.4",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.2",
     "@tsconfig/node22": "^22.0.1",
+    "@types/dagre-d3": "^0.6.6",
     "@types/express": "^5.0.1",
     "@types/gulp": "^4.0.17",
     "@types/node": "^22.14.1",

@@ -43,7 +43,7 @@ function installSearchReferencesJs() {
     .pipe(replace(
       `import graphlib from '@dagrejs/graphlib';\n`,
       `
-await import("./dagre.js");
+import { dagre } from "./dagre-imports.js";
 const { graphlib } = dagre;
       `.trim() + "\n"
     ))
@@ -53,7 +53,7 @@ const { graphlib } = dagre;
 function installSearchReferences_d_ts() {
   return src("es-search-references/dist/core-host/runSearchesInGuestEngine.d.ts")
     .pipe(replace("@engine262/engine262", "./engine262.mjs"))
-    .pipe(replace("@dagrejs/graphlib", "./dagre.js"))
+    .pipe(replace("@dagrejs/graphlib", "./dagre-d3.js"))
     .pipe(dest("source/lib/packages"));
 }
 

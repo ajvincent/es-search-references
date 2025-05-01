@@ -1,6 +1,6 @@
-import type { graphlib } from "@dagrejs/dagre";
+import type { dagre } from "../../lib/packages/dagre-imports.js";
 
 export class SearchResults {
   logs: string[] = [];
-  graph: graphlib.Graph | null = null;
+  graph: dagre.graphlib.Graph<{}> | null = null;
 }
