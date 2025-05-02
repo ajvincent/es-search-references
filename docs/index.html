@@ -15,9 +15,7 @@
   <div id="workbench">
     <span>Last run: <span id="lastRun">(no run started)</span></span>
     <tab-bar id="output-tabbar">
-      <!--
       <label data-tabkey="svg-graph">Graph</label>
-      -->
       <label data-tabkey="dagre-layout">Layout</label>
       <label data-tabkey="searchResults">Search results</label>
       <label data-tabkey="searchLog">Search Log</label>
@@ -59,6 +57,16 @@
     <tree-grid id="tree-root" class="reports">
       <tree-rows id="tree-rows"></tree-rows>
     </tree-grid>
+  </template>
+
+  <template id="svg-graph-base">
+    <svg xml:lang="en-US"
+      xmlns="http://www.w3.org/2000/svg"
+      width="720"
+      height="700"
+    >
+      <g class="graph-inner"></g>
+    </svg>
   </template>
 
   <script type="module" src="./scripts/workbench.js"></script>

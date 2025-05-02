@@ -19,6 +19,14 @@ import {
   createLayoutGraph
 } from "./dagreLayout.js";
 
+import {
+  createRenderGraph
+} from "./dagreRender.js";
+
+import {
+  SVGGraphView
+} from "./views/svg-graph.js";
+
 export class OutputController {
   public static readonly tabsSelector = "#output-tabbar > label";
 
@@ -97,6 +105,7 @@ export class OutputController {
         this.#addRawGraphPanel(pathToFile, searchKey, results);
         this.#addLogPanel(pathToFile, searchKey, results);
         this.#addLayoutPanel(pathToFile, searchKey, results);
+        this.#addGraphPanel(pathToFile, searchKey, results);
       }
     }
   }
@@ -104,10 +113,10 @@ export class OutputController {
   #addRawGraphPanel(
     pathToFile: string,
     searchKey: string,
-    result: SearchResults
+    results: SearchResults
   ): void
   {
-    const serializedGraph = result.graph ? JSON.stringify(dagre.graphlib.json.write(result.graph), null, 2) : "(null)";
+    const serializedGraph = results.graph ? JSON.stringify(dagre.graphlib.json.write(results.graph), null, 2) : "(null)";
     const view: BaseView = OutputController.#createPreformattedView(serializedGraph);
     this.#addPanel(pathToFile, searchKey, "searchResults", view);
   }
@@ -115,11 +124,11 @@ export class OutputController {
   #addLogPanel(
     pathToFile: string,
     searchKey: string,
-    result: SearchResults
+    results: SearchResults
   ): void
   {
     const view: BaseView = OutputController.#createPreformattedView(
-      result.logs.join("\n")
+      results.logs.join("\n")
     );
 
     this.#addPanel(pathToFile, searchKey, "searchLog", view);
@@ -128,20 +137,37 @@ export class OutputController {
   #addLayoutPanel(
     pathToFile: string,
     searchKey: string,
-    result: SearchResults
+    results: SearchResults
   ): void
   {
     let view: BaseView;
-    if (result.graph) {
-      const graph: dagre.graphlib.Graph = createLayoutGraph(result.graph);
-
-      const serializedGraph = JSON.stringify(graph, null, 2);
+    if (results.graph) {
+      results.layoutGraph = createLayoutGraph(results.graph);
+      const serializedGraph = JSON.stringify(results.graph, null, 2);
       view = OutputController.#createPreformattedView(serializedGraph);
     } else {
       view = OutputController.#createPreformattedView("(null)");
     }
 
     this.#addPanel(pathToFile, searchKey, "dagre-layout", view);
+  }
+
+  #addGraphPanel(
+    pathToFile: string,
+    searchKey: string,
+    results: SearchResults
+  ): void
+  {
+    let view: BaseView;
+    if (results.layoutGraph) {
+      const svgView = new SVGGraphView();
+      createRenderGraph(results.layoutGraph, svgView);
+      view = svgView;
+    } else {
+      view = OutputController.#createPreformattedView("(null)");
+    }
+
+    this.#addPanel(pathToFile, searchKey, "svg-graph", view);
   }
 
   #addPanel(

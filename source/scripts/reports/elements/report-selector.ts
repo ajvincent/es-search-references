@@ -1,6 +1,6 @@
 export class ReportSelectorElement extends HTMLElement {
   static readonly #template: DocumentFragment = (document.getElementById("shadow-reports-base") as HTMLTemplateElement).content;
-  #shadowRoot?: ShadowRoot;
+  #shadowRoot: ShadowRoot;
 
   public treeRows: HTMLElement | null = null;
 
