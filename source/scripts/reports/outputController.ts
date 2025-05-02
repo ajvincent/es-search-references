@@ -41,7 +41,7 @@ export class OutputController {
     searchKey: "",
     tabKey: ""
   };
-  readonly #outputLogsView = new TabPanelsView("output-logs");
+  readonly #reportPanels = new TabPanelsView("report-panels");
 
   readonly #filePathsAndSearchKeys: DefaultMap<string, Set<string>> = new DefaultMap(() => new Set);
   readonly filePathsAndSearchKeys: ReadonlyMap<string, ReadonlySet<string>> = this.#filePathsAndSearchKeys;
@@ -51,7 +51,7 @@ export class OutputController {
 
   clearResults(): void {
     this.selectTabKey("");
-    this.#outputLogsView.clearPanels();
+    this.#reportPanels.clearPanels();
     this.#selected.pathToFile = "";
     this.#selected.searchKey = "";
     this.#selected.tabKey = "";
@@ -80,7 +80,7 @@ export class OutputController {
 
   #updateSelectedPanel() {
     const hash = JSON.stringify(this.#selected);
-    this.#outputLogsView.activeViewKey = hash;
+    this.#reportPanels.activeViewKey = hash;
   }
 
   #setTabSelected(tabKey: string, isSelected: boolean): void {
@@ -158,16 +158,15 @@ export class OutputController {
     results: SearchResults
   ): void
   {
-    let view: BaseView;
-    if (results.layoutGraph) {
-      const svgView = new SVGGraphView();
-      createRenderGraph(results.layoutGraph, svgView);
-      view = svgView;
-    } else {
-      view = OutputController.#createPreformattedView("(null)");
+    if (!results.layoutGraph) {
+      const view = OutputController.#createPreformattedView("(null)");
+      this.#addPanel(pathToFile, searchKey, "svg-graph", view);
+      return;
     }
 
+    const view = new SVGGraphView();
     this.#addPanel(pathToFile, searchKey, "svg-graph", view);
+    createRenderGraph(results.graph!, view);
   }
 
   #addPanel(
@@ -180,7 +179,7 @@ export class OutputController {
     this.#tabKeys.add(tabKey);
 
     const hash = JSON.stringify({pathToFile, searchKey, tabKey});
-    this.#outputLogsView!.addPanel(hash, view);
+    this.#reportPanels!.addPanel(hash, view);
 
     if (!this.#selected.pathToFile) {
       this.#selected.pathToFile = pathToFile;

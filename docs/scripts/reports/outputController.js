@@ -17,14 +17,14 @@ export class OutputController {
         searchKey: "",
         tabKey: ""
     };
-    #outputLogsView = new TabPanelsView("output-logs");
+    #reportPanels = new TabPanelsView("report-panels");
     #filePathsAndSearchKeys = new DefaultMap(() => new Set);
     filePathsAndSearchKeys = this.#filePathsAndSearchKeys;
     #tabKeys = new Set;
     tabKeys = this.#tabKeys;
     clearResults() {
         this.selectTabKey("");
-        this.#outputLogsView.clearPanels();
+        this.#reportPanels.clearPanels();
         this.#selected.pathToFile = "";
         this.#selected.searchKey = "";
         this.#selected.tabKey = "";
@@ -46,7 +46,7 @@ export class OutputController {
     }
     #updateSelectedPanel() {
         const hash = JSON.stringify(this.#selected);
-        this.#outputLogsView.activeViewKey = hash;
+        this.#reportPanels.activeViewKey = hash;
     }
     #setTabSelected(tabKey, isSelected) {
         const tab = document.querySelector(`${_a.tabsSelector}[data-tabkey="${tabKey}"]`);
@@ -92,21 +92,19 @@ export class OutputController {
         this.#addPanel(pathToFile, searchKey, "dagre-layout", view);
     }
     #addGraphPanel(pathToFile, searchKey, results) {
-        let view;
-        if (results.layoutGraph) {
-            const svgView = new SVGGraphView();
-            createRenderGraph(results.layoutGraph, svgView);
-            view = svgView;
+        if (!results.layoutGraph) {
+            const view = _a.#createPreformattedView("(null)");
+            this.#addPanel(pathToFile, searchKey, "svg-graph", view);
+            return;
         }
-        else {
-            view = _a.#createPreformattedView("(null)");
-        }
+        const view = new SVGGraphView();
         this.#addPanel(pathToFile, searchKey, "svg-graph", view);
+        createRenderGraph(results.graph, view);
     }
     #addPanel(pathToFile, searchKey, tabKey, view) {
         this.#tabKeys.add(tabKey);
         const hash = JSON.stringify({ pathToFile, searchKey, tabKey });
-        this.#outputLogsView.addPanel(hash, view);
+        this.#reportPanels.addPanel(hash, view);
         if (!this.#selected.pathToFile) {
             this.#selected.pathToFile = pathToFile;
             this.#selected.searchKey = searchKey;

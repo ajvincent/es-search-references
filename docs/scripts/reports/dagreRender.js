@@ -4,8 +4,8 @@ export function createRenderGraph(graph, svgView) {
     graph.setGraph({ "rankdir": "LR" });
     graph.nodes().forEach(v => {
         const node = graph.node(v);
-        node.width = 200;
-        node.height = 200;
+        node.width = 20;
+        node.height = 20;
         node.shape = "circle";
     });
     const renderer = new RenderCtor();

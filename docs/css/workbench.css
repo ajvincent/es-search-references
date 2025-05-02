@@ -70,7 +70,7 @@ tab-panels > :not(.active) {
   display: none;
 }
 
-#output-logs {
+#report-panels {
   grid-row: 2;
 
   background-color: #ffffff;

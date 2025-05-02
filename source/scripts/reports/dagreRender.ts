@@ -14,6 +14,13 @@ export function createRenderGraph(
 ): void
 {
   graph = dagre.graphlib.json.read(dagre.graphlib.json.write(graph));
+  graph.setGraph({"rankdir": "LR"});
+  graph.nodes().forEach(v => {
+    const node = graph.node(v);
+    node.width = 20;
+    node.height = 20;
+    node.shape = "circle";
+  });
 
   const renderer = new RenderCtor();
   const svg = d3.select(svgView.svgSelector);

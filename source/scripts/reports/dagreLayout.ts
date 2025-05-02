@@ -10,7 +10,7 @@ export function createLayoutGraph(graph: dagre.graphlib.Graph): dagre.graphlib.G
     node.width = 200;
     node.height = 200;
     node.shape = "circle";
-  })
+  });
 
   graph.edges().forEach((e: dagre.Edge) => {
     Reflect.set(e, "label", e.name!);
