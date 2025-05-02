@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 module.exports =  {
+  d3: require("d3"),
   graphlib: require("./lib/graphlib"),
   dagre: require("./lib/dagre"),
   intersect: require("./lib/intersect"),
@@ -30,7 +31,7 @@ module.exports =  {
   version: require("./lib/version")
 };
 
-},{"./lib/dagre":8,"./lib/graphlib":9,"./lib/intersect":10,"./lib/render":25,"./lib/util":27,"./lib/version":28}],2:[function(require,module,exports){
+},{"./lib/dagre":8,"./lib/graphlib":9,"./lib/intersect":10,"./lib/render":25,"./lib/util":27,"./lib/version":28,"d3": 60}],2:[function(require,module,exports){
 var util = require("./util");
 
 module.exports = {
