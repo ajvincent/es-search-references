@@ -37,8 +37,11 @@ export class TabPanelsView {
         if (oldView)
             oldView.displayElement.classList.remove("active");
         const newView = this.#viewsMap.get(newKey);
-        if (newView)
+        if (newView) {
             newView.displayElement.classList.add("active");
+            if (newView.handleActivated)
+                newView.handleActivated();
+        }
         this.#activeViewKey = newKey;
     }
 }

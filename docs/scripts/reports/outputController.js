@@ -100,7 +100,7 @@ export class OutputController {
         }
         const view = new SVGGraphView();
         this.#addPanel(pathToFile, searchKey, "svg-graph", view);
-        createRenderGraph(results.layoutGraph, view);
+        view.activatedPromise.then(() => createRenderGraph(results.layoutGraph, view));
     }
     #addPanel(pathToFile, searchKey, tabKey, view) {
         this.#tabKeys.add(tabKey);

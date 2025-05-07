@@ -6,8 +6,8 @@ export function createLayoutGraph(graph: dagre.graphlib.Graph): dagre.graphlib.G
   graph = dagre.graphlib.json.read(dagre.graphlib.json.write(graph));
   graph.setGraph({
     "rankdir": "LR",
-    "nodesep": 200,
-    "ranksep": 200,
+    "nodesep": 100,
+    "ranksep": 100,
   });
   graph.nodes().forEach(v => {
     const node = graph.node(v);

@@ -6,5 +6,10 @@
 
 #report-panels svg text {
   fill: black;
-  text-anchor: middle;
+  font-size: 12px;
+}
+
+#report-panels svg path[d] {
+  stroke: black;
+  stroke-width: 2px;
 }
