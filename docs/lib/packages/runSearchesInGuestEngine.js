@@ -269,6 +269,7 @@ class ObjectGraphImpl {
         this.#targetId = "target:-1";
         this.#heldValuesId = "heldValues:-2";
         this.#searchConfiguration = searchConfiguration;
+        this.#graph.setGraph({});
     }
     #throwInternalError(error) {
         if (this.#searchConfiguration?.internalErrorTrap) {
@@ -340,6 +341,8 @@ class ObjectGraphImpl {
         this.#weakKeyToIdMap.set(privateName, nodeId);
         this.#idToWeakKeyMap.set(nodeId, privateName);
         const nodeMetadata = {
+            width: 200,
+            height: 200,
             metadata: {
                 description
             }
@@ -356,7 +359,11 @@ class ObjectGraphImpl {
         const nodeId = this.#nodeCounter.next(prefix);
         this.#weakKeyToIdMap.set(weakKey, nodeId);
         this.#idToWeakKeyMap.set(nodeId, weakKey);
-        const nodeMetadata = { metadata };
+        const nodeMetadata = {
+            width: 200,
+            height: 200,
+            metadata,
+        };
         this.#graph.setNode(nodeId, nodeMetadata);
         this.#ownershipSetsTracker.defineKey(nodeId);
         this.#weakKeyHeldStronglyMap.set(weakKey, false);
@@ -371,9 +378,10 @@ class ObjectGraphImpl {
             this.#throwInternalError(new Error(identifier + " is not defined as a node"));
         return id;
     }
-    #defineEdge(parentId, edgePrefixType, description, metadata, childId, isStrongReference, secondParentId) {
+    #defineEdge(label, parentId, edgePrefixType, description, metadata, childId, isStrongReference, secondParentId) {
         const edgeId = this.#edgeCounter.next(edgePrefixType);
         const edgeMetadata = {
+            label,
             edgeType: edgePrefixType,
             description,
             metadata,
@@ -398,7 +406,7 @@ class ObjectGraphImpl {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
         const parentId = this.#requireWeakKeyId(parentObject, "parentObject");
         const relationshipId = this.#requireWeakKeyId(relationshipName, "childObject");
-        const edgeId = this.#defineEdge(parentId, EdgePrefix.HasSymbolAsKey, ObjectGraphImpl.#NOT_APPLICABLE, keyEdgeMetadata, relationshipId, true, undefined);
+        const edgeId = this.#defineEdge(relationshipName.description ?? "(symbol)", parentId, EdgePrefix.HasSymbolAsKey, ObjectGraphImpl.#NOT_APPLICABLE, keyEdgeMetadata, relationshipId, true, undefined);
         return edgeId;
     }
     #hasSymbolKeyEdge(edge) {
@@ -415,7 +423,8 @@ class ObjectGraphImpl {
                 this.#throwInternalError(new Error(`no edge found between parent object "${parentId}" and symbol key "${symbolId}"`));
             }
         }
-        const edgeId = this.#defineEdge(parentId, isGetter ? EdgePrefix.GetterKey : EdgePrefix.PropertyKey, createValueDescription(relationshipName, this), metadata, childId, true, undefined);
+        const label = typeof relationshipName === "symbol" ? (relationshipName.description ?? "(symbol)") : relationshipName.toString();
+        const edgeId = this.#defineEdge(label, parentId, isGetter ? EdgePrefix.GetterKey : EdgePrefix.PropertyKey, createValueDescription(relationshipName, this), metadata, childId, true, undefined);
         return edgeId;
     }
     defineConstructorOf(instanceObject, ctorObject, metadata) {
@@ -425,7 +434,7 @@ class ObjectGraphImpl {
         }
         const instanceId = this.#requireWeakKeyId(instanceObject, "instanceObject");
         const ctorId = this.#requireWeakKeyId(ctorObject, "ctorObject");
-        const edgeId = this.#defineEdge(instanceId, EdgePrefix.InstanceOf, ObjectGraphImpl.#NOT_APPLICABLE, metadata, ctorId, true, undefined);
+        const edgeId = this.#defineEdge("(constructor)", instanceId, EdgePrefix.InstanceOf, ObjectGraphImpl.#NOT_APPLICABLE, metadata, ctorId, true, undefined);
         return edgeId;
     }
     defineScopeValue(functionObject, identifier, objectValue, metadata) {
@@ -435,13 +444,13 @@ class ObjectGraphImpl {
         }
         const functionId = this.#requireWeakKeyId(functionObject, "functionObject");
         const valueId = this.#requireWeakKeyId(objectValue, "objectValue");
-        return this.#defineEdge(functionId, EdgePrefix.ScopeValue, createValueDescription(identifier, this), metadata, valueId, true, undefined);
+        return this.#defineEdge("(scope:" + identifier + ")", functionId, EdgePrefix.ScopeValue, createValueDescription(identifier, this), metadata, valueId, true, undefined);
     }
     defineInternalSlot(parentObject, slotName, childObject, isStrongReference, metadata) {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
         const parentId = this.#requireWeakKeyId(parentObject, "parentObject");
         const childId = this.#requireWeakKeyId(childObject, "childObject");
-        const edgeId = this.#defineEdge(parentId, EdgePrefix.InternalSlot, createValueDescription(slotName, this), metadata, childId, isStrongReference, undefined);
+        const edgeId = this.#defineEdge(slotName, parentId, EdgePrefix.InternalSlot, createValueDescription(slotName, this), metadata, childId, isStrongReference, undefined);
         return edgeId;
     }
     defineMapKeyValueTuple(map, key, value, isStrongReferenceToKey, keyMetadata, valueMetadata) {
@@ -471,17 +480,17 @@ class ObjectGraphImpl {
             this.#searchConfiguration.defineNodeTrap(mapId, tupleNodeId, "(new map tuple)");
         }
         // map to tuple
-        const mapToTupleEdgeId = this.#defineEdge(mapId, EdgePrefix.MapToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, undefined);
+        const mapToTupleEdgeId = this.#defineEdge("(tuple)", mapId, EdgePrefix.MapToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, undefined);
         const keyDescription = createValueDescription(key, this);
         // map key edge
         let tupleToKeyEdgeId;
         if (keyId) {
-            tupleToKeyEdgeId = this.#defineEdge(tupleNodeId, EdgePrefix.MapKey, keyDescription, keyMetadata === undefined ? null : keyMetadata, keyId, isStrongReferenceToKey, undefined);
+            tupleToKeyEdgeId = this.#defineEdge("(key)", tupleNodeId, EdgePrefix.MapKey, keyDescription, keyMetadata === undefined ? null : keyMetadata, keyId, isStrongReferenceToKey, undefined);
         }
         // map value edge
         let tupleToValueEdgeId;
         if (valueId) {
-            tupleToValueEdgeId = this.#defineEdge(tupleNodeId, EdgePrefix.MapValue, createValueDescription(value, this), valueMetadata === undefined ? null : valueMetadata, valueId, true, keyId);
+            tupleToValueEdgeId = this.#defineEdge("(value)", tupleNodeId, EdgePrefix.MapValue, createValueDescription(value, this), valueMetadata === undefined ? null : valueMetadata, valueId, true, keyId);
         }
         return {
             tupleNodeId,
@@ -494,7 +503,7 @@ class ObjectGraphImpl {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
         const setId = this.#requireWeakKeyId(set, "set");
         const valueId = this.#requireWeakKeyId(value, "value");
-        const edgeId = this.#defineEdge(setId, EdgePrefix.SetValue, ObjectGraphImpl.#NOT_APPLICABLE, metadata, valueId, isStrongReferenceToValue, undefined);
+        const edgeId = this.#defineEdge("(element)", setId, EdgePrefix.SetValue, ObjectGraphImpl.#NOT_APPLICABLE, metadata, valueId, isStrongReferenceToValue, undefined);
         return edgeId;
     }
     defineFinalizationTuple(registry, target, heldValue, unregisterToken) {
@@ -513,15 +522,15 @@ class ObjectGraphImpl {
         if (this.#searchConfiguration?.defineNodeTrap) {
             this.#searchConfiguration.defineNodeTrap(registryId, tupleNodeId, "(new finalization tuple)");
         }
-        const registryToTupleEdgeId = this.#defineEdge(registryId, EdgePrefix.FinalizationRegistryToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, undefined);
-        const tupleToTargetEdgeId = this.#defineEdge(tupleNodeId, EdgePrefix.FinalizationToTarget, createValueDescription(target, this), null, targetId, false, undefined);
+        const registryToTupleEdgeId = this.#defineEdge("(tuple)", registryId, EdgePrefix.FinalizationRegistryToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, undefined);
+        const tupleToTargetEdgeId = this.#defineEdge("(target)", tupleNodeId, EdgePrefix.FinalizationToTarget, createValueDescription(target, this), null, targetId, false, undefined);
         let tupleToHeldValueEdgeId;
         if (heldValueId) {
-            tupleToHeldValueEdgeId = this.#defineEdge(tupleNodeId, EdgePrefix.FinalizationToHeldValue, createValueDescription(heldValue, this), null, heldValueId, true, targetId);
+            tupleToHeldValueEdgeId = this.#defineEdge("(held value)", tupleNodeId, EdgePrefix.FinalizationToHeldValue, createValueDescription(heldValue, this), null, heldValueId, true, targetId);
         }
         let tupleToUnregisterTokenEdgeId;
         if (unregisterTokenId) {
-            tupleToUnregisterTokenEdgeId = this.#defineEdge(tupleNodeId, EdgePrefix.FinalizationToUnregisterToken, createValueDescription(unregisterToken, this), null, unregisterTokenId, false, targetId);
+            tupleToUnregisterTokenEdgeId = this.#defineEdge("(unregister token)", tupleNodeId, EdgePrefix.FinalizationToUnregisterToken, createValueDescription(unregisterToken, this), null, unregisterTokenId, false, targetId);
         }
         return {
             tupleNodeId,
@@ -542,9 +551,9 @@ class ObjectGraphImpl {
         if (this.#searchConfiguration?.defineNodeTrap) {
             this.#searchConfiguration.defineNodeTrap(parentId, tupleNodeId, "(new private field tuple)");
         }
-        const objectToTupleEdgeId = this.#defineEdge(parentId, EdgePrefix.ObjectToPrivateTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, undefined);
-        const tupleToKeyEdgeId = this.#defineEdge(tupleNodeId, EdgePrefix.PrivateTupleToKey, ObjectGraphImpl.#NOT_APPLICABLE, privateNameMetadata, privateNameId, true, undefined);
-        const tupleToValueEdgeId = this.#defineEdge(tupleNodeId, isGetter ? EdgePrefix.PrivateTupleToGetter : EdgePrefix.PrivateTupleToValue, createValueDescription(privateKey, this), childMetadata, childId, true, parentId);
+        const objectToTupleEdgeId = this.#defineEdge("(tuple)", parentId, EdgePrefix.ObjectToPrivateTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, undefined);
+        const tupleToKeyEdgeId = this.#defineEdge("(private key)", tupleNodeId, EdgePrefix.PrivateTupleToKey, ObjectGraphImpl.#NOT_APPLICABLE, privateNameMetadata, privateNameId, true, undefined);
+        const tupleToValueEdgeId = this.#defineEdge(privateKey, tupleNodeId, isGetter ? EdgePrefix.PrivateTupleToGetter : EdgePrefix.PrivateTupleToValue, createValueDescription(privateKey, this), childMetadata, childId, true, parentId);
         return {
             tupleNodeId,
             objectToTupleEdgeId,
