@@ -67,6 +67,7 @@ export class OutputController {
                 this.#addLogPanel(pathToFile, searchKey, results);
                 this.#addLayoutPanel(pathToFile, searchKey, results);
                 this.#addGraphPanel(pathToFile, searchKey, results);
+                this.selectTabKey("svg-graph");
             }
         }
     }
@@ -99,7 +100,7 @@ export class OutputController {
         }
         const view = new SVGGraphView();
         this.#addPanel(pathToFile, searchKey, "svg-graph", view);
-        createRenderGraph(results.graph, view);
+        createRenderGraph(results.layoutGraph, view);
     }
     #addPanel(pathToFile, searchKey, tabKey, view) {
         this.#tabKeys.add(tabKey);

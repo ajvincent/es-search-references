@@ -1,12 +1,20 @@
 import { dagre, } from "../../lib/packages/dagre-imports.js";
 export function createLayoutGraph(graph) {
     graph = dagre.graphlib.json.read(dagre.graphlib.json.write(graph));
-    graph.setGraph({ "rankdir": "LR" });
+    graph.setGraph({
+        "rankdir": "LR",
+        "nodesep": 200,
+        "ranksep": 200,
+    });
     graph.nodes().forEach(v => {
         const node = graph.node(v);
-        node.width = 200;
-        node.height = 200;
+        node.width = 100;
+        node.height = 100;
         node.shape = "circle";
+    });
+    graph.edges().forEach(e => {
+        const edge = graph.edge(e);
+        edge.arrowHeadClass = "arrowhead";
     });
     graph.edges().forEach((e) => {
         Reflect.set(e, "label", e.name);

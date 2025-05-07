@@ -3,3 +3,8 @@
   stroke: black;
   stroke-width: 1px;
 }
+
+#report-panels svg text {
+  fill: black;
+  text-anchor: middle;
+}
