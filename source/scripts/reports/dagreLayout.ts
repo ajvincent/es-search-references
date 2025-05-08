@@ -9,11 +9,17 @@ export function createLayoutGraph(graph: dagre.graphlib.Graph): dagre.graphlib.G
     "nodesep": 100,
     "ranksep": 100,
   });
+
   graph.nodes().forEach(v => {
     const node = graph.node(v);
     node.width = 100;
     node.height = 100;
     node.shape = "circle";
+
+    if (v === "target:0")
+      node.class = "target-node";
+    else if (v === "heldValues:1")
+      node.class = "heldValues-node";
   });
 
   graph.edges().forEach(e => {
@@ -24,6 +30,7 @@ export function createLayoutGraph(graph: dagre.graphlib.Graph): dagre.graphlib.G
   graph.edges().forEach((e: dagre.Edge) => {
     Reflect.set(e, "label", e.name!);
   });
+
   dagre.layout(graph);
   return graph;
 }

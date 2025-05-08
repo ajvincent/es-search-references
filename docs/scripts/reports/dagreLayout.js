@@ -11,6 +11,10 @@ export function createLayoutGraph(graph) {
         node.width = 100;
         node.height = 100;
         node.shape = "circle";
+        if (v === "target:0")
+            node.class = "target-node";
+        else if (v === "heldValues:1")
+            node.class = "heldValues-node";
     });
     graph.edges().forEach(e => {
         const edge = graph.edge(e);

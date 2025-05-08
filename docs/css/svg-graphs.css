@@ -13,3 +13,11 @@
   stroke: black;
   stroke-width: 2px;
 }
+
+#report-panels svg .heldValues-node circle {
+  stroke: green;
+}
+
+#report-panels svg .target-node circle {
+  stroke: red
+}

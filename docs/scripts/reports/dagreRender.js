@@ -7,4 +7,10 @@ export function createRenderGraph(graph, svgView) {
     renderer(group, graph);
     svg.attr("width", graph.graph().width);
     svg.attr("height", graph.graph().height);
+    addInnerCircle(svg, "heldValues");
+    addInnerCircle(svg, "target");
+}
+function addInnerCircle(svg, prefix) {
+    const outerCircle = svg.select(`.${prefix}-node circle`);
+    outerCircle.clone().attr("r", parseInt(outerCircle.attr("r")) - 6);
 }

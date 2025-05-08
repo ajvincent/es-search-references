@@ -21,4 +21,12 @@ export function createRenderGraph(
   renderer(group, graph);
   svg.attr("width", graph.graph().width!);
   svg.attr("height", graph.graph().height!);
+
+  addInnerCircle(svg, "heldValues");
+  addInnerCircle(svg, "target");
+}
+
+function addInnerCircle(svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>, prefix: string): void {
+  const outerCircle = svg.select(`.${prefix}-node circle`);
+  outerCircle.clone().attr("r", parseInt(outerCircle.attr("r")) - 6);
 }
