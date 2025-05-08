@@ -1,21 +1,12 @@
+# TO DO
+
 - [ ] README
 - [ ] Replace introductory text
 - Graph rendering:
   - [x] Edge labels as a default
   - [x] Source/sink double circles, green/red colors
   - [ ] Weak reference edge arrows
-  - [ ] Icons for built-in object types
-    - [ ] `{}` for object
-    - [ ] `[]` for array
-    - [ ] `()` for set
-    - [ ] `#` for map
-    - [ ] `()` (grey) for weak set
-    - [ ] `#` (grey) for weak map
-    - [ ] play button for function
-    - [ ] stopwatch for Promise
-    - [ ] dashed square for pseudo-tuple
-    - [ ] arrow (grey) for weak reference
-    - [ ] broom or trash for finalization registry
+  - [x] Icons for built-in object types
   - [ ] Zoom controls & Legend overlay
   - [ ] Start with heldValues scrolled into view
 - File system:

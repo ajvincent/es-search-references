@@ -18,6 +18,9 @@ export function createLayoutGraph(graph) {
         else if (/Tuple:\d+$/.test(v)) {
             node.shape = "rect";
         }
+        else {
+            node.class = "builtin-" + node.metadata.builtInJSTypeName;
+        }
     });
     graph.edges().forEach(e => {
         const edge = graph.edge(e);

@@ -1,6 +1,6 @@
 #report-panels svg circle,
 #report-panels svg rect {
-  fill: none;
+  fill: #ffffff;
   stroke: black;
   stroke-width: 1px;
 }
@@ -21,4 +21,19 @@
 
 #report-panels svg .target-node circle {
   stroke: red
+}
+
+#report-panels svg .builtin-icon {
+  font-size: 24px;
+  transform: translate(-12px, -20px);
+}
+
+#report-panels svg .builtin-icon-pair {
+  font-size: 24px;
+  transform: translate(-8px, -20px);
+}
+
+#report-panels svg .builtin-icon.grey,
+#report-panels svg .builtin-icon-pair.grey {
+  fill: #999999;
 }

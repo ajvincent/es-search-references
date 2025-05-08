@@ -22,6 +22,8 @@ export function createLayoutGraph(graph: dagre.graphlib.Graph): dagre.graphlib.G
       node.class = "heldValues-node";
     else if (/Tuple:\d+$/.test(v)) {
       node.shape = "rect";
+    } else {
+      node.class = "builtin-" + (node as unknown as { metadata: { builtInJSTypeName: string } }).metadata.builtInJSTypeName
     }
   });
 
