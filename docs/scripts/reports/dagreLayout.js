@@ -15,6 +15,9 @@ export function createLayoutGraph(graph) {
             node.class = "target-node";
         else if (v === "heldValues:1")
             node.class = "heldValues-node";
+        else if (/Tuple:\d+$/.test(v)) {
+            node.shape = "rect";
+        }
     });
     graph.edges().forEach(e => {
         const edge = graph.edge(e);

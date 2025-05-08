@@ -1,4 +1,5 @@
-#report-panels svg circle {
+#report-panels svg circle,
+#report-panels svg rect {
   fill: none;
   stroke: black;
   stroke-width: 1px;
