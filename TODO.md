@@ -1,0 +1,28 @@
+- [ ] README
+- [ ] Replace introductory text
+- Graph rendering:
+  - [x] Edge labels as a default
+  - [x] Source/sink double circles, green/red colors
+  - [ ] Weak reference edge arrows
+  - [ ] Icons for built-in object types
+    - [ ] `{}` for object
+    - [ ] `[]` for array
+    - [ ] `()` for set
+    - [ ] `#` for map
+    - [ ] `()` (grey) for weak set
+    - [ ] `#` (grey) for weak map
+    - [ ] play button for function
+    - [ ] stopwatch for Promise
+    - [ ] dashed square for pseudo-tuple
+    - [ ] arrow (grey) for weak reference
+    - [ ] broom or trash for finalization registry
+  - [ ] Zoom controls & Legend overlay
+  - [ ] Start with heldValues scrolled into view
+- File system:
+  - [ ] Read-only panel for reference files
+  - [ ] Upload a zip or tarball
+  - [ ] Local storage for files
+  - [ ] Multiple file systems
+    - [ ] `<input datalist>` for the file system selector?
+  - [ ] Context menu to add new files, delete files, new folders, delete folders
+  - [ ] Package import support?
