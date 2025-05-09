@@ -1,4 +1,5 @@
 @import url("./svg-graphs.css");
+@import url("./graph-controls.css");
 
 body {
   background-color: #ffff00;
@@ -19,8 +20,6 @@ body {
 
 #workbench > * {
   border: 1px dashed black;
-  row-gap: 5px;
-  column-gap: 5px;
   margin: 2px;
   padding: 2px;
 }

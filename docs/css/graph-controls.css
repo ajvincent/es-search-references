@@ -1,0 +1,41 @@
+#graph-controls-overlay {
+  grid-row: 2;
+  grid-column: main-display;
+  z-index: 1;
+  justify-self: end;
+  align-self: end;
+  padding-right: 20px;
+  padding-bottom: 20px;
+  background-color: #ffffff;
+}
+
+#graph-zoom-legend {
+  outline: 1px solid black;
+  box-shadow:#000066;
+}
+
+#graph-legend {
+  display: grid;
+  grid-template-columns: repeat(2, 16px 100px) [column-end];
+  column-gap: 10px;
+  padding: 2px;
+  font-size: 12px;
+}
+
+#graph-legend .grey {
+  color: #999999;
+}
+
+#graph-legend > .span-all-columns {
+  grid-column-start: 1;
+  grid-column-end: column-end;
+}
+
+#graph-legend > .long-name-icon {
+  grid-column-start: 1;
+}
+
+#graph-legend > .long-label {
+  grid-column-start: 2;
+  grid-column-end: column-end;
+}

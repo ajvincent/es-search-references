@@ -53,9 +53,6 @@ class Workbench_Base {
         for (const tab of tabs) {
             tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey);
         }
-        /*
-        document.getElementById("testButton")?.onclick = () => this.#doTestAction();
-        */
     }
     async #runSearches(event) {
         event.preventDefault();
@@ -76,8 +73,6 @@ class Workbench_Base {
         event.preventDefault();
         event.stopPropagation();
         this.#outputController?.selectTabKey(tabKey);
-    }
-    #doTestAction() {
     }
 }
 const Workbench = new Workbench_Base();

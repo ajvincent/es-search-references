@@ -94,10 +94,6 @@ class Workbench_Base implements FileSystemCallbacks {
     for (const tab of tabs) {
       tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey!);
     }
-
-    /*
-    document.getElementById("testButton")?.onclick = () => this.#doTestAction();
-    */
   }
 
   async #runSearches(event: MouseEvent): Promise<void> {
@@ -127,8 +123,6 @@ class Workbench_Base implements FileSystemCallbacks {
     this.#outputController?.selectTabKey(tabKey);
   }
 
-  #doTestAction(): void {
-  }
 
   /*
   #onWorkspaceSelect(): void {

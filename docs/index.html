@@ -8,9 +8,6 @@
   <h1>Search for Object References in engine262</h1>
 
   <p>This is a starting point for Alex Vincent's es-search-references webpage.  It's probably going to be a single page.</p>
-  <!--
-  <p><button id="testButton">Click me!</button></p>
-  -->
 
   <div id="workbench">
     <span>Last run: <span id="lastRun">(no run started)</span></span>
@@ -26,6 +23,36 @@
     </report-selector>
 
     <tab-panels id="report-panels"></tab-panels>
+
+    <div id="graph-controls-overlay">
+      <div id="graph-zoom-legend">
+        <div id="graph-legend">
+          <span class="span-all-columns">
+            <button id="graph-controls-toggle">&#x2198;</button>
+            <label>Zoom & Legend</label>
+          </span>
+          <span class="span-all-columns">
+            <button id="zoom-out-button">-</button>
+            <span id="zoom-level">1</span>
+            <button id="zoom-in-button">+</button>
+          </span>
+          <span>{}</span><span>Object</span>
+          <span>[]</span><span>Array</span>
+          <span>fn</span><span>Function</span>
+          <span>&#x23f1;</span><span>AsyncFunction</span>
+          <span>()</span><span>Set</span>
+          <span class="grey">()</span><span>WeakSet</span>
+          <span>#</span><span>Map</span>
+          <span class="grey">#</span><span>WeakMap</span>
+          <span>&#x23f3;</span><span>Promise</span>
+          <span>&#x2248;</span><span>Proxy</span>
+          <span>*</span><span>Generator</span>
+          <span>&#x23ef;</span><span>Iterator</span>
+          <span class="grey">&#x2192;</span><span>WeakRef</span>
+          <span class="grey long-name-icon">&#x267b;</span><span class="long-label">FinalizationRegistry</span>
+        </div>
+      </div>
+    </div>
 
     <select id="workspace-selector">
       <option value="reference-spec">Example Reference specifications</option>

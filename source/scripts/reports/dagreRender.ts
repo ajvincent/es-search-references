@@ -29,21 +29,21 @@ export function createRenderGraph(
 
   addIconAndTitle(svg, "Object", "{}", true);
   addIconAndTitle(svg, "Array", "[]", true);
-  addIconAndTitle(svg, "WeakSet", "()", false);
-  addIconAndTitle(svg, "Set", "()", true);
-  addIconAndTitle(svg, "Map", "#", true);
-  addIconAndTitle(svg, "WeakMap", "#", false);
   addIconAndTitle(svg, "Function", "fn", true);
   addIconAndTitle(svg, "AsyncFunction", "\u23f1", true);
-  addIconAndTitle(svg, "WeakRef", "\u2192", false);
-  addIconAndTitle(svg, "FinalizationRegistry", "\u267B", false);
+  addIconAndTitle(svg, "Set", "()", true);
+  addIconAndTitle(svg, "WeakSet", "()", false);
+  addIconAndTitle(svg, "Map", "#", true);
+  addIconAndTitle(svg, "WeakMap", "#", false);
   addIconAndTitle(svg, "Promise", "\u23f3", true);
   addIconAndTitle(svg, "Proxy", "\u2248", true);
-  addIconAndTitle(svg, "GeneratorPrototype", "\u23F5", true);
-  addIconAndTitle(svg, "AsyncGeneratorPrototype", "\u23f5", true);
+  addIconAndTitle(svg, "GeneratorPrototype", "*", true);
+  addIconAndTitle(svg, "AsyncGeneratorPrototype", "*", true);
   addIconAndTitle(svg, "ArrayIteratorPrototype", "\u23ef", true);
   addIconAndTitle(svg, "MapIteratorPrototype", "\u23ef", true);
   addIconAndTitle(svg, "SetIteratorPrototype", "\u23ef", true);
+  addIconAndTitle(svg, "WeakRef", "\u2192", false);
+  addIconAndTitle(svg, "FinalizationRegistry", "\u267b", false);
 }
 
 function addInnerCircle(svg: SelectionAlias, prefix: string): void {
