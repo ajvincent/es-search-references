@@ -24,6 +24,10 @@ import {
 } from "./dagreRender.js";
 
 import {
+  GraphControlsView
+} from "./views/graphControls.js";
+
+import {
   SVGGraphView
 } from "./views/svg-graph.js";
 
@@ -42,6 +46,7 @@ export class OutputController {
     tabKey: ""
   };
   readonly #reportPanels = new TabPanelsView("report-panels");
+  readonly #graphControls = new GraphControlsView();
 
   readonly #filePathsAndSearchKeys: DefaultMap<string, Set<string>> = new DefaultMap(() => new Set);
   readonly filePathsAndSearchKeys: ReadonlyMap<string, ReadonlySet<string>> = this.#filePathsAndSearchKeys;
@@ -81,6 +86,13 @@ export class OutputController {
   #updateSelectedPanel() {
     const hash = JSON.stringify(this.#selected);
     this.#reportPanels.activeViewKey = hash;
+
+    const currentGraphView: BaseView | undefined = this.#reportPanels.viewsMap.get(hash);
+    if (currentGraphView instanceof SVGGraphView) {
+      this.#graphControls.currentGraphView = currentGraphView;
+    } else {
+      this.#graphControls.currentGraphView = undefined;
+    }
   }
 
   #setTabSelected(tabKey: string, isSelected: boolean): void {

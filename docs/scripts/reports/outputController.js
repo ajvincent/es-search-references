@@ -4,6 +4,7 @@ import { DefaultMap } from "../search/DefaultMap.js";
 import { TabPanelsView } from "../tab-panels/tab-panels-view.js";
 import { createLayoutGraph } from "./dagreLayout.js";
 import { createRenderGraph } from "./dagreRender.js";
+import { GraphControlsView } from "./views/graphControls.js";
 import { SVGGraphView } from "./views/svg-graph.js";
 export class OutputController {
     static tabsSelector = "#output-tabbar > label";
@@ -18,6 +19,7 @@ export class OutputController {
         tabKey: ""
     };
     #reportPanels = new TabPanelsView("report-panels");
+    #graphControls = new GraphControlsView();
     #filePathsAndSearchKeys = new DefaultMap(() => new Set);
     filePathsAndSearchKeys = this.#filePathsAndSearchKeys;
     #tabKeys = new Set;
@@ -47,6 +49,13 @@ export class OutputController {
     #updateSelectedPanel() {
         const hash = JSON.stringify(this.#selected);
         this.#reportPanels.activeViewKey = hash;
+        const currentGraphView = this.#reportPanels.viewsMap.get(hash);
+        if (currentGraphView instanceof SVGGraphView) {
+            this.#graphControls.currentGraphView = currentGraphView;
+        }
+        else {
+            this.#graphControls.currentGraphView = undefined;
+        }
     }
     #setTabSelected(tabKey, isSelected) {
         const tab = document.querySelector(`${_a.tabsSelector}[data-tabkey="${tabKey}"]`);

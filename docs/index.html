@@ -24,17 +24,19 @@
 
     <tab-panels id="report-panels"></tab-panels>
 
-    <div id="graph-controls-overlay">
+    <div id="graph-controls-overlay" class="hidden">
       <div id="graph-zoom-legend">
         <div id="graph-legend">
           <span class="span-all-columns">
-            <button id="graph-controls-toggle">&#x2198;</button>
+            <button id="graph-controls-toggle">
+              <img src="./images/button-collapse.svg">
+              <img src="./images/button-expand.svg">
+            </button>
             <label>Zoom & Legend</label>
           </span>
-          <span class="span-all-columns">
-            <button id="zoom-out-button">-</button>
-            <span id="zoom-level">1</span>
-            <button id="zoom-in-button">+</button>
+          <span class="span-all-columns zoom-controls">
+            <span>Zoom: </span>
+            <input id="zoom-level" type="number" value="1" step="0.25">
           </span>
           <span>{}</span><span>Object</span>
           <span>[]</span><span>Array</span>

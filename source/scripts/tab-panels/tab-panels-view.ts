@@ -8,6 +8,8 @@ export class TabPanelsView {
   readonly #viewsMap = new Map<string, BaseView>;
   #activeViewKey: string;
 
+  readonly viewsMap: ReadonlyMap<string, BaseView> = this.#viewsMap;
+
   constructor(id: string)
   {
     this.#rootElement = document.getElementById(id)!;

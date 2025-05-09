@@ -2,6 +2,7 @@ export class TabPanelsView {
     #rootElement;
     #viewsMap = new Map;
     #activeViewKey;
+    viewsMap = this.#viewsMap;
     constructor(id) {
         this.#rootElement = document.getElementById(id);
         this.#activeViewKey = "";

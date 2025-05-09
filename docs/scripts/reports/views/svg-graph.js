@@ -4,6 +4,7 @@ export class SVGGraphView {
     displayElement;
     activatedPromise;
     handleActivated;
+    #zoomLevel = 1;
     constructor() {
         this.displayElement = document.createElement("div");
         this.displayElement.append(SVGGraphView.#templateNode.cloneNode(true));
@@ -14,5 +15,11 @@ export class SVGGraphView {
     }
     get svgSelector() {
         return `#${this.displayElement.id} > svg`;
+    }
+    getZoomLevel() {
+        return this.#zoomLevel;
+    }
+    setZoomLevel(newZoom) {
+        this.#zoomLevel = newZoom;
     }
 }

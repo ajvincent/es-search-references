@@ -10,6 +10,8 @@ export class SVGGraphView implements BaseView {
   activatedPromise: Promise<void>;
   handleActivated: () => void;
 
+  #zoomLevel = 1;
+
   constructor() {
     this.displayElement = document.createElement("div");
     this.displayElement.append(SVGGraphView.#templateNode.cloneNode(true));
@@ -22,5 +24,13 @@ export class SVGGraphView implements BaseView {
 
   get svgSelector() {
     return `#${this.displayElement.id} > svg`;
+  }
+
+  getZoomLevel(): number {
+    return this.#zoomLevel;
+  }
+
+  setZoomLevel(newZoom: number) {
+    this.#zoomLevel = newZoom;
   }
 }
