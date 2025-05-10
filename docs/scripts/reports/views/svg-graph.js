@@ -6,7 +6,7 @@ export class SVGGraphView {
     #graphicsElement;
     activatedPromise;
     handleActivated;
-    #zoomLevel = 1;
+    #zoomLevel = 0;
     constructor() {
         this.displayElement = document.createElement("div");
         this.displayElement.append(SVGGraphView.#templateNode.cloneNode(true));
@@ -25,6 +25,7 @@ export class SVGGraphView {
     }
     setZoomLevel(newZoom) {
         this.#zoomLevel = newZoom;
+        newZoom = Math.pow(1.2, newZoom);
         const matrix = this.#svgElement.createSVGMatrix();
         matrix.a = newZoom;
         matrix.d = newZoom;

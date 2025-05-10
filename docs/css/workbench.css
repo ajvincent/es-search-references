@@ -13,7 +13,7 @@ body {
     [file-names] 1fr
     [main-display] 4fr
     [column-end];
-  grid-template-rows: 30px 450px 30px 450px 30px;
+  grid-template-rows: 30px 600px 30px 600px;
   column-gap: 10px;
   row-gap: 10px;
 }
@@ -96,13 +96,6 @@ file-system {
   grid-row: 4;
 
   background-color: #ffffff;
-}
-
-workbench-footer {
-  grid-column: file-names;
-  grid-row: 5;
-  width: 100%;
-  display: block;
 }
 
 .hidden {

@@ -12,7 +12,7 @@ export class SVGGraphView implements BaseView {
   activatedPromise: Promise<void>;
   handleActivated: () => void;
 
-  #zoomLevel = 1;
+  #zoomLevel = 0;
 
   constructor() {
     this.displayElement = document.createElement("div");
@@ -37,6 +37,7 @@ export class SVGGraphView implements BaseView {
 
   setZoomLevel(newZoom: number) {
     this.#zoomLevel = newZoom;
+    newZoom = Math.pow(1.2, newZoom);
     const matrix = this.#svgElement.createSVGMatrix();
     matrix.a = newZoom;
     matrix.d = newZoom;
