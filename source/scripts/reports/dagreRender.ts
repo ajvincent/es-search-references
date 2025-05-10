@@ -20,9 +20,10 @@ export function createRenderGraph(
   const renderer = new RenderCtor();
   const svg = d3.select(svgView.svgSelector);
   const group = svg.select("g");
+
   renderer(group, graph);
   svg.attr("width", graph.graph().width!);
-  svg.attr("height", graph.graph().height!);
+  svg.attr("height", graph.graph().height! + 40);
 
   addInnerCircle(svg, "heldValues");
   addInnerCircle(svg, "target");
@@ -44,6 +45,8 @@ export function createRenderGraph(
   addIconAndTitle(svg, "SetIteratorPrototype", "\u23ef", true);
   addIconAndTitle(svg, "WeakRef", "\u2192", false);
   addIconAndTitle(svg, "FinalizationRegistry", "\u267b", false);
+
+  svgView.showHeldValuesNode();
 }
 
 function addInnerCircle(svg: SelectionAlias, prefix: string): void {

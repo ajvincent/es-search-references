@@ -6,7 +6,7 @@ export function createRenderGraph(graph, svgView) {
     const group = svg.select("g");
     renderer(group, graph);
     svg.attr("width", graph.graph().width);
-    svg.attr("height", graph.graph().height);
+    svg.attr("height", graph.graph().height + 40);
     addInnerCircle(svg, "heldValues");
     addInnerCircle(svg, "target");
     addIconAndTitle(svg, "Object", "{}", true);
@@ -26,6 +26,7 @@ export function createRenderGraph(graph, svgView) {
     addIconAndTitle(svg, "SetIteratorPrototype", "\u23ef", true);
     addIconAndTitle(svg, "WeakRef", "\u2192", false);
     addIconAndTitle(svg, "FinalizationRegistry", "\u267b", false);
+    svgView.showHeldValuesNode();
 }
 function addInnerCircle(svg, prefix) {
     const outerCircle = svg.select(`.${prefix}-node circle`);
