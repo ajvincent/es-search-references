@@ -1,3 +1,12 @@
+import type {
+  BaseView
+} from "../tab-panels/tab-panels-view.js";
+
+import type {
+  TreeRowView
+} from "../tree/views/tree-row.js";
+
+
 import {
   FileRowView
 } from "./views/file-row.js";
@@ -10,10 +19,6 @@ import {
   FileSystemView
 } from "./views/file-system.js";
 
-import type {
-  TreeRowView
-} from "../tree/views/tree-row.js";
-
 import {
   FileSystemElement
 } from "./elements/file-system.js";
@@ -25,9 +30,9 @@ export interface FileSystemCallbacks {
 
 void(FileSystemElement); // force the custom element upgrade
 
-export class FileSystemController {
+export class FileSystemController implements BaseView {
   #isReadOnly: boolean;
-  #rootElement: FileSystemElement;
+  readonly displayElement: FileSystemElement;
 
   #fileMap: ReadonlyMap<string, string> = new Map<string, string>;
   readonly #callbacks: FileSystemCallbacks;
@@ -41,11 +46,11 @@ export class FileSystemController {
     callbacks: FileSystemCallbacks,
   )
   {
-    this.#rootElement = document.getElementById(rootId) as FileSystemElement;
+    this.displayElement = document.getElementById(rootId) as FileSystemElement;
     this.#isReadOnly = isReadonly;
     this.#callbacks = callbacks;
 
-    this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.#rootElement.treeRows!)
+    this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows!)
   }
 
   setFileMap(
@@ -53,7 +58,7 @@ export class FileSystemController {
   ): void
   {
     this.#fileToRowMap.clear();
-    this.#rootElement.treeRows!.replaceChildren();
+    this.displayElement.treeRows!.replaceChildren();
 
     const fileEntries = Array.from(fileMap.entries());
     fileEntries.sort((a, b) => a[0].localeCompare(b[0]));

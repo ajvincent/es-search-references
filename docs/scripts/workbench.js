@@ -3,25 +3,24 @@ import { FileSystemController, } from "./file-system/controller.js";
 import { TabPanelsView, } from "./tab-panels/tab-panels-view.js";
 import { ReferenceSpecFileMap } from "./reference-spec/FileMap.js";
 import { SearchDriver } from "./search/Driver.js";
+import { FileSystemMap } from "./storage/FileSystemMap.js";
 import { OutputController } from "./reports/outputController.js";
 import { ReportSelectController } from "./reports/selectController.js";
 class Workbench_Base {
-    /*
-    readonly #fsSelector: HTMLSelectElement;
-    */
-    #fileMap;
+    #fsSelector;
+    #fileSystems;
+    #currentFileMap;
     #refSpecFS;
     #outputController;
     #reportSelectorController;
     #codeMirrorPanels;
+    #fileSystemPanels;
     #fileMapView;
     #filesCheckedMap = new WeakMap;
     #lastRunSpan;
     constructor() {
-        /*
-        this.#fsSelector = document.getElementById("workspace-selector") as HTMLSelectElement;
-        */
-        this.#fileMap = ReferenceSpecFileMap;
+        this.#fsSelector = document.getElementById("workspace-selector");
+        this.#currentFileMap = ReferenceSpecFileMap;
         this.#filesCheckedMap.set(ReferenceSpecFileMap, new Set);
         window.onload = () => this.#initialize();
     }
@@ -29,17 +28,16 @@ class Workbench_Base {
         this.#fileMapView.selectFile(pathToFile);
     }
     fileCheckToggled(pathToFile, isChecked) {
-        const fileSet = this.#filesCheckedMap.get(this.#fileMap);
+        const fileSet = this.#filesCheckedMap.get(this.#currentFileMap);
         if (isChecked)
             fileSet.add(pathToFile);
         else
             fileSet.delete(pathToFile);
     }
     #initialize() {
-        this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
-        this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
+        this.#fillFileSystemPanels();
         this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
-        this.#fileMapView = new FileMapView(this.#fileMap, "reference-spec-editors");
+        this.#fileMapView = new FileMapView(this.#currentFileMap, "reference-spec-editors");
         this.#codeMirrorPanels.addPanel("reference-spec", this.#fileMapView);
         this.#codeMirrorPanels.activeViewKey = "reference-spec";
         this.#outputController = new OutputController;
@@ -47,11 +45,14 @@ class Workbench_Base {
         this.#lastRunSpan = document.getElementById("lastRun");
         this.#attachEvents();
     }
-    #attachEvents() {
-        document.getElementById("runSearchesButton").onclick = this.#runSearches.bind(this);
-        const tabs = Array.from(document.querySelectorAll(OutputController.tabsSelector));
-        for (const tab of tabs) {
-            tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey);
+    #fillFileSystemPanels() {
+        this.#fileSystemPanels = new TabPanelsView("filesystem-selector");
+        this.#refSpecFS = new FileSystemController("filesystem:reference-spec", true, this);
+        this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
+        this.#fileSystemPanels.addPanel("filesystem:reference-spec", this.#refSpecFS);
+        this.#fileSystemPanels.activeViewKey = "filesystem:reference-spec";
+        this.#fileSystems = FileSystemMap.getAll();
+        for (const [systemKey, fileSystem] of this.#fileSystems) {
         }
     }
     async #runSearches(event) {
@@ -59,8 +60,8 @@ class Workbench_Base {
         event.stopPropagation();
         this.#outputController.clearResults();
         this.#updateFileMap();
-        const driver = new SearchDriver(this.#fileMap);
-        const fileSet = this.#filesCheckedMap.get(this.#fileMap);
+        const driver = new SearchDriver(this.#currentFileMap);
+        const fileSet = this.#filesCheckedMap.get(this.#currentFileMap);
         const resultsMap = await driver.run(Array.from(fileSet));
         this.#outputController.addResults(resultsMap);
         this.#reportSelectorController.refreshTree();
@@ -69,10 +70,26 @@ class Workbench_Base {
     #updateFileMap() {
         this.#fileMapView.updateFileMap();
     }
+    #attachEvents() {
+        document.getElementById("runSearchesButton").onclick = this.#runSearches.bind(this);
+        const tabs = Array.from(document.querySelectorAll(OutputController.tabsSelector));
+        for (const tab of tabs) {
+            tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey);
+        }
+        this.#fsSelector.onchange = this.#onWorkspaceSelect.bind(this);
+    }
     #selectOutputReportTab(tabKey, event) {
         event.preventDefault();
         event.stopPropagation();
         this.#outputController?.selectTabKey(tabKey);
+    }
+    #onWorkspaceSelect(event) {
+        event.stopPropagation();
+        event.preventDefault();
+        const { value } = this.#fsSelector;
+        if (value === "reference-spec") {
+            this.#currentFileMap = ReferenceSpecFileMap;
+        }
     }
 }
 const Workbench = new Workbench_Base();

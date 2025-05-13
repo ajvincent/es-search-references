@@ -5,10 +5,9 @@
 - Graph rendering:
   - [x] Edge labels as a default
   - [x] Source/sink double circles, green/red colors
-  - [ ] Weak reference edge arrows
   - [x] Icons for built-in object types
-  - [ ] Zoom controls & Legend overlay
-  - [ ] Start with heldValues scrolled into view
+  - [x] Zoom controls & Legend overlay
+  - [x] Start with heldValues scrolled into view
 - File system:
   - [ ] Read-only panel for reference files
   - [ ] Upload a zip or tarball

@@ -5,20 +5,20 @@ import { FileSystemElement } from "./elements/file-system.js";
 void (FileSystemElement); // force the custom element upgrade
 export class FileSystemController {
     #isReadOnly;
-    #rootElement;
+    displayElement;
     #fileMap = new Map;
     #callbacks;
     #fileToRowMap = new Map;
     #fileSystemView;
     constructor(rootId, isReadonly, callbacks) {
-        this.#rootElement = document.getElementById(rootId);
+        this.displayElement = document.getElementById(rootId);
         this.#isReadOnly = isReadonly;
         this.#callbacks = callbacks;
-        this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.#rootElement.treeRows);
+        this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows);
     }
     setFileMap(fileMap) {
         this.#fileToRowMap.clear();
-        this.#rootElement.treeRows.replaceChildren();
+        this.displayElement.treeRows.replaceChildren();
         const fileEntries = Array.from(fileMap.entries());
         fileEntries.sort((a, b) => a[0].localeCompare(b[0]));
         this.#fileMap = new Map(fileEntries);

@@ -9,6 +9,8 @@ tree-grid.filesystem {
 
   max-height: 100%;
   overflow: scroll;
+
+  background-color: #000066;
 }
 
 tree-grid.filesystem tree-row > :first-child {

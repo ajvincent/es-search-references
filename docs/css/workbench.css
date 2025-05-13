@@ -59,7 +59,8 @@ report-selector, file-system {
   font-family: 'Courier New', Courier, monospace;
 }
 
-tab-panels {
+#report-panels,
+#codemirror-panels {
   grid-column: main-display;
   min-width: 800px;
   width: 100%;

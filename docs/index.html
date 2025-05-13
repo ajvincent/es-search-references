@@ -58,13 +58,13 @@
 
     <select id="workspace-selector">
       <option value="reference-spec">Example Reference specifications</option>
-      <option value="local-storage"></option>
     </select>
 
     <button id="runSearchesButton">Run Searches!</button>
 
-    <file-system id="filesystem:reference-spec"></file-system>
-    <file-system id="filesystem:local-storage" class="hidden"></file-system>
+    <tab-panels id="filesystem-selector">
+      <file-system id="filesystem:reference-spec"></file-system>
+    </tab-panels>
 
     <tab-panels id="codemirror-panels"></tab-panels>
   </div>
