@@ -27,6 +27,9 @@ export class FileSystemView<
 >
 {
   static #getParentAndLeaf(key: string): [string, string] {
+    if (key === "virtual:/") {
+      return ["", "virtual://"];
+    }
     let lastSlash = key.lastIndexOf("/");
     if (lastSlash === -1) {
       return ["", key];
@@ -82,7 +85,6 @@ export class FileSystemView<
     let depth: number
     if (parent === "") {
       depth = 0;
-      leaf = "virtual://";
     } else {
       depth = this.#fileToRowMap.get(parent)!.depth + 1
     }

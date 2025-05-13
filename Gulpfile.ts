@@ -63,8 +63,23 @@ async function installReferenceSpecs(): Promise<void> {
   );
 
   const fileEntries: [string, string][] = await PromiseAllParallel(files, async f => [
-    "home/" + f, await fs.readFile(path.join(projectRoot, "dist", f), { encoding: "utf-8"})
+    "virtual://home/" + f, await fs.readFile(path.join(projectRoot, "dist", f), { encoding: "utf-8"})
   ]);
+  fileEntries.unshift([
+    `es-search-references/guest`,
+    `
+/*
+declare function searchReferences(
+  this: void,
+  resultsKey: string,
+  targetValue: WeakKey,
+  heldValues: readonly WeakKey[],
+  strongReferencesOnly: boolean,
+): void;
+*/
+export {};
+    `.trim() + "\n"
+  ])
 
   const serialized = JSON.stringify(fileEntries);
   const moduleSource = `export const ReferenceSpecFileMap = new Map(${serialized});\n`;
