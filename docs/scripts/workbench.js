@@ -1,5 +1,3 @@
-//#region preamble
-import { FileMapView } from "./codemirror/views/FileMapView.js";
 import { FileSystemController, } from "./file-system/controller.js";
 import { FileSystemElement } from "./file-system/elements/file-system.js";
 import { FileUploadsView } from "./file-system/views/uploads.js";
@@ -12,81 +10,60 @@ import { ReportSelectController } from "./reports/selectController.js";
 import { GenericPanelView } from "./tab-panels/panelView.js";
 //#endregion preamble
 class Workbench_Base {
-    #refSpecFS;
     #outputController;
     #reportSelectorController;
     #fsSelector;
-    #fileSystems;
+    #fileSystemToControllerMap = new Map;
     #fileSystemControlsLeftView;
     #fileUploadsView;
-    #currentFileMap;
-    #fsToOptionMap = new WeakMap;
     #codeMirrorPanels;
     #fileSystemPanels;
-    #referenceFileMapView;
-    #filesCheckedMap = new WeakMap;
     #lastRunSpan;
     constructor() {
         this.#fsSelector = document.getElementById("workspace-selector");
-        this.#currentFileMap = ReferenceSpecFileMap;
-        this.#filesCheckedMap.set(ReferenceSpecFileMap, new Set);
         window.onload = () => this.#initialize();
-    }
-    fileSelected(controller, pathToFile) {
-        this.#referenceFileMapView.selectFile(pathToFile);
-    }
-    fileCheckToggled(controller, pathToFile, isChecked) {
-        const fileSet = this.#filesCheckedMap.get(this.#currentFileMap);
-        if (isChecked)
-            fileSet.add(pathToFile);
-        else
-            fileSet.delete(pathToFile);
     }
     async #initialize() {
         this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
         await this.#fillFileSystemPanels();
-        this.#referenceFileMapView = new FileMapView(this.#currentFileMap, "reference-spec-editors");
-        this.#codeMirrorPanels.addPanel("reference-spec-filesystem", this.#referenceFileMapView);
         this.#codeMirrorPanels.addPanel("filesystem-controls", new GenericPanelView("filesystem-controls-right"));
         this.#codeMirrorPanels.activeViewKey = "reference-spec-filesystem";
         this.#outputController = new OutputController;
         this.#reportSelectorController = new ReportSelectController("report-selector", this.#outputController);
         this.#lastRunSpan = document.getElementById("lastRun");
         this.#attachEvents();
-        this.#fsSelector.value = "reference-spec-filesystem";
     }
     async #fillFileSystemPanels() {
         this.#fileSystemPanels = new TabPanelsView("filesystem-selector");
-        this.#refSpecFS = new FileSystemController("reference-spec-filesystem", true, this);
-        this.#refSpecFS.setFileMap(ReferenceSpecFileMap);
-        this.#fileSystemPanels.addPanel("reference-spec-filesystem", this.#refSpecFS);
-        this.#fileSystemPanels.activeViewKey = "reference-spec-filesystem";
+        const refSpecOption = await this.#addFileSystemOption("reference-spec-filesystem", ReferenceSpecFileMap, false, true);
         this.#fileSystemControlsLeftView = new GenericPanelView("filesystem-controls-left");
         this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView);
         this.#fileUploadsView = new FileUploadsView();
-        this.#fileSystems = FileSystemMap.getAll();
+        const fileSystems = FileSystemMap.getAll();
         const optionPromises = [];
-        for (const [systemKey, fileSystem] of this.#fileSystems) {
-            optionPromises.push(this.#addFileSystemOption(systemKey, fileSystem));
+        for (const [systemKey, fileSystem] of fileSystems) {
+            optionPromises.push(this.#addFileSystemOption(systemKey, fileSystem, true, false));
         }
         const options = await Promise.all(optionPromises);
         options.sort((a, b) => a.text.localeCompare(b.text));
-        this.#fsSelector.append(...options);
+        this.#fsSelector.append(refSpecOption, ...options);
+        this.#fsSelector.value = "reference-spec-filesystem";
+        this.#onWorkspaceSelect();
+    }
+    #getCurrentFSController() {
+        return this.#fileSystemToControllerMap.get(this.#fsSelector.value);
     }
     async #runSearches(event) {
         event.preventDefault();
         event.stopPropagation();
         this.#outputController.clearResults();
-        this.#updateFileMap();
-        const driver = new SearchDriver(this.#currentFileMap);
-        const fileSet = this.#filesCheckedMap.get(this.#currentFileMap);
+        const fsController = this.#getCurrentFSController();
+        const driver = new SearchDriver(fsController.fileMap);
+        const fileSet = fsController.filesCheckedSet;
         const resultsMap = await driver.run(Array.from(fileSet));
         this.#outputController.addResults(resultsMap);
         this.#reportSelectorController.refreshTree();
         this.#lastRunSpan.replaceChildren((new Date()).toLocaleString());
-    }
-    #updateFileMap() {
-        this.#referenceFileMapView.updateFileMap();
     }
     #attachEvents() {
         document.getElementById("runSearchesButton").onclick = this.#runSearches.bind(this);
@@ -103,24 +80,11 @@ class Workbench_Base {
         this.#outputController?.selectTabKey(tabKey);
     }
     #onWorkspaceSelect(event) {
-        event.stopPropagation();
-        event.preventDefault();
+        event?.stopPropagation();
+        event?.preventDefault();
         const { value } = this.#fsSelector;
-        if (value === "filesystem-controls") {
-            this.#fileSystemPanels.activeViewKey = "filesystem-controls";
-            this.#codeMirrorPanels.activeViewKey = "filesystem-controls";
-            return;
-        }
-        if (value === "reference-spec-filesystem") {
-            this.#currentFileMap = ReferenceSpecFileMap;
-            this.#fileSystemPanels.activeViewKey = "reference-spec-filesystem";
-            this.#codeMirrorPanels.activeViewKey = "";
-            return;
-        }
-        const systemKey = value.replace(/^filesystem:/, "");
-        this.#currentFileMap = this.#fileSystems.get(systemKey);
-        this.#fileSystemPanels.activeViewKey = value;
-        this.#codeMirrorPanels.activeViewKey = "";
+        this.#fileSystemPanels.activeViewKey = "fss:" + value;
+        this.#codeMirrorPanels.activeViewKey = value;
     }
     async #doFileUpload(event) {
         event.preventDefault();
@@ -128,8 +92,7 @@ class Workbench_Base {
         const targetFileSystem = this.#fileUploadsView.getSelectedFileSystem();
         const newFileEntries = await this.#fileUploadsView.getFileEntries();
         this.#fileUploadsView.displayElement.reset();
-        const fileSystems = this.#fileSystems;
-        let fs = fileSystems.get(targetFileSystem);
+        let fs = this.#fileSystemToControllerMap.get(targetFileSystem)?.fileMap;
         if (fs) {
             fs.batchUpdate(() => {
                 for (const [pathToFile, contents] of newFileEntries) {
@@ -138,9 +101,15 @@ class Workbench_Base {
             });
         }
         else {
-            fs = new FileSystemMap(targetFileSystem, newFileEntries);
-            fileSystems.set(targetFileSystem, fs);
-            const option = await this.#addFileSystemOption(targetFileSystem, fs);
+            const fs = new FileSystemMap(targetFileSystem, newFileEntries);
+            if (!fs.has("es-search-references/guest")) {
+                const guestFile = this.#fileSystemToControllerMap.get("reference-spec-filesystem")?.fileMap.get("es-search-references/guest");
+                if (!guestFile) {
+                    throw new Error("no guest file?");
+                }
+                fs.set("es-search-references/guest", guestFile);
+            }
+            const option = await this.#addFileSystemOption(targetFileSystem, fs, true, false);
             let referenceOption = null;
             for (const currentOption of Array.from(this.#fsSelector.options).slice(2)) {
                 if (targetFileSystem.localeCompare(currentOption.text) < 0) {
@@ -149,23 +118,20 @@ class Workbench_Base {
                 }
             }
             this.#fsSelector.options.add(option, referenceOption);
-            this.#fsToOptionMap.set(fs, option);
         }
-        this.#fsSelector.value = this.#fsToOptionMap.get(fs).value;
+        this.#fsSelector.value = targetFileSystem;
     }
-    async #addFileSystemOption(systemKey, fileSystem) {
+    async #addFileSystemOption(systemKey, fileSystem, useFSPrefix, isReadOnly) {
         const option = document.createElement("option");
-        option.value = "filesystem:" + systemKey;
+        option.value = useFSPrefix ? "filesystem:" + systemKey : systemKey;
         option.append(systemKey);
         const fsDisplayElement = new FileSystemElement();
-        fsDisplayElement.id = option.value;
+        fsDisplayElement.id = "fss:" + option.value;
         this.#fileSystemPanels.rootElement.append(fsDisplayElement);
-        const fsController = new FileSystemController(option.value, false, this);
-        this.#fileSystemPanels.addPanel(option.value, fsController);
-        this.#codeMirrorPanels.addPanel(option.value, new FileMapView(fileSystem, option.value));
-        fsDisplayElement.connectedPromise.then(() => {
-            fsController.setFileMap(fileSystem);
-        });
+        const fsController = new FileSystemController(option.value, isReadOnly, fileSystem, this.#codeMirrorPanels.rootElement);
+        this.#fileSystemPanels.addPanel(fsDisplayElement.id, fsController);
+        this.#codeMirrorPanels.addPanel(option.value, fsController.referenceFileMapView);
+        this.#fileSystemToControllerMap.set(option.value, fsController);
         return option;
     }
 }

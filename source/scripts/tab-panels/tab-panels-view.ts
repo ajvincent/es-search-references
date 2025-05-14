@@ -13,6 +13,9 @@ export class TabPanelsView {
   constructor(id: string)
   {
     this.rootElement = document.getElementById(id)!;
+    if (!this.rootElement) {
+      throw new Error("no root element with id: " + id);
+    }
     this.#activeViewKey = "";
   }
 

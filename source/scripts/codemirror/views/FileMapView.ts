@@ -7,7 +7,7 @@ import {
   EditorPanelView
 } from "./EditorView.js";
 
-export class FileMapView implements BaseView {
+export class FileEditorMapView implements BaseView {
   readonly #fileMap: Map<string, string>;
   readonly #panelsView: TabPanelsView;
   readonly #editorPanelViews = new Map<string, EditorPanelView>;
@@ -15,13 +15,13 @@ export class FileMapView implements BaseView {
   public readonly panelSetId: string;
   public readonly displayElement: HTMLElement;
 
-  constructor(fileMap: Map<string, string>, panelSetId: string) {
+  constructor(fileMap: Map<string, string>, panelSetId: string, parentElement: HTMLElement) {
     this.#fileMap = fileMap;
 
     this.panelSetId = panelSetId;
     this.displayElement = document.createElement("tab-panels");
     this.displayElement.id = panelSetId;
-    document.getElementById("codemirror-panels")!.append(this.displayElement);
+    parentElement.append(this.displayElement);
     this.#panelsView = new TabPanelsView(panelSetId);
 
     const keys = Array.from(this.#fileMap.keys());

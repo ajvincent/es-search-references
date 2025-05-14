@@ -10,9 +10,10 @@
   - [x] Start with heldValues scrolled into view
 - File system:
   - [ ] Read-only panel for reference files
-  - [ ] Upload a zip or tarball
-  - [ ] Local storage for files
-  - [ ] Multiple file systems
-    - [ ] `<input datalist>` for the file system selector?
+  - [x] Upload a zip
+  - [ ] Upload a gzipped tarball
+  - [x] Local storage for files
+  - [x] Multiple file systems
+    - [x] `<input datalist>` for the file system selector?
   - [ ] Context menu to add new files, delete files, new folders, delete folders
-  - [ ] Package import support?
+  - [x] Package import support?

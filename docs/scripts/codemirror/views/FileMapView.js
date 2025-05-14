@@ -1,17 +1,17 @@
 import { TabPanelsView } from "../../tab-panels/tab-panels-view.js";
 import { EditorPanelView } from "./EditorView.js";
-export class FileMapView {
+export class FileEditorMapView {
     #fileMap;
     #panelsView;
     #editorPanelViews = new Map;
     panelSetId;
     displayElement;
-    constructor(fileMap, panelSetId) {
+    constructor(fileMap, panelSetId, parentElement) {
         this.#fileMap = fileMap;
         this.panelSetId = panelSetId;
         this.displayElement = document.createElement("tab-panels");
         this.displayElement.id = panelSetId;
-        document.getElementById("codemirror-panels").append(this.displayElement);
+        parentElement.append(this.displayElement);
         this.#panelsView = new TabPanelsView(panelSetId);
         const keys = Array.from(this.#fileMap.keys());
         keys.sort();
