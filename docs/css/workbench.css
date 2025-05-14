@@ -1,5 +1,6 @@
 @import url("./svg-graphs.css");
 @import url("./graph-controls.css");
+@import url("./filesystem-controls.css");
 
 body {
   background-color: #ffff00;
@@ -51,7 +52,7 @@ report-selector {
   min-height: 450px;
 }
 
-report-selector, file-system {
+report-selector, file-system, #filesystem-controls-left {
   width: 100%;
   height: 100%;
   background-color: #000066;

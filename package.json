@@ -35,7 +35,8 @@
     "@codemirror/lang-json": "^6.0.1",
     "@dagrejs/graphlib": "^2.2.4",
     "@engine262/engine262": "^0.0.1-0bd9a5fb33988b1e4a3a7bc9560c242fa8fe7393",
-    "codemirror": "^6.0.1"
+    "codemirror": "^6.0.1",
+    "fflate": "^0.8.2"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.3",

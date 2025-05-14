@@ -37,6 +37,13 @@ function installEngine262(): Promise<void> {
   );
 }
 
+function installFFlate(): Promise<void> {
+  return fs.cp(
+    path.join(projectRoot, "node_modules/fflate/esm/browser.js"),
+    path.join(projectRoot, "docs/lib/packages/fflate.js")
+  );
+}
+
 function installSearchReferencesJs() {
   return src("es-search-references/dist/core-host/runSearchesInGuestEngine.js")
     .pipe(replace("@engine262/engine262", "./engine262.mjs"))
@@ -53,7 +60,7 @@ const { graphlib } = dagre;
 function installSearchReferences_d_ts() {
   return src("es-search-references/dist/core-host/runSearchesInGuestEngine.d.ts")
     .pipe(replace("@engine262/engine262", "./engine262.mjs"))
-    .pipe(replace("@dagrejs/graphlib", "./dagre-d3.js"))
+    .pipe(replace("@dagrejs/graphlib", "./dagre-imports.js"))
     .pipe(dest("source/lib/packages"));
 }
 
@@ -110,6 +117,7 @@ export default series([
   buildLocalhost,
   parallel([
     installEngine262,
+    installFFlate,
     installSearchReferencesJs,
     installSearchReferences_d_ts,
     installReferenceSpecs,

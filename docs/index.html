@@ -57,16 +57,41 @@
     </div>
 
     <select id="workspace-selector">
-      <option value="reference-spec">Example Reference specifications</option>
+      <option value="filesystem-controls">Upload files to virtual file system</option>
+      <option value="reference-spec-filesystem" selected="true">Example Reference specifications</option>
     </select>
 
     <button id="runSearchesButton">Run Searches!</button>
 
     <tab-panels id="filesystem-selector">
-      <file-system id="filesystem:reference-spec"></file-system>
+      <div id="filesystem-controls-left"></div>
+      <file-system id="reference-spec-filesystem"></file-system>
     </tab-panels>
 
-    <tab-panels id="codemirror-panels"></tab-panels>
+    <tab-panels id="codemirror-panels">
+      <div id="filesystem-controls-right">
+        <h2>Upload Files To Virtual File System</h2>
+        <form id="file-system-controls-grid">
+          <label for="file-system-selector">Use file system:</label>
+          <input id="file-system-selector" list="file-system-list" required>
+
+          <label for="file-upload-root">Specify upload root</label>
+          <input id="file-upload-root" list="file-upload-root-list">
+
+          <label for="file-upload-picker">Select ZIP:</label>
+          <input id="file-upload-picker" type="file" accept=".zip" required>
+
+          <span><!-- empty on purpose --></span>
+          <button id="uploadFiles" type="submit">Upload files!</button>
+        </form>
+      </div>
+    </tab-panels>
+    <datalist id="file-system-list"></datalist>
+    <datalist id="file-upload-root-list">
+      <option value="">(top-level package)</option>
+      <option value="virtual://">virtual://</option>
+      <option value="virtual://home/">virtual://home/</option>
+    </datalist>
   </div>
 
   <template id="shadow-filesystem-base">
