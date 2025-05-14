@@ -4,7 +4,7 @@ import { FileSystemView } from "./views/file-system.js";
 import { FileSystemElement } from "./elements/file-system.js";
 void (FileSystemElement); // force the custom element upgrade
 export class FileSystemController {
-    #isReadOnly;
+    isReadOnly;
     displayElement;
     #fileMap = new Map;
     #callbacks;
@@ -12,9 +12,12 @@ export class FileSystemController {
     #fileSystemView;
     constructor(rootId, isReadonly, callbacks) {
         this.displayElement = document.getElementById(rootId);
-        this.#isReadOnly = isReadonly;
+        this.isReadOnly = isReadonly;
         this.#callbacks = callbacks;
         this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows);
+    }
+    getFileMap() {
+        return this.#fileMap;
     }
     setFileMap(fileMap) {
         this.#fileToRowMap.clear();
@@ -31,10 +34,10 @@ export class FileSystemController {
         const view = this.#fileSystemView.addFileKey(key, directoriesSet);
         this.#fileToRowMap.set(key, view);
         view.checkboxElement.onclick = (ev) => {
-            this.#callbacks.fileCheckToggled(key, view.checkboxElement.checked);
+            this.#callbacks.fileCheckToggled(this, key, view.checkboxElement.checked);
         };
         view.radioElement.onclick = (ev) => {
-            this.#callbacks.fileSelected(key);
+            this.#callbacks.fileSelected(this, key);
         };
         view.rowElement.onclick = (ev) => {
             ev.stopPropagation();

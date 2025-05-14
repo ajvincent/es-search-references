@@ -24,14 +24,22 @@ import {
 } from "./elements/file-system.js";
 
 export interface FileSystemCallbacks {
-  fileSelected(pathToFile: string): void;
-  fileCheckToggled(pathToFile: string, isChecked: boolean): void;
+  fileSelected(
+    controller: FileSystemController,
+    pathToFile: string
+  ): void;
+
+  fileCheckToggled(
+    controller: FileSystemController,
+    pathToFile: string,
+    isChecked: boolean
+  ): void;
 }
 
 void(FileSystemElement); // force the custom element upgrade
 
 export class FileSystemController implements BaseView {
-  #isReadOnly: boolean;
+  readonly isReadOnly: boolean;
   readonly displayElement: FileSystemElement;
 
   #fileMap: ReadonlyMap<string, string> = new Map<string, string>;
@@ -47,10 +55,14 @@ export class FileSystemController implements BaseView {
   )
   {
     this.displayElement = document.getElementById(rootId) as FileSystemElement;
-    this.#isReadOnly = isReadonly;
+    this.isReadOnly = isReadonly;
     this.#callbacks = callbacks;
 
     this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows!)
+  }
+
+  getFileMap(): ReadonlyMap<string, string> {
+    return this.#fileMap;
   }
 
   setFileMap(
@@ -75,10 +87,10 @@ export class FileSystemController implements BaseView {
     this.#fileToRowMap.set(key, view);
 
     view.checkboxElement!.onclick = (ev: MouseEvent): void => {
-      this.#callbacks.fileCheckToggled(key, view.checkboxElement!.checked);
+      this.#callbacks.fileCheckToggled(this, key, view.checkboxElement!.checked);
     };
     view.radioElement!.onclick = (ev: Event): void => {
-      this.#callbacks.fileSelected(key);
+      this.#callbacks.fileSelected(this, key);
     };
 
     view.rowElement!.onclick = (ev: MouseEvent): void => {

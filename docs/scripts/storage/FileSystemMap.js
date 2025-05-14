@@ -11,9 +11,12 @@ export class FileSystemMap extends Map {
         return new Map(entries);
     }
     #systemKey;
+    #isBatchUpdate = true;
     constructor(systemKey, entries) {
         super(entries);
         this.#systemKey = systemKey;
+        this.#isBatchUpdate = false;
+        this.#refreshStorage();
     }
     #refreshStorage() {
         if (this.size) {
@@ -21,6 +24,16 @@ export class FileSystemMap extends Map {
         }
         else {
             _a.#storage.removeItem(this.#systemKey);
+        }
+    }
+    batchUpdate(callback) {
+        this.#isBatchUpdate = true;
+        try {
+            callback();
+            this.#refreshStorage();
+        }
+        finally {
+            this.#isBatchUpdate = false;
         }
     }
     clear() {
@@ -36,7 +49,13 @@ export class FileSystemMap extends Map {
     }
     set(key, value) {
         super.set(key, value);
-        this.#refreshStorage();
+        try {
+            if (!this.#isBatchUpdate)
+                this.#refreshStorage();
+        }
+        catch (ex) {
+            // do nothing, this is normal during construction
+        }
         return this;
     }
 }

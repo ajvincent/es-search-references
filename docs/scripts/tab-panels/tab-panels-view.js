@@ -1,14 +1,14 @@
 export class TabPanelsView {
-    #rootElement;
+    rootElement;
     #viewsMap = new Map;
     #activeViewKey;
     viewsMap = this.#viewsMap;
     constructor(id) {
-        this.#rootElement = document.getElementById(id);
+        this.rootElement = document.getElementById(id);
         this.#activeViewKey = "";
     }
     clearPanels() {
-        this.#rootElement.replaceChildren();
+        this.rootElement.replaceChildren();
         this.#viewsMap.clear();
         this.#activeViewKey = "";
     }
@@ -28,7 +28,7 @@ export class TabPanelsView {
         else {
             view.displayElement.classList.remove("active");
         }
-        this.#rootElement.append(view.displayElement);
+        this.rootElement.append(view.displayElement);
     }
     get activeViewKey() {
         return this.#activeViewKey;

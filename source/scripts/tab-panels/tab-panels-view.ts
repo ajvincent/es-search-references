@@ -4,7 +4,7 @@ export interface BaseView {
 }
 
 export class TabPanelsView {
-  readonly #rootElement: HTMLElement;
+  readonly rootElement: HTMLElement;
   readonly #viewsMap = new Map<string, BaseView>;
   #activeViewKey: string;
 
@@ -12,12 +12,12 @@ export class TabPanelsView {
 
   constructor(id: string)
   {
-    this.#rootElement = document.getElementById(id)!;
+    this.rootElement = document.getElementById(id)!;
     this.#activeViewKey = "";
   }
 
   clearPanels(): void {
-    this.#rootElement.replaceChildren();
+    this.rootElement.replaceChildren();
     this.#viewsMap.clear();
     this.#activeViewKey = "";
   }
@@ -40,7 +40,7 @@ export class TabPanelsView {
       view.displayElement.classList.remove("active");
     }
 
-    this.#rootElement.append(view.displayElement);
+    this.rootElement.append(view.displayElement);
   }
 
   get activeViewKey(): string {

@@ -63,7 +63,7 @@ export class FileSystemView<
     this.#fileToRowMap.clear();
   }
 
-  addFileKey(key: string, directoriesSet: Set<string>): FileView  {
+  addFileKey(key: string, directoriesSet: Set<string>): FileView {
     const [parent, leaf] = FileSystemView.#getParentAndLeaf(key);
     if (parent && directoriesSet.has(parent) === false) {
       this.#addDirectoryKey(parent, directoriesSet);

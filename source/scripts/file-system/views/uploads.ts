@@ -6,29 +6,50 @@ import {
   unzip
 } from "../../../lib/packages/fflate.js";
 
-export class FileUploadsView implements BaseView {
-  displayElement: HTMLFormElement;
+import type {
+  UnzipCallback,
+  UnzipFileFilter,
+} from "fflate";
 
-  #fileUploadPicker: HTMLInputElement;
+export class FileUploadsView implements BaseView {
+  static readonly #decoder = new TextDecoder
+
+  readonly displayElement: HTMLFormElement;
+
+  readonly #fileUploadPicker: HTMLInputElement;
+  readonly #uploadRoot: HTMLInputElement;
+  readonly #fileSystemSelector: HTMLInputElement;
 
   constructor() {
     this.displayElement = document.getElementById("file-system-controls-grid") as HTMLFormElement;
-    this.#fileUploadPicker = this.displayElement.elements.namedItem("file-upload-picker") as HTMLInputElement;
+    const { elements } = this.displayElement;
+    this.#fileUploadPicker = elements.namedItem("file-upload-picker") as HTMLInputElement;
+    this.#uploadRoot = elements.namedItem("file-upload-root") as HTMLInputElement;
+    this.#fileSystemSelector = elements.namedItem("file-system-selector") as HTMLInputElement;
   }
 
-  async getFiles(): Promise<void> {
+  getSelectedFileSystem(): string {
+    return this.#fileSystemSelector.value;
+  }
+
+  async getFileEntries(): Promise<[string, string][]> {
     const firstFile: Uint8Array = await this.#fileUploadPicker.files![0]!.bytes();
     const deferred = Promise.withResolvers<Record<string, Uint8Array>>();
-    unzip(firstFile, (err, unzipped) => {
+    const filter: UnzipFileFilter = file => {
+      return file.size > 0;
+    }
+    const resultFn: UnzipCallback = (err, unzipped) => {
       if (err)
         deferred.reject(err);
       else
         deferred.resolve(unzipped);
-    });
+    };
+    unzip(firstFile, { filter }, resultFn);
     const fileRecords: Record<string, Uint8Array> = await deferred.promise;
-    const decoder = new TextDecoder;
-    const fileMap = new Map(Object.entries(fileRecords).map(([pathToFile, contentsArray]) => {
-      return [pathToFile, decoder.decode(contentsArray)]
-    }));
+
+    const prefix = this.#uploadRoot.value;
+    return Object.entries(fileRecords).map(
+      ([pathToFile, contentsArray]) => [prefix + pathToFile, FileUploadsView.#decoder.decode(contentsArray)]
+    );
   }
 }
