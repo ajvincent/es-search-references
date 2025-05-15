@@ -98,6 +98,7 @@ var EdgePrefix;
     EdgePrefix["InternalSlot"] = "internalSlot";
     EdgePrefix["MapToTuple"] = "mapToTuple";
     EdgePrefix["MapKey"] = "mapKey";
+    EdgePrefix["MapKeyToTuple"] = "mapKeyToTuple";
     EdgePrefix["MapValue"] = "mapValue";
     EdgePrefix["SetValue"] = "setValue";
     EdgePrefix["FinalizationRegistryToTuple"] = "finalizationToTuple";
@@ -479,23 +480,29 @@ class ObjectGraphImpl {
         if (this.#searchConfiguration?.defineNodeTrap) {
             this.#searchConfiguration.defineNodeTrap(mapId, tupleNodeId, "(new map tuple)");
         }
-        // map to tuple
-        const mapToTupleEdgeId = this.#defineEdge("(tuple)", mapId, EdgePrefix.MapToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, undefined);
-        const keyDescription = createValueDescription(key, this);
-        // map key edge
-        let tupleToKeyEdgeId;
+        // map-to-key edge
+        let mapToKeyEdgeId;
         if (keyId) {
-            tupleToKeyEdgeId = this.#defineEdge("(key)", tupleNodeId, EdgePrefix.MapKey, keyDescription, keyMetadata === undefined ? null : keyMetadata, keyId, isStrongReferenceToKey, undefined);
+            const keyDescription = createValueDescription(key, this);
+            mapToKeyEdgeId = this.#defineEdge("(map key)", mapId, EdgePrefix.MapKey, keyDescription, keyMetadata ?? null, keyId, isStrongReferenceToKey, undefined);
+        }
+        // map to tuple
+        const mapToTupleEdgeId = this.#defineEdge("(map tuple)", mapId, EdgePrefix.MapToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, keyId);
+        // key to tuple
+        let keyToTupleEdgeId;
+        if (keyId) {
+            keyToTupleEdgeId = this.#defineEdge("(map key to tuple)", keyId, EdgePrefix.MapKeyToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, mapId);
         }
         // map value edge
         let tupleToValueEdgeId;
         if (valueId) {
-            tupleToValueEdgeId = this.#defineEdge("(value)", tupleNodeId, EdgePrefix.MapValue, createValueDescription(value, this), valueMetadata === undefined ? null : valueMetadata, valueId, true, keyId);
+            tupleToValueEdgeId = this.#defineEdge("(map value)", tupleNodeId, EdgePrefix.MapValue, createValueDescription(value, this), valueMetadata === undefined ? null : valueMetadata, valueId, true, keyId);
         }
         return {
             tupleNodeId,
+            mapToKeyEdgeId,
             mapToTupleEdgeId,
-            tupleToKeyEdgeId,
+            keyToTupleEdgeId,
             tupleToValueEdgeId
         };
     }
@@ -1595,7 +1602,7 @@ async function runInRealm(inputs) {
         },
         // ensureCanCompileStrings() {},
         // hasSourceTextAvailable() {},
-        loadImportedModule(referrer, specifier, hostDefined, finish) {
+        loadImportedModule(referrer, specifier, attributes, hostDefined, finish) {
             const moduleOrThrow = realmDriver.resolveModule(specifier, referrer);
             finish(moduleOrThrow);
         },
