@@ -44,10 +44,10 @@ export class SVGGraphView implements BaseView {
     const newTransform = this.#svgElement.createSVGTransformFromMatrix(matrix);
     const { baseVal } = this.#graphicsElement.transform;
 
-    if (baseVal.numberOfItems < 1) {
+    if (baseVal.numberOfItems < 2) {
       baseVal.appendItem(newTransform);
     } else {
-      baseVal.replaceItem(newTransform, 0);
+      baseVal.replaceItem(newTransform, 1);
     }
   }
 
