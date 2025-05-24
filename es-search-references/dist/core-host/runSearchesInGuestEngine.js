@@ -624,7 +624,6 @@ class ObjectGraphImpl {
     summarizeGraphToTarget(strongReferencesOnly) {
         this.#setNextState(ObjectGraphState.Summarizing);
         try {
-            const summaryGraph = new graphlib.Graph({ directed: true, multigraph: true });
             const target = this.#idToWeakKeyMap.get(this.#targetId);
             const targetReference = this.#weakKeyHeldStronglyMap.get(target);
             let edgeIdToJointOwnersMap;
@@ -635,9 +634,12 @@ class ObjectGraphImpl {
                 edgeIdToJointOwnersMap = this.#edgeIdToJointOwnersMap_Weak;
             }
             if (edgeIdToJointOwnersMap) {
-                this.#summarizeGraphToTarget(summaryGraph, edgeIdToJointOwnersMap);
+                this.#summarizeGraphToTarget(edgeIdToJointOwnersMap);
+                this.#summarizeGraphFromHeldValues();
             }
-            this.#graph = summaryGraph;
+            else {
+                this.#graph = new graphlib.Graph({ directed: true, multigraph: true });
+            }
             this.#setNextState(ObjectGraphState.Summarized);
         }
         catch (ex) {
@@ -645,16 +647,17 @@ class ObjectGraphImpl {
             throw ex;
         }
     }
-    #summarizeGraphToTarget(summaryGraph, edgeIdToJointOwnersMap) {
+    #summarizeGraphToTarget(edgeIdToJointOwnersMap) {
+        const summaryGraph = new graphlib.Graph({ directed: true, multigraph: true });
         const wNodeIds = new Set([this.#targetId]);
         for (const id of wNodeIds) {
+            const edges = this.#graph.inEdges(id);
+            if (!edges)
+                continue;
             const wNode = this.#graph.node(id);
             if (!summaryGraph.node(id)) {
                 summaryGraph.setNode(id, wNode);
             }
-            const edges = this.#graph.inEdges(id);
-            if (!edges)
-                continue;
             for (const e of edges) {
                 const vNodeId = e.v;
                 if (!summaryGraph.node(vNodeId)) {
@@ -670,6 +673,26 @@ class ObjectGraphImpl {
                 }
             }
         }
+        this.#graph = summaryGraph;
+    }
+    #summarizeGraphFromHeldValues() {
+        const summaryGraph = new graphlib.Graph({ directed: true, multigraph: true });
+        const vNodeIds = new Set([this.#heldValuesId]);
+        summaryGraph.setNode(this.#heldValuesId, this.#graph.node(this.#heldValuesId));
+        for (const id of vNodeIds) {
+            const edges = this.#graph.outEdges(id);
+            if (!edges)
+                continue;
+            for (const e of edges) {
+                const wNodeId = e.w;
+                if (!summaryGraph.node(wNodeId)) {
+                    summaryGraph.setNode(wNodeId, this.#graph.node(wNodeId));
+                    vNodeIds.add(wNodeId);
+                }
+                summaryGraph.setEdge(e, this.#graph.edge(e));
+            }
+        }
+        this.#graph = summaryGraph;
     }
 }
 let supportsWeakSymbolKeys;
