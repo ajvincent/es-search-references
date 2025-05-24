@@ -1,3 +1,4 @@
+import { JsonObject, ReadonlyDeep } from 'type-fest';
 import { Graph } from './dagre-imports.js';
 
 interface GuestRealmInputs {
@@ -82,5 +83,164 @@ declare class LoggingConfiguration implements Required<SearchConfiguration> {
 
 declare function runSearchesInGuestEngine(inputs: GuestRealmInputs, searchConfiguration?: SearchConfiguration): Promise<ReadonlyMap<string, Graph | null>>;
 
-export { LoggingConfiguration, runSearchesInGuestEngine };
-export type { GuestRealmInputs, SearchConfiguration };
+declare enum ValueDiscrimant {
+    NotApplicable = "NotApplicable",
+    Object = "Object",
+    Symbol = "Symbol",
+    BigInt = "BigInt",
+    Primitive = "Primitive"
+}
+declare enum BuiltInJSTypeName {
+    Symbol = "Symbol",
+    Object = "Object",
+    Array = "Array",
+    Function = "Function",
+    AsyncFunction = "AsyncFunction",
+    WeakRef = "WeakRef",
+    WeakMap = "WeakMap",
+    WeakSet = "WeakSet",
+    Map = "Map",
+    Set = "Set",
+    Promise = "Promise",
+    Proxy = "Proxy",
+    FinalizationRegistry = "FinalizationRegistry",
+    PrivateName = "#private",
+    ArrayIterator = "ArrayIterator",
+    MapIterator = "MapIterator",
+    SetIterator = "SetIterator",
+    Generator = "Generator",
+    AsyncGenerator = "AsyncGenerator"
+}
+declare enum NodePrefix {
+    Object = "object",
+    Symbol = "symbol",
+    Target = "target",
+    HeldValues = "heldValues",
+    KeyValueTuple = "keyValueTuple",
+    FinalizationTuple = "finalizationTuple",
+    PrivateName = "privateName",
+    PrivateFieldTuple = "privateFieldTuple"
+}
+declare enum ChildReferenceEdgeType {
+    PropertyName = "PropertyName",
+    ArrayIndex = "ArrayIndex",
+    PropertySymbol = "PropertySymbol",
+    SymbolKey = "SymbolKey",
+    ScopeValue = "ScopeValue",
+    InstanceOf = "InstanceOf",
+    PrivateClassKey = "PrivateClassKey",
+    PrivateClassValue = "PrivateClassValue",
+    InternalSlot = "InternalSlot",
+    SetElement = "SetElement",
+    MapKey = "MapKey",
+    MapValue = "MapValue"
+}
+declare enum EdgePrefix {
+    PropertyKey = "propertyKey",
+    GetterKey = "getterKey",
+    HasSymbolAsKey = "hasSymbolAsKey",
+    InstanceOf = "instanceOf",
+    ScopeValue = "scopeValue",
+    InternalSlot = "internalSlot",
+    MapToTuple = "mapToTuple",
+    MapKey = "mapKey",
+    MapKeyToTuple = "mapKeyToTuple",
+    MapValue = "mapValue",
+    SetValue = "setValue",
+    FinalizationRegistryToTarget = "finalizationToTarget",
+    FinalizationRegistryToTuple = "finalizationRegistryToTuple",
+    FinalizationTargetToTuple = "finalizationTargetToTuple",
+    FinalizationTupleToHeldValue = "finalizationTupleToHeldValue",
+    FinalizationTupleToUnregisterToken = "finalizationTupleToUnregisterToken",
+    ObjectToPrivateKey = "objectToPrivateKey",
+    ObjectToPrivateTuple = "objectToPrivateTuple",
+    PrivateKeyToTuple = "privateKeyToTuple",
+    PrivateTupleToValue = "privateValue",
+    PrivateTupleToGetter = "privateGetter"
+}
+
+type constants_BuiltInJSTypeName = BuiltInJSTypeName;
+declare const constants_BuiltInJSTypeName: typeof BuiltInJSTypeName;
+type constants_ChildReferenceEdgeType = ChildReferenceEdgeType;
+declare const constants_ChildReferenceEdgeType: typeof ChildReferenceEdgeType;
+type constants_EdgePrefix = EdgePrefix;
+declare const constants_EdgePrefix: typeof EdgePrefix;
+type constants_NodePrefix = NodePrefix;
+declare const constants_NodePrefix: typeof NodePrefix;
+type constants_ValueDiscrimant = ValueDiscrimant;
+declare const constants_ValueDiscrimant: typeof ValueDiscrimant;
+declare namespace constants {
+  export {
+    constants_BuiltInJSTypeName as BuiltInJSTypeName,
+    constants_ChildReferenceEdgeType as ChildReferenceEdgeType,
+    constants_EdgePrefix as EdgePrefix,
+    constants_NodePrefix as NodePrefix,
+    constants_ValueDiscrimant as ValueDiscrimant,
+  };
+}
+
+type PrefixedNumber<Prefix extends string> = `${Prefix}:${number}`;
+
+type ObjectId = PrefixedNumber<"object" | "target" | "heldValues">;
+type SymbolId = PrefixedNumber<"symbol" | "target">;
+
+interface NotApplicableValueDescription {
+  readonly valueType: ValueDiscrimant.NotApplicable,
+}
+
+interface ObjectValueDescription {
+  readonly valueType: ValueDiscrimant.Object,
+  readonly objectId: ObjectId,
+}
+
+interface SymbolValueDescription {
+  readonly valueType: ValueDiscrimant.Symbol;
+  readonly symbolId: SymbolId,
+}
+
+interface BigIntValueDescription {
+  readonly valueType: ValueDescription.BigInt;
+  readonly bigintStringValue: string;
+}
+
+interface PrimitiveValueDescription {
+  readonly valueType: ValueDiscrimant.Primitive;
+  readonly primitiveValue: boolean | number | string | undefined | null;
+}
+
+type ValueDescription = (
+  NotApplicableValueDescription |
+  ObjectValueDescription |
+  SymbolValueDescription |
+  BigIntValueDescription |
+  PrimitiveValueDescription
+);
+
+interface GraphNodeWithMetadata<ObjectMetadata extends JsonObject | null> {
+  readonly metadata: ObjectMetadata,
+  width: number,
+  height: number,
+}
+
+interface GraphEdgeWithMetadata<RelationshipMetadata extends JsonObject | null> {
+  label: string;
+  readonly edgeType: EdgePrefix;
+  description: ReadonlyDeep<ValueDescription>;
+  readonly metadata: RelationshipMetadata;
+  readonly isStrongReference: boolean;
+}
+
+interface GraphObjectMetadata extends JsonObject {
+  readonly builtInJSTypeName: BuiltInJSTypeName;
+  readonly derivedClassName: string;
+}
+
+interface GraphRelationshipMetadata extends JsonObject {
+  parentToChildEdgeType: ChildReferenceEdgeType
+}
+
+type JSGraphNode = ReadonlyDeep<GraphNodeWithMetadata<GraphObjectMetadata>>;
+type JSGraphEdge = ReadonlyDeep<GraphEdgeWithMetadata<GraphRelationshipMetadata>>;
+
+export { constants as JSGraphConstants, LoggingConfiguration, runSearchesInGuestEngine };
+export type { GuestRealmInputs, JSGraphEdge, JSGraphNode, SearchConfiguration };

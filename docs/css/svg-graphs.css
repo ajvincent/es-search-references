@@ -37,3 +37,13 @@
 #report-panels svg .builtin-icon-pair.grey {
   fill: #999999;
 }
+
+#report-panels svg .isWeakReference > path {
+  stroke-dasharray: 10px 10px;
+  stroke: #999999;
+}
+
+#report-panels svg .isWeakReference > defs > marker > path {
+  fill: #999999;
+  stroke: #999999;
+}

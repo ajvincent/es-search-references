@@ -113,6 +113,15 @@ var EdgePrefix;
 })(EdgePrefix || (EdgePrefix = {}));
 //#endregion edges
 
+var constants = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    get BuiltInJSTypeName () { return BuiltInJSTypeName; },
+    get ChildReferenceEdgeType () { return ChildReferenceEdgeType; },
+    get EdgePrefix () { return EdgePrefix; },
+    get NodePrefix () { return NodePrefix; },
+    get ValueDiscrimant () { return ValueDiscrimant; }
+});
+
 const OBJECT_OR_SYMBOL_TYPES = new Set(["symbol", "object", "function"]);
 function isObjectOrSymbol(value) {
     return OBJECT_OR_SYMBOL_TYPES.has(typeof value);
@@ -387,6 +396,7 @@ class ObjectGraphImpl {
             edgeType: edgePrefixType,
             description,
             metadata,
+            isStrongReference,
         };
         const jointOwnerKeys = [parentId];
         if (secondParentId)
@@ -1797,4 +1807,4 @@ class SearchGuestRealmInputs {
     }
 }
 
-export { LoggingConfiguration, runSearchesInGuestEngine };
+export { constants as JSGraphConstants, LoggingConfiguration, runSearchesInGuestEngine };

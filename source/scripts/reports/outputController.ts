@@ -157,7 +157,7 @@ export class OutputController {
     let view: BaseView;
     if (results.graph) {
       results.layoutGraph = createLayoutGraph(results.graph);
-      const serializedGraph = JSON.stringify(results.graph, null, 2);
+      const serializedGraph = JSON.stringify(results.layoutGraph, null, 2);
       view = OutputController.#createPreformattedView(serializedGraph);
     } else {
       view = OutputController.#createPreformattedView("(null)");

@@ -2,6 +2,10 @@ import {
   dagre,
 } from "../../lib/packages/dagre-imports.js";
 
+import type {
+  JSGraphEdge
+} from "../../lib/packages/runSearchesInGuestEngine.js";
+
 export function createLayoutGraph(graph: dagre.graphlib.Graph): dagre.graphlib.Graph {
   graph = dagre.graphlib.json.read(dagre.graphlib.json.write(graph));
   graph.setGraph({
@@ -28,14 +32,13 @@ export function createLayoutGraph(graph: dagre.graphlib.Graph): dagre.graphlib.G
   });
 
   graph.edges().forEach(e => {
-    const edge = graph.edge(e);
-    edge.arrowHeadClass = "arrowhead";
+    const edge = graph.edge(e) as dagre.GraphEdge & JSGraphEdge;
+    if (edge.isStrongReference === false) {
+      edge.class = "isWeakReference";
+      edge.arrowHeadClass = "arrowhead-gray";
+      graph.setEdge(e, edge);
+    }
   });
-
-  graph.edges().forEach((e: dagre.Edge) => {
-    Reflect.set(e, "label", e.name!);
-  });
-
   dagre.layout(graph);
   return graph;
 }

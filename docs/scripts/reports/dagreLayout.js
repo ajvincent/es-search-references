@@ -24,10 +24,11 @@ export function createLayoutGraph(graph) {
     });
     graph.edges().forEach(e => {
         const edge = graph.edge(e);
-        edge.arrowHeadClass = "arrowhead";
-    });
-    graph.edges().forEach((e) => {
-        Reflect.set(e, "label", e.name);
+        if (edge.isStrongReference === false) {
+            edge.class = "isWeakReference";
+            edge.arrowHeadClass = "arrowhead-gray";
+            graph.setEdge(e, edge);
+        }
     });
     dagre.layout(graph);
     return graph;
