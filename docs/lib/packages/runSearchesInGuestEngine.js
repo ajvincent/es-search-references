@@ -101,10 +101,11 @@ var EdgePrefix;
     EdgePrefix["MapKeyToTuple"] = "mapKeyToTuple";
     EdgePrefix["MapValue"] = "mapValue";
     EdgePrefix["SetValue"] = "setValue";
-    EdgePrefix["FinalizationRegistryToTuple"] = "finalizationToTuple";
-    EdgePrefix["FinalizationToTarget"] = "finalizationToTarget";
-    EdgePrefix["FinalizationToHeldValue"] = "finalizationToHeldValue";
-    EdgePrefix["FinalizationToUnregisterToken"] = "finalizationToUnregisterToken";
+    EdgePrefix["FinalizationRegistryToTarget"] = "finalizationToTarget";
+    EdgePrefix["FinalizationRegistryToTuple"] = "finalizationRegistryToTuple";
+    EdgePrefix["FinalizationTargetToTuple"] = "finalizationTargetToTuple";
+    EdgePrefix["FinalizationTupleToHeldValue"] = "finalizationTupleToHeldValue";
+    EdgePrefix["FinalizationTupleToUnregisterToken"] = "finalizationTupleToUnregisterToken";
     EdgePrefix["ObjectToPrivateKey"] = "objectToPrivateKey";
     EdgePrefix["ObjectToPrivateTuple"] = "objectToPrivateTuple";
     EdgePrefix["PrivateKeyToTuple"] = "privateKeyToTuple";
@@ -530,20 +531,22 @@ class ObjectGraphImpl {
         if (this.#searchConfiguration?.defineNodeTrap) {
             this.#searchConfiguration.defineNodeTrap(registryId, tupleNodeId, "(new finalization tuple)");
         }
-        const registryToTupleEdgeId = this.#defineEdge("(tuple)", registryId, EdgePrefix.FinalizationRegistryToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, undefined);
-        const tupleToTargetEdgeId = this.#defineEdge("(target)", tupleNodeId, EdgePrefix.FinalizationToTarget, createValueDescription(target, this), null, targetId, false, undefined);
+        const registryToTargetEdgeId = this.#defineEdge("(registry to target)", registryId, EdgePrefix.FinalizationRegistryToTarget, createValueDescription(target, this), null, targetId, false, undefined);
+        const registryToTupleEdgeId = this.#defineEdge("(registry to tuple)", registryId, EdgePrefix.FinalizationRegistryToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, targetId);
+        const registryTargetToTupleEdgeId = this.#defineEdge("(registry target to tuple)", targetId, EdgePrefix.FinalizationTargetToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, registryId);
         let tupleToHeldValueEdgeId;
         if (heldValueId) {
-            tupleToHeldValueEdgeId = this.#defineEdge("(held value)", tupleNodeId, EdgePrefix.FinalizationToHeldValue, createValueDescription(heldValue, this), null, heldValueId, true, targetId);
+            tupleToHeldValueEdgeId = this.#defineEdge("(held value)", tupleNodeId, EdgePrefix.FinalizationTupleToHeldValue, createValueDescription(heldValue, this), null, heldValueId, true, targetId);
         }
         let tupleToUnregisterTokenEdgeId;
         if (unregisterTokenId) {
-            tupleToUnregisterTokenEdgeId = this.#defineEdge("(unregister token)", tupleNodeId, EdgePrefix.FinalizationToUnregisterToken, createValueDescription(unregisterToken, this), null, unregisterTokenId, false, targetId);
+            tupleToUnregisterTokenEdgeId = this.#defineEdge("(unregister token)", tupleNodeId, EdgePrefix.FinalizationTupleToUnregisterToken, createValueDescription(unregisterToken, this), null, unregisterTokenId, false, targetId);
         }
         return {
             tupleNodeId,
+            registryToTargetEdgeId,
             registryToTupleEdgeId,
-            tupleToTargetEdgeId,
+            registryTargetToTupleEdgeId,
             tupleToHeldValueEdgeId,
             tupleToUnregisterTokenEdgeId,
         };
