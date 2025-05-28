@@ -20,10 +20,11 @@ export function createRenderGraph(graph, svgView) {
     addIconAndTitle(svg, "Promise", "\u23f3", true);
     addIconAndTitle(svg, "Proxy", "\u2248", true);
     addIconAndTitle(svg, "GeneratorPrototype", "*", true);
-    addIconAndTitle(svg, "AsyncGeneratorPrototype", "*", true);
-    addIconAndTitle(svg, "ArrayIteratorPrototype", "\u23ef", true);
-    addIconAndTitle(svg, "MapIteratorPrototype", "\u23ef", true);
-    addIconAndTitle(svg, "SetIteratorPrototype", "\u23ef", true);
+    addIconAndTitle(svg, "AsyncGenerator", "*", true);
+    addIconAndTitle(svg, "ArrayIterator", "\u23ef", true);
+    addIconAndTitle(svg, "MapIterator", "\u23ef", true);
+    addIconAndTitle(svg, "SetIterator", "\u23ef", true);
+    addIconAndTitle(svg, "IteratorHelper", "\u23ef", true);
     addIconAndTitle(svg, "WeakRef", "\u2192", false);
     addIconAndTitle(svg, "FinalizationRegistry", "\u267b", false);
     svgView.showHeldValuesNode();

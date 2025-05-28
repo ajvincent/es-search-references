@@ -114,7 +114,8 @@ declare enum BuiltInJSTypeName {
     MapIterator = "MapIterator",
     SetIterator = "SetIterator",
     Generator = "Generator",
-    AsyncGenerator = "AsyncGenerator"
+    AsyncGenerator = "AsyncGenerator",
+    IteratorHelper = "IteratorHelper"
 }
 declare enum NodePrefix {
     Object = "object",

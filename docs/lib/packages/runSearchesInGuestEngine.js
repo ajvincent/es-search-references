@@ -59,6 +59,7 @@ var BuiltInJSTypeName;
     BuiltInJSTypeName["SetIterator"] = "SetIterator";
     BuiltInJSTypeName["Generator"] = "Generator";
     BuiltInJSTypeName["AsyncGenerator"] = "AsyncGenerator";
+    BuiltInJSTypeName["IteratorHelper"] = "IteratorHelper";
 })(BuiltInJSTypeName || (BuiltInJSTypeName = {}));
 var NodePrefix;
 (function (NodePrefix) {
@@ -981,6 +982,7 @@ class GraphBuilder {
             [Intrinsics["%ArrayIteratorPrototype%"], BuiltInJSTypeName.ArrayIterator],
             [Intrinsics["%MapIteratorPrototype%"], BuiltInJSTypeName.MapIterator],
             [Intrinsics["%SetIteratorPrototype%"], BuiltInJSTypeName.SetIterator],
+            [Intrinsics["%IteratorHelperPrototype%"], BuiltInJSTypeName.IteratorHelper],
         ]);
     }
     static *#isConstructorPrototype(guestObject) {
@@ -1334,12 +1336,19 @@ class GraphBuilder {
             Array.isArray(guestObject.HostCapturedValues)) {
             yield* this.#addInternalSlotIfList(guestObject, "HostCapturedValues");
         }
+        if (internalSlots.has("UnderlyingIterator")) {
+            const UnderlyingRecord = Reflect.get(guestObject, "UnderlyingIterator");
+            const guestRecord = GuestEngine.OrdinaryObjectCreate.from(UnderlyingRecord);
+            yield* this.#defineGraphNode(guestRecord, false, `internal slot object: UnderlyingIterator`);
+            const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.InternalSlot);
+            this.#guestObjectGraph.defineInternalSlot(guestObject, `[[UnderlyingIterator]]`, guestRecord, true, edgeRelationship);
+        }
     }
     *#addInternalSlotIfObject(parentObject, slotName, excludeFromSearches, isStrongReference) {
         const slotObject = Reflect.get(parentObject, slotName);
         if (slotObject.type !== "Object")
             return;
-        yield* this.#defineGraphNode(slotObject, excludeFromSearches, `internal slot object: slotName`);
+        yield* this.#defineGraphNode(slotObject, excludeFromSearches, `internal slot object: ${slotName}`);
         const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.InternalSlot);
         this.#guestObjectGraph.defineInternalSlot(parentObject, `[[${slotName}]]`, slotObject, isStrongReference, edgeRelationship);
     }
