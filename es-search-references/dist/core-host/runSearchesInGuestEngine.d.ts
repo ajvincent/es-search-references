@@ -60,6 +60,10 @@ interface SearchConfiguration {
    */
   internalErrorTrap?: () => void;
 
+  markStrongNodeTrap?: (
+    nodeId: string
+  ) => void;
+
   /**
    * True if we should exclude values available to functions (this, super, arguments).
    * Usually you do not want this, but for internal development purposes (reducing noise
@@ -78,6 +82,7 @@ declare class LoggingConfiguration implements Required<SearchConfiguration> {
     defineNodeTrap(parentId: string, weakKey: string, details: string): void;
     defineEdgeTrap(parentId: string, edgeId: string, childId: string, secondParentId: string | undefined, isStrongReference: boolean): void;
     defineWeakKeyTrap(weakKey: string): void;
+    markStrongNodeTrap(nodeId: string): void;
     retrieveLogs(sourceSpecifier: string, resultsKey: string): readonly string[] | undefined;
 }
 

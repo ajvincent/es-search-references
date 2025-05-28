@@ -596,7 +596,7 @@ class ObjectGraphImpl {
     }
     #ownershipResolver(childKey, jointOwnerKeys, edgeId, tracker) {
         const isStrongReference = this.#edgeIdTo_IsStrongReference_Map.get(edgeId);
-        if (isStrongReference && !this.#weakKeyIdsToVisit.has(childKey)) {
+        if (isStrongReference) {
             this.#weakKeyIdsToVisit.add(childKey);
             const objectOrSymbol = this.#idToWeakKeyMap.get(childKey);
             this.#weakKeyHeldStronglyMap.set(objectOrSymbol, true);
@@ -615,6 +615,8 @@ class ObjectGraphImpl {
         this.#weakKeyIdsToVisit.add(this.#heldValuesId);
         try {
             for (const id of this.#weakKeyIdsToVisit) {
+                if (this.#searchConfiguration?.markStrongNodeTrap)
+                    this.#searchConfiguration?.markStrongNodeTrap(id);
                 this.#ownershipSetsTracker.resolveKey(id);
             }
             this.#state = ObjectGraphState.MarkedStrongReferences;
@@ -1327,6 +1329,11 @@ class GraphBuilder {
             yield* this.#addInternalPromiseRecordsList(guestObject, "PromiseFulfillReactions");
             yield* this.#addInternalPromiseRecordsList(guestObject, "PromiseRejectReactions");
         }
+        if (internalSlots.has("HostCapturedValues") &&
+            "HostCapturedValues" in guestObject &&
+            Array.isArray(guestObject.HostCapturedValues)) {
+            yield* this.#addInternalSlotIfList(guestObject, "HostCapturedValues");
+        }
     }
     *#addInternalSlotIfObject(parentObject, slotName, excludeFromSearches, isStrongReference) {
         const slotObject = Reflect.get(parentObject, slotName);
@@ -1768,6 +1775,9 @@ class LoggingConfiguration {
     }
     defineWeakKeyTrap(weakKey) {
         this.log(`defineWeakKey: ${weakKey}`);
+    }
+    markStrongNodeTrap(nodeId) {
+        this.log("markStrongNode: " + nodeId);
     }
     //#endregion SearchConfiguration
     retrieveLogs(sourceSpecifier, resultsKey) {
