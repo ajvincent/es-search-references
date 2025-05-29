@@ -23,7 +23,10 @@ interface SearchConfiguration {
   endSearch?(sourceSpecifier: string, resultsKey: string): void;
 
   /** Ye olde log function. */
-  log?(message: string): void;
+  log?(message: string, indentLevel?: number): void;
+
+  enterNodeIdTrap?: (nodeId: string) => void;
+  leaveNodeIdTrap?: (nodeId: string) => void;
 
   /**
    * A callback for when we attempt to define a node, even if the node already exists.
@@ -78,7 +81,9 @@ declare class LoggingConfiguration implements Required<SearchConfiguration> {
     beginSearch(sourceSpecifier: string, resultsKey: string): void;
     endSearch(sourceSpecifier: string, resultsKey: string): void;
     internalErrorTrap(): void;
-    log(message: string, noIndent?: boolean): void;
+    log(message: string, indentLevel?: number): void;
+    enterNodeIdTrap(nodeId: string): void;
+    leaveNodeIdTrap(nodeId: string): void;
     defineNodeTrap(parentId: string, weakKey: string, details: string): void;
     defineEdgeTrap(parentId: string, edgeId: string, childId: string, secondParentId: string | undefined, isStrongReference: boolean): void;
     defineWeakKeyTrap(weakKey: string): void;

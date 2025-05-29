@@ -9,7 +9,8 @@ export class SearchLogsConfiguration extends LoggingConfiguration {
     endSearch(sourceSpecifier, resultsKey) {
         this.#currentLogs = undefined;
     }
-    log(message, noIndent) {
+    log(message, indentLevel = 2) {
+        message = "  ".repeat(indentLevel - 1) + message;
         this.#currentLogs.push(message);
     }
 }

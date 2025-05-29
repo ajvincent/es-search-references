@@ -15,7 +15,8 @@ export class SearchLogsConfiguration extends LoggingConfiguration {
     this.#currentLogs = undefined;
   }
 
-  log(message: string, noIndent?: boolean): void {
+  log(message: string, indentLevel = 2): void {
+    message = "  ".repeat(indentLevel - 1) + message;
     this.#currentLogs!.push(message);
   }
 }

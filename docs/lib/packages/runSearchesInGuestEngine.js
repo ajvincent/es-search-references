@@ -1060,6 +1060,8 @@ class GraphBuilder {
                 continue;
             }
             this.#currentNodeId = this.#guestObjectGraph.getWeakKeyId(guestObject);
+            if (this.#searchConfiguration?.enterNodeIdTrap)
+                this.#searchConfiguration.enterNodeIdTrap(this.#currentNodeId);
             if (GuestEngine.isProxyExoticObject(guestObject)) {
                 yield* this.#addInternalSlotIfObject(guestObject, "ProxyTarget", true, true);
                 yield* this.#addInternalSlotIfObject(guestObject, "ProxyHandler", false, true);
@@ -1075,6 +1077,8 @@ class GraphBuilder {
                 }
                 yield* this.#lookupAndAddInternalSlots(guestObject);
             }
+            if (this.#searchConfiguration?.leaveNodeIdTrap)
+                this.#searchConfiguration.leaveNodeIdTrap(this.#currentNodeId);
             this.#currentNodeId = undefined;
         }
     }
@@ -1757,23 +1761,28 @@ class LoggingConfiguration {
     noFunctionEnvironment = false;
     beginSearch(sourceSpecifier, resultsKey) {
         this.#tracingHash = LoggingConfiguration.#hashSpecifierAndKey(sourceSpecifier, resultsKey);
-        this.log("enter " + this.#tracingHash, true);
+        this.log("enter " + this.#tracingHash, 0);
     }
     endSearch(sourceSpecifier, resultsKey) {
-        this.log("leave " + this.#tracingHash, true);
+        this.log("leave " + this.#tracingHash, 0);
         this.#tracingHash = "";
     }
     internalErrorTrap() {
         // eslint-disable-next-line no-debugger
         debugger;
     }
-    log(message, noIndent) {
-        if (!noIndent)
-            message = "  " + message;
+    log(message, indentLevel = 2) {
+        message = "  ".repeat(indentLevel) + message;
         if (this.#logsMap.has(this.#tracingHash) === false) {
             this.#logsMap.set(this.#tracingHash, []);
         }
         this.#logsMap.get(this.#tracingHash).push(message);
+    }
+    enterNodeIdTrap(nodeId) {
+        this.log("enter search nodeId: " + nodeId, 1);
+    }
+    leaveNodeIdTrap(nodeId) {
+        this.log("leave search nodeId: " + nodeId, 1);
     }
     defineNodeTrap(parentId, weakKey, details) {
         this.log(`defineNode: parentId=${parentId} weakKeyId=${weakKey} ${details}`);
