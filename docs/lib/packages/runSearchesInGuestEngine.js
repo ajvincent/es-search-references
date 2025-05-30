@@ -81,7 +81,6 @@ var ChildReferenceEdgeType;
     ChildReferenceEdgeType["PropertySymbol"] = "PropertySymbol";
     ChildReferenceEdgeType["SymbolKey"] = "SymbolKey";
     ChildReferenceEdgeType["ScopeValue"] = "ScopeValue";
-    ChildReferenceEdgeType["InstanceOf"] = "InstanceOf";
     ChildReferenceEdgeType["PrivateClassKey"] = "PrivateClassKey";
     ChildReferenceEdgeType["PrivateClassValue"] = "PrivateClassValue";
     ChildReferenceEdgeType["InternalSlot"] = "InternalSlot";
@@ -94,7 +93,6 @@ var EdgePrefix;
     EdgePrefix["PropertyKey"] = "propertyKey";
     EdgePrefix["GetterKey"] = "getterKey";
     EdgePrefix["HasSymbolAsKey"] = "hasSymbolAsKey";
-    EdgePrefix["InstanceOf"] = "instanceOf";
     EdgePrefix["ScopeValue"] = "scopeValue";
     EdgePrefix["InternalSlot"] = "internalSlot";
     EdgePrefix["MapToTuple"] = "mapToTuple";
@@ -439,16 +437,6 @@ class ObjectGraphImpl {
         }
         const label = typeof relationshipName === "symbol" ? (relationshipName.description ?? "(symbol)") : relationshipName.toString();
         const edgeId = this.#defineEdge(label, parentId, isGetter ? EdgePrefix.GetterKey : EdgePrefix.PropertyKey, createValueDescription(relationshipName, this), metadata, childId, true, undefined);
-        return edgeId;
-    }
-    defineConstructorOf(instanceObject, ctorObject, metadata) {
-        this.#setNextState(ObjectGraphState.AcceptingDefinitions);
-        if (typeof ctorObject !== "function") {
-            this.#throwInternalError(new Error("ctorObject must be a function!"));
-        }
-        const instanceId = this.#requireWeakKeyId(instanceObject, "instanceObject");
-        const ctorId = this.#requireWeakKeyId(ctorObject, "ctorObject");
-        const edgeId = this.#defineEdge("(constructor)", instanceId, EdgePrefix.InstanceOf, ObjectGraphImpl.#NOT_APPLICABLE, metadata, ctorId, true, undefined);
         return edgeId;
     }
     defineScopeValue(functionObject, identifier, objectValue, metadata) {
@@ -905,18 +893,6 @@ class GuestObjectGraphImpl {
         }
         return this.#hostGraph.definePropertyOrGetter(this.#substitution.getHostObject(parentObject), relationshipName, this.#substitution.getHostWeakKey(childObject), metadata, isGetter);
     }
-    defineConstructorOf(instanceObject, ctorObject, metadata) {
-        if (!GuestEngine.IsConstructor(ctorObject)) {
-            this.#throwInternalError(new Error("ctorObject is not a constructor"));
-        }
-        // preserving the graph order, though the graph _should_ have instanceObject already
-        const hostInstance = this.#substitution.getHostObject(instanceObject);
-        const hostCtor = this.#substitution.getHostObject(ctorObject);
-        if (typeof hostCtor !== "function") {
-            this.#throwInternalError(new Error("assertion failure: hostCtor should be a function"));
-        }
-        return this.#hostGraph.defineConstructorOf(hostInstance, hostCtor, metadata);
-    }
     defineScopeValue(functionObject, identifier, objectValue, metadata) {
         if (!GuestEngine.isFunctionObject(functionObject)) {
             this.#throwInternalError(new Error("ctorObject is not a constructor"));
@@ -1069,7 +1045,6 @@ class GraphBuilder {
             else {
                 yield* this.#addObjectProperties(guestObject);
                 yield* this.#addPrivateFields(guestObject);
-                yield* this.#addConstructorOf(guestObject);
                 if ((this.#searchConfiguration?.noFunctionEnvironment !== true) &&
                     GuestEngine.isECMAScriptFunctionObject(guestObject)) {
                     // closures
@@ -1158,7 +1133,6 @@ class GraphBuilder {
         ];
     }
     *#addObjectProperties(guestObject) {
-        const isObjectPrototype = yield* _a.#isConstructorPrototype(guestObject);
         const OwnKeys = yield* EnsureTypeOrThrow(guestObject.OwnPropertyKeys());
         GuestEngine.Assert(Array.isArray(OwnKeys));
         for (const guestKey of OwnKeys) {
@@ -1189,6 +1163,7 @@ class GraphBuilder {
                 if (guestCtor.type === "Object" && this.#intrinsics.has(guestCtor) === false) {
                     yield* this.#instanceGetterTracking.addGetterName(guestCtor, key);
                 }
+                const isObjectPrototype = yield* _a.#isConstructorPrototype(guestObject);
                 if (isObjectPrototype)
                     continue;
                 /* In the case of getters, this can definitely have side effects.  For instance, the getter
@@ -1347,6 +1322,10 @@ class GraphBuilder {
             const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.InternalSlot);
             this.#guestObjectGraph.defineInternalSlot(guestObject, `[[UnderlyingIterator]]`, guestRecord, true, edgeRelationship);
         }
+        if (guestObject.ConstructedBy?.length > 0) {
+            yield* this.#addInternalSlotIfList(guestObject, "ConstructedBy");
+            yield* this.#instanceGetterTracking.addInstance(guestObject, guestObject.ConstructedBy[guestObject.ConstructedBy.length - 1]);
+        }
     }
     *#addInternalSlotIfObject(parentObject, slotName, excludeFromSearches, isStrongReference) {
         const slotObject = Reflect.get(parentObject, slotName);
@@ -1392,24 +1371,6 @@ class GraphBuilder {
         if (UnregisterToken)
             yield* this.#defineGraphNode(UnregisterToken, false, "finalization cell unregisterToken");
         this.#guestObjectGraph.defineFinalizationTuple(registry, WeakRefTarget, HeldValue, UnregisterToken);
-    }
-    *#addConstructorOf(guestObject) {
-        const guestCtor = yield* EnsureTypeOrThrow(GuestEngine.GetV(guestObject, _a.#stringConstants.get("constructor")));
-        if (GuestEngine.isFunctionObject(guestCtor) === false) {
-            // generators end up here
-            return;
-        }
-        const guestCtorProto = yield* EnsureTypeOrThrow(GuestEngine.GetPrototypeFromConstructor(guestCtor, "%Object.prototype%"));
-        if (this.#intrinsics.has(guestCtorProto))
-            return;
-        if (guestCtorProto === guestObject)
-            return;
-        GuestEngine.Assert(guestCtor.type === "Object");
-        GuestEngine.Assert(GuestEngine.IsConstructor(guestCtor));
-        yield* this.#defineGraphNode(guestCtor, false, "constructor");
-        const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.InstanceOf);
-        this.#guestObjectGraph.defineConstructorOf(guestObject, guestCtor, edgeRelationship);
-        yield* this.#instanceGetterTracking.addInstance(guestObject, guestCtor);
     }
     *#addMapData(mapObject, slotName) {
         const elements = Reflect.get(mapObject, slotName);
