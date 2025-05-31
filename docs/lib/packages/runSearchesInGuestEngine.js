@@ -1085,6 +1085,31 @@ class GraphBuilder {
         if (this.#guestObjectGraph.hasObject(guestObject) === false) {
             const collectionAndClass = yield* this.#getCollectionAndClassName(guestObject);
             const objectMetadata = buildObjectMetadata(...collectionAndClass);
+            if (guestObject.ConstructedBy.length > 0) {
+                const classObject = guestObject.ConstructedBy[guestObject.ConstructedBy.length - 1];
+                const slots = new Set(classObject.internalSlotsList);
+                if (slots.has("ScriptOrModule")) {
+                    const ScriptOrModule = Reflect.get(classObject, "ScriptOrModule");
+                    if (ScriptOrModule instanceof GuestEngine.NullValue === false)
+                        objectMetadata.classSpecifier = ScriptOrModule?.HostDefined?.specifier;
+                }
+                if (slots.has("ECMAScriptCode")) {
+                    const ECMAScriptCode = Reflect.get(classObject, "ECMAScriptCode");
+                    let parseNode = ECMAScriptCode;
+                    for (let i = 0; i < 5; i++) {
+                        if ((parseNode.type === "ClassDeclaration") || (parseNode.type === "ClassExpression")) {
+                            break;
+                        }
+                        parseNode = parseNode.parent;
+                        if (!parseNode)
+                            break;
+                    }
+                    if ((parseNode?.type !== "ClassDeclaration") && (parseNode?.type !== "ClassExpression")) {
+                        parseNode = ECMAScriptCode;
+                    }
+                    objectMetadata.classLineNumber = parseNode?.location.start.line;
+                }
+            }
             this.#guestObjectGraph.defineObject(guestObject, objectMetadata);
             if (excludeFromSearch) {
                 this.#objectsToExcludeFromSearch.add(guestObject);
