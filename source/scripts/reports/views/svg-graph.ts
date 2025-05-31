@@ -122,8 +122,6 @@ export class SVGGraphView implements BaseView {
       this.#nodeIdToViewMap.set(nodeId, view);
     });
 
-    // this.#graph.node(v).elem === the <g> element for the node
-
     this.selectNode("heldValues:1");
   }
 }
