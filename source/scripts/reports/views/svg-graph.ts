@@ -1,20 +1,35 @@
+import {
+  d3,
+  dagre,
+  render as RenderCtor,
+} from "../../../lib/packages/dagre-imports.js";
+
 import type {
   BaseView
 } from "../../tab-panels/tab-panels-view.js";
 
+type SelectionAlias = d3.Selection<d3.BaseType, unknown, HTMLElement, any>;
+
 export class SVGGraphView implements BaseView {
   static readonly #templateNode: DocumentFragment = (document.getElementById("svg-graph-base") as HTMLTemplateElement).content;
   static #idCounter = 0;
+
+  #graph: dagre.graphlib.Graph;
+
   displayElement: HTMLElement;
   #svgElement: SVGSVGElement;
   #graphicsElement: SVGGraphicsElement;
 
-  activatedPromise: Promise<void>;
   handleActivated: () => void;
 
   #zoomLevel = 0;
 
-  constructor() {
+  constructor(
+    graph: dagre.graphlib.Graph,
+  )
+  {
+    this.#graph = dagre.graphlib.json.read(dagre.graphlib.json.write(graph));
+
     this.displayElement = document.createElement("div");
     this.displayElement.append(SVGGraphView.#templateNode.cloneNode(true));
     this.displayElement.id = "svg-graph-wrapper-" + (SVGGraphView.#idCounter++);
@@ -23,8 +38,9 @@ export class SVGGraphView implements BaseView {
     this.#graphicsElement = this.displayElement.querySelector(".graph") as SVGGraphicsElement;
 
     const { promise, resolve } = Promise.withResolvers<void>();
-    this.activatedPromise = promise;
     this.handleActivated = resolve;
+
+    promise.then(() => this.#createRenderGraph());
   }
 
   get svgSelector() {
@@ -55,4 +71,55 @@ export class SVGGraphView implements BaseView {
     const heldValuesNode = this.#graphicsElement.querySelector(".heldValues-node") as SVGGElement;
     heldValuesNode.scrollIntoView({block: "center"});
   }
+
+  #createRenderGraph(): void {
+    const renderer = new RenderCtor();
+    const svg = d3.select(this.svgSelector);
+    const group = svg.select("g");
+
+    renderer(group, this.#graph);
+    svg.attr("width", this.#graph.graph().width!);
+    svg.attr("height", this.#graph.graph().height! + 40);
+
+    addInnerCircle(svg, "heldValues");
+    addInnerCircle(svg, "target");
+
+    addIconAndTitle(svg, "Object", "{}", true);
+    addIconAndTitle(svg, "Array", "[]", true);
+    addIconAndTitle(svg, "Function", "fn", true);
+    addIconAndTitle(svg, "AsyncFunction", "\u23f1", true);
+    addIconAndTitle(svg, "Set", "()", true);
+    addIconAndTitle(svg, "WeakSet", "()", false);
+    addIconAndTitle(svg, "Map", "#", true);
+    addIconAndTitle(svg, "WeakMap", "#", false);
+    addIconAndTitle(svg, "Promise", "\u23f3", true);
+    addIconAndTitle(svg, "Proxy", "\u2248", true);
+    addIconAndTitle(svg, "GeneratorPrototype", "*", true);
+    addIconAndTitle(svg, "AsyncGenerator", "*", true);
+    addIconAndTitle(svg, "ArrayIterator", "\u23ef", true);
+    addIconAndTitle(svg, "MapIterator", "\u23ef", true);
+    addIconAndTitle(svg, "SetIterator", "\u23ef", true);
+    addIconAndTitle(svg, "IteratorHelper", "\u23ef", true);
+    addIconAndTitle(svg, "WeakRef", "\u2192", false);
+    addIconAndTitle(svg, "FinalizationRegistry", "\u267b", false);
+
+    // this.#graph.node(v).elem === the <g> element for the node
+
+    this.showHeldValuesNode();
+  }
+}
+
+function addInnerCircle(svg: SelectionAlias, prefix: string): void {
+  const outerCircle = svg.select(`.${prefix}-node circle`);
+  outerCircle.clone().attr("r", parseInt(outerCircle.attr("r")) - 6);
+}
+
+function addIconAndTitle(svg: SelectionAlias, builtIn: string, icon: string, isStrong: boolean): void {
+  const selection = svg.selectAll(`.nodes > .builtin-${builtIn}`);
+  let classes: string = icon.length === 1 ? "builtin-icon" : "builtin-icon-pair";
+  if (!isStrong) {
+    classes += " grey";
+  }
+  selection.append("text").classed(classes, true).text(icon);
+  selection.append("title").text(builtIn);
 }

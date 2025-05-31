@@ -3,7 +3,6 @@ import { dagre } from "../../lib/packages/dagre-imports.js";
 import { DefaultMap } from "../search/DefaultMap.js";
 import { TabPanelsView } from "../tab-panels/tab-panels-view.js";
 import { createLayoutGraph } from "./dagreLayout.js";
-import { createRenderGraph } from "./dagreRender.js";
 import { GraphControlsView } from "./views/graphControls.js";
 import { SVGGraphView } from "./views/svg-graph.js";
 export class OutputController {
@@ -107,9 +106,8 @@ export class OutputController {
             this.#addPanel(pathToFile, searchKey, "svg-graph", view);
             return;
         }
-        const view = new SVGGraphView();
+        const view = new SVGGraphView(results.layoutGraph);
         this.#addPanel(pathToFile, searchKey, "svg-graph", view);
-        view.activatedPromise.then(() => createRenderGraph(results.layoutGraph, view));
     }
     #addPanel(pathToFile, searchKey, tabKey, view) {
         this.#tabKeys.add(tabKey);

@@ -20,10 +20,6 @@ import {
 } from "./dagreLayout.js";
 
 import {
-  createRenderGraph
-} from "./dagreRender.js";
-
-import {
   GraphControlsView
 } from "./views/graphControls.js";
 
@@ -178,9 +174,8 @@ export class OutputController {
       return;
     }
 
-    const view = new SVGGraphView();
+    const view = new SVGGraphView(results.layoutGraph);
     this.#addPanel(pathToFile, searchKey, "svg-graph", view);
-    view.activatedPromise.then(() => createRenderGraph(results.layoutGraph!, view));
   }
 
   #addPanel(
