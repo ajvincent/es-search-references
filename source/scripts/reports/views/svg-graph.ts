@@ -13,7 +13,6 @@ import {
   type JSGraphNode,
 } from "../../../lib/packages/runSearchesInGuestEngine.js";
 
-type SelectionAlias = d3.Selection<d3.BaseType, unknown, HTMLElement, any>;
 type IconAndIsStrongRef = readonly [string, boolean];
 
 interface GraphNode extends JSGraphNode {
