@@ -47,3 +47,20 @@
   fill: #999999;
   stroke: #999999;
 }
+
+#report-panels svg g.selected > circle {
+  animation-duration: 1s;
+  animation-name: node-pulse;
+  animation-iteration-count: 6;
+  animation-direction: alternate;
+}
+
+@keyframes node-pulse {
+  from {
+    stroke-width: 1px;
+  }
+
+  to {
+    stroke-width: 3px;
+  }
+}

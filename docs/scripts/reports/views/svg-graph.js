@@ -2,10 +2,14 @@ import { d3, dagre, render as RenderCtor, } from "../../../lib/packages/dagre-im
 export class SVGGraphView {
     static #templateNode = document.getElementById("svg-graph-base").content;
     static #idCounter = 0;
+    static #getIdNumber(id) {
+        return parseInt(id.substring(id.lastIndexOf(":") + 1));
+    }
     #graph;
     displayElement;
     #svgElement;
     #graphicsElement;
+    #selectedElement;
     handleActivated;
     #zoomLevel = 0;
     constructor(graph) {
@@ -40,9 +44,22 @@ export class SVGGraphView {
             baseVal.replaceItem(newTransform, 1);
         }
     }
-    showHeldValuesNode() {
-        const heldValuesNode = this.#graphicsElement.querySelector(".heldValues-node");
-        heldValuesNode.scrollIntoView({ block: "center" });
+    getNodeIds() {
+        const nodes = this.#graph.nodes();
+        const results = [];
+        results.length = nodes.length;
+        nodes.forEach(n => {
+            const index = SVGGraphView.#getIdNumber(n);
+            results[index] = n;
+        });
+        return results;
+    }
+    showNode(nodeId) {
+        this.#selectedElement?.classList.remove("selected");
+        const node = this.#graph.node(nodeId);
+        this.#selectedElement = node.elem;
+        this.#selectedElement.scrollIntoView({ block: "center", inline: "center" });
+        this.#selectedElement.classList.add("selected");
     }
     #createRenderGraph() {
         const renderer = new RenderCtor();
@@ -72,7 +89,7 @@ export class SVGGraphView {
         addIconAndTitle(svg, "WeakRef", "\u2192", false);
         addIconAndTitle(svg, "FinalizationRegistry", "\u267b", false);
         // this.#graph.node(v).elem === the <g> element for the node
-        this.showHeldValuesNode();
+        this.showNode("heldValues:1");
     }
 }
 function addInnerCircle(svg, prefix) {

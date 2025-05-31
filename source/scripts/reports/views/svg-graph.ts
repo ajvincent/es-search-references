@@ -9,16 +9,24 @@ import type {
 } from "../../tab-panels/tab-panels-view.js";
 
 type SelectionAlias = d3.Selection<d3.BaseType, unknown, HTMLElement, any>;
+interface GraphNodeWithElement {
+  elem: SVGGElement;
+}
 
 export class SVGGraphView implements BaseView {
   static readonly #templateNode: DocumentFragment = (document.getElementById("svg-graph-base") as HTMLTemplateElement).content;
   static #idCounter = 0;
+
+  static #getIdNumber(id: `${string}:${number}`): number {
+    return parseInt(id.substring(id.lastIndexOf(":") + 1));
+  }
 
   #graph: dagre.graphlib.Graph;
 
   displayElement: HTMLElement;
   #svgElement: SVGSVGElement;
   #graphicsElement: SVGGraphicsElement;
+  #selectedElement?: SVGGElement;
 
   handleActivated: () => void;
 
@@ -67,9 +75,23 @@ export class SVGGraphView implements BaseView {
     }
   }
 
-  showHeldValuesNode(): void {
-    const heldValuesNode = this.#graphicsElement.querySelector(".heldValues-node") as SVGGElement;
-    heldValuesNode.scrollIntoView({block: "center"});
+  getNodeIds(): readonly string[] {
+    const nodes = this.#graph.nodes() as readonly (`${string}:${number}`)[];
+    const results: string[] = [];
+    results.length = nodes.length;
+    nodes.forEach(n => {
+      const index = SVGGraphView.#getIdNumber(n);
+      results[index] = n;
+    });
+    return results;
+  }
+
+  showNode(nodeId: string): void {
+    this.#selectedElement?.classList.remove("selected");
+    const node = this.#graph.node(nodeId) as unknown as GraphNodeWithElement;
+    this.#selectedElement = node.elem;
+    this.#selectedElement.scrollIntoView({block: "center", inline: "center"});
+    this.#selectedElement.classList.add("selected");
   }
 
   #createRenderGraph(): void {
@@ -105,7 +127,7 @@ export class SVGGraphView implements BaseView {
 
     // this.#graph.node(v).elem === the <g> element for the node
 
-    this.showHeldValuesNode();
+    this.showNode("heldValues:1");
   }
 }
 
