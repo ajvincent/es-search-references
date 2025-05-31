@@ -227,8 +227,6 @@ type ValueDescription = (
 
 interface GraphNodeWithMetadata<ObjectMetadata extends JsonObject | null> {
   readonly metadata: ObjectMetadata,
-  width: number,
-  height: number,
 }
 
 interface GraphEdgeWithMetadata<RelationshipMetadata extends JsonObject | null> {

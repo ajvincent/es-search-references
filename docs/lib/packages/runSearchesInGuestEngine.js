@@ -352,8 +352,6 @@ class ObjectGraphImpl {
         this.#weakKeyToIdMap.set(privateName, nodeId);
         this.#idToWeakKeyMap.set(nodeId, privateName);
         const nodeMetadata = {
-            width: 200,
-            height: 200,
             metadata: {
                 description
             }
@@ -371,8 +369,6 @@ class ObjectGraphImpl {
         this.#weakKeyToIdMap.set(weakKey, nodeId);
         this.#idToWeakKeyMap.set(nodeId, weakKey);
         const nodeMetadata = {
-            width: 200,
-            height: 200,
             metadata,
         };
         this.#graph.setNode(nodeId, nodeMetadata);
