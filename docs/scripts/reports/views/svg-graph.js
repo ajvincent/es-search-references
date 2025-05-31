@@ -1,4 +1,5 @@
 import { d3, dagre, render as RenderCtor, } from "../../../lib/packages/dagre-imports.js";
+import { JSGraphConstants, } from "../../../lib/packages/runSearchesInGuestEngine.js";
 export class SVGGraphView {
     static #templateNode = document.getElementById("svg-graph-base").content;
     static #idCounter = 0;
@@ -9,7 +10,8 @@ export class SVGGraphView {
     displayElement;
     #svgElement;
     #graphicsElement;
-    #selectedElement;
+    #nodeIdToViewMap = new Map;
+    #selectedId = "";
     handleActivated;
     #zoomLevel = 0;
     constructor(graph) {
@@ -54,12 +56,15 @@ export class SVGGraphView {
         });
         return results;
     }
-    showNode(nodeId) {
-        this.#selectedElement?.classList.remove("selected");
-        const node = this.#graph.node(nodeId);
-        this.#selectedElement = node.elem;
-        this.#selectedElement.scrollIntoView({ block: "center", inline: "center" });
-        this.#selectedElement.classList.add("selected");
+    selectNode(nodeId) {
+        const previousView = this.#nodeIdToViewMap.get(this.#selectedId);
+        previousView?.hideSelected();
+        this.#selectedId = nodeId;
+        const view = this.#nodeIdToViewMap.get(nodeId);
+        if (view) {
+            view.scrollIntoView();
+            view.showSelected();
+        }
     }
     #createRenderGraph() {
         const renderer = new RenderCtor();
@@ -68,40 +73,71 @@ export class SVGGraphView {
         renderer(group, this.#graph);
         svg.attr("width", this.#graph.graph().width);
         svg.attr("height", this.#graph.graph().height + 40);
-        addInnerCircle(svg, "heldValues");
-        addInnerCircle(svg, "target");
-        addIconAndTitle(svg, "Object", "{}", true);
-        addIconAndTitle(svg, "Array", "[]", true);
-        addIconAndTitle(svg, "Function", "fn", true);
-        addIconAndTitle(svg, "AsyncFunction", "\u23f1", true);
-        addIconAndTitle(svg, "Set", "()", true);
-        addIconAndTitle(svg, "WeakSet", "()", false);
-        addIconAndTitle(svg, "Map", "#", true);
-        addIconAndTitle(svg, "WeakMap", "#", false);
-        addIconAndTitle(svg, "Promise", "\u23f3", true);
-        addIconAndTitle(svg, "Proxy", "\u2248", true);
-        addIconAndTitle(svg, "GeneratorPrototype", "*", true);
-        addIconAndTitle(svg, "AsyncGenerator", "*", true);
-        addIconAndTitle(svg, "ArrayIterator", "\u23ef", true);
-        addIconAndTitle(svg, "MapIterator", "\u23ef", true);
-        addIconAndTitle(svg, "SetIterator", "\u23ef", true);
-        addIconAndTitle(svg, "IteratorHelper", "\u23ef", true);
-        addIconAndTitle(svg, "WeakRef", "\u2192", false);
-        addIconAndTitle(svg, "FinalizationRegistry", "\u267b", false);
+        this.#graph.nodes().forEach((nodeId) => {
+            const node = this.#graph.node(nodeId);
+            const view = new SVGGraphNodeView(node.elem, nodeId, node.metadata?.builtInJSTypeName);
+            this.#nodeIdToViewMap.set(nodeId, view);
+        });
         // this.#graph.node(v).elem === the <g> element for the node
-        this.showNode("heldValues:1");
+        this.selectNode("heldValues:1");
     }
 }
-function addInnerCircle(svg, prefix) {
-    const outerCircle = svg.select(`.${prefix}-node circle`);
-    outerCircle.clone().attr("r", parseInt(outerCircle.attr("r")) - 6);
-}
-function addIconAndTitle(svg, builtIn, icon, isStrong) {
-    const selection = svg.selectAll(`.nodes > .builtin-${builtIn}`);
-    let classes = icon.length === 1 ? "builtin-icon" : "builtin-icon-pair";
-    if (!isStrong) {
-        classes += " grey";
+class SVGGraphNodeView {
+    static #iconAndIsStrongMap = new Map([
+        [JSGraphConstants.BuiltInJSTypeName.Object, ["{}", true]],
+        [JSGraphConstants.BuiltInJSTypeName.Array, ["[]", true]],
+        [JSGraphConstants.BuiltInJSTypeName.Function, ["fn", true]],
+        [JSGraphConstants.BuiltInJSTypeName.AsyncFunction, ["\u23f1", true]],
+        [JSGraphConstants.BuiltInJSTypeName.Set, ["()", true]],
+        [JSGraphConstants.BuiltInJSTypeName.WeakSet, ["()", false]],
+        [JSGraphConstants.BuiltInJSTypeName.Map, ["#", true]],
+        [JSGraphConstants.BuiltInJSTypeName.WeakMap, ["#", false]],
+        [JSGraphConstants.BuiltInJSTypeName.Promise, ["\u23f3", true]],
+        [JSGraphConstants.BuiltInJSTypeName.Proxy, ["\u2248", true]],
+        [JSGraphConstants.BuiltInJSTypeName.Generator, ["*", true]],
+        [JSGraphConstants.BuiltInJSTypeName.AsyncGenerator, ["*", true]],
+        [JSGraphConstants.BuiltInJSTypeName.ArrayIterator, ["\u23ef", true]],
+        [JSGraphConstants.BuiltInJSTypeName.MapIterator, ["\u23ef", true]],
+        [JSGraphConstants.BuiltInJSTypeName.SetIterator, ["\u23ef", true]],
+        [JSGraphConstants.BuiltInJSTypeName.IteratorHelper, ["\u23ef", true]],
+        [JSGraphConstants.BuiltInJSTypeName.WeakRef, ["\u2192", false]],
+        [JSGraphConstants.BuiltInJSTypeName.FinalizationRegistry, ["\u267b", false]],
+    ]);
+    #element;
+    constructor(element, nodeId, builtInType) {
+        this.#element = element;
+        if (nodeId === "target:0" || nodeId === "heldValues:1") {
+            this.#addInnerCircle();
+        }
+        if (builtInType) {
+            const iconAndIsStrongRef = SVGGraphNodeView.#iconAndIsStrongMap.get(builtInType);
+            if (iconAndIsStrongRef) {
+                const [icon, isStrong] = iconAndIsStrongRef;
+                const textElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                textElement.classList.add(icon.length === 1 ? "builtin-icon" : "builtin-icon-pair");
+                if (!isStrong)
+                    textElement.classList.add("grey");
+                textElement.append(icon);
+                const titleElement = document.createElementNS("http://www.w3.org/2000/svg", "title");
+                titleElement.append(builtInType);
+                element.append(textElement, titleElement);
+            }
+        }
     }
-    selection.append("text").classed(classes, true).text(icon);
-    selection.append("title").text(builtIn);
+    #addInnerCircle() {
+        const outerCircle = this.#element.firstElementChild;
+        const innerCircle = outerCircle.cloneNode(false);
+        const outerRadius = parseInt(outerCircle.getAttribute("r"));
+        innerCircle.setAttribute("r", (outerRadius - 6).toString(10));
+        outerCircle.after(innerCircle);
+    }
+    showSelected() {
+        this.#element.classList.add("selected");
+    }
+    hideSelected() {
+        this.#element.classList.remove("selected");
+    }
+    scrollIntoView() {
+        this.#element.scrollIntoView({ block: "center", inline: "center" });
+    }
 }

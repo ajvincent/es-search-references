@@ -61,6 +61,6 @@ export class GraphControlsView implements BaseView {
 
   #handleNodeSelect(event: Event): void {
     event.stopPropagation();
-    this.#currentGraphView!.showNode(this.#scrollToNodeSelect.value);
+    this.#currentGraphView!.selectNode(this.#scrollToNodeSelect.value);
   }
 }

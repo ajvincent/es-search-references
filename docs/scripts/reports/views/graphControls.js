@@ -44,6 +44,6 @@ export class GraphControlsView {
     }
     #handleNodeSelect(event) {
         event.stopPropagation();
-        this.#currentGraphView.showNode(this.#scrollToNodeSelect.value);
+        this.#currentGraphView.selectNode(this.#scrollToNodeSelect.value);
     }
 }

@@ -48,7 +48,7 @@
   stroke: #999999;
 }
 
-#report-panels svg g.selected > circle {
+#report-panels svg g.selected > :is(circle, rect) {
   animation-duration: 1s;
   animation-name: node-pulse;
   animation-iteration-count: 6;

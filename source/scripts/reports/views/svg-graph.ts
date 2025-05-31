@@ -8,8 +8,15 @@ import type {
   BaseView
 } from "../../tab-panels/tab-panels-view.js";
 
+import {
+  JSGraphConstants,
+  type JSGraphNode,
+} from "../../../lib/packages/runSearchesInGuestEngine.js";
+
 type SelectionAlias = d3.Selection<d3.BaseType, unknown, HTMLElement, any>;
-interface GraphNodeWithElement {
+type IconAndIsStrongRef = readonly [string, boolean];
+
+interface GraphNode extends JSGraphNode {
   elem: SVGGElement;
 }
 
@@ -26,7 +33,9 @@ export class SVGGraphView implements BaseView {
   displayElement: HTMLElement;
   #svgElement: SVGSVGElement;
   #graphicsElement: SVGGraphicsElement;
-  #selectedElement?: SVGGElement;
+
+  readonly #nodeIdToViewMap = new Map<string, SVGGraphNodeView>;
+  #selectedId: string = "";
 
   handleActivated: () => void;
 
@@ -86,12 +95,16 @@ export class SVGGraphView implements BaseView {
     return results;
   }
 
-  showNode(nodeId: string): void {
-    this.#selectedElement?.classList.remove("selected");
-    const node = this.#graph.node(nodeId) as unknown as GraphNodeWithElement;
-    this.#selectedElement = node.elem;
-    this.#selectedElement.scrollIntoView({block: "center", inline: "center"});
-    this.#selectedElement.classList.add("selected");
+  selectNode(nodeId: string): void {
+    const previousView = this.#nodeIdToViewMap.get(this.#selectedId);
+    previousView?.hideSelected();
+
+    this.#selectedId = nodeId;
+    const view = this.#nodeIdToViewMap.get(nodeId);
+    if (view) {
+      view.scrollIntoView();
+      view.showSelected();
+    }
   }
 
   #createRenderGraph(): void {
@@ -103,45 +116,90 @@ export class SVGGraphView implements BaseView {
     svg.attr("width", this.#graph.graph().width!);
     svg.attr("height", this.#graph.graph().height! + 40);
 
-    addInnerCircle(svg, "heldValues");
-    addInnerCircle(svg, "target");
-
-    addIconAndTitle(svg, "Object", "{}", true);
-    addIconAndTitle(svg, "Array", "[]", true);
-    addIconAndTitle(svg, "Function", "fn", true);
-    addIconAndTitle(svg, "AsyncFunction", "\u23f1", true);
-    addIconAndTitle(svg, "Set", "()", true);
-    addIconAndTitle(svg, "WeakSet", "()", false);
-    addIconAndTitle(svg, "Map", "#", true);
-    addIconAndTitle(svg, "WeakMap", "#", false);
-    addIconAndTitle(svg, "Promise", "\u23f3", true);
-    addIconAndTitle(svg, "Proxy", "\u2248", true);
-    addIconAndTitle(svg, "GeneratorPrototype", "*", true);
-    addIconAndTitle(svg, "AsyncGenerator", "*", true);
-    addIconAndTitle(svg, "ArrayIterator", "\u23ef", true);
-    addIconAndTitle(svg, "MapIterator", "\u23ef", true);
-    addIconAndTitle(svg, "SetIterator", "\u23ef", true);
-    addIconAndTitle(svg, "IteratorHelper", "\u23ef", true);
-    addIconAndTitle(svg, "WeakRef", "\u2192", false);
-    addIconAndTitle(svg, "FinalizationRegistry", "\u267b", false);
+    this.#graph.nodes().forEach((nodeId: string): void => {
+      const node = this.#graph.node(nodeId) as unknown as GraphNode;
+      const view = new SVGGraphNodeView(node.elem, nodeId, node.metadata?.builtInJSTypeName);
+      this.#nodeIdToViewMap.set(nodeId, view);
+    });
 
     // this.#graph.node(v).elem === the <g> element for the node
 
-    this.showNode("heldValues:1");
+    this.selectNode("heldValues:1");
   }
 }
 
-function addInnerCircle(svg: SelectionAlias, prefix: string): void {
-  const outerCircle = svg.select(`.${prefix}-node circle`);
-  outerCircle.clone().attr("r", parseInt(outerCircle.attr("r")) - 6);
-}
+class SVGGraphNodeView {
+  static readonly #iconAndIsStrongMap: ReadonlyMap<JSGraphConstants.BuiltInJSTypeName, IconAndIsStrongRef> = new Map([
+    [JSGraphConstants.BuiltInJSTypeName.Object, ["{}", true]],
+    [JSGraphConstants.BuiltInJSTypeName.Array, ["[]", true]],
+    [JSGraphConstants.BuiltInJSTypeName.Function, ["fn", true]],
+    [JSGraphConstants.BuiltInJSTypeName.AsyncFunction, ["\u23f1", true]],
+    [JSGraphConstants.BuiltInJSTypeName.Set, ["()", true]],
+    [JSGraphConstants.BuiltInJSTypeName.WeakSet, ["()", false]],
+    [JSGraphConstants.BuiltInJSTypeName.Map, ["#", true]],
+    [JSGraphConstants.BuiltInJSTypeName.WeakMap, ["#", false]],
+    [JSGraphConstants.BuiltInJSTypeName.Promise, ["\u23f3", true]],
+    [JSGraphConstants.BuiltInJSTypeName.Proxy, ["\u2248", true]],
+    [JSGraphConstants.BuiltInJSTypeName.Generator, ["*", true]],
+    [JSGraphConstants.BuiltInJSTypeName.AsyncGenerator, ["*", true]],
+    [JSGraphConstants.BuiltInJSTypeName.ArrayIterator, ["\u23ef", true]],
+    [JSGraphConstants.BuiltInJSTypeName.MapIterator, ["\u23ef", true]],
+    [JSGraphConstants.BuiltInJSTypeName.SetIterator, ["\u23ef", true]],
+    [JSGraphConstants.BuiltInJSTypeName.IteratorHelper, ["\u23ef", true]],
+    [JSGraphConstants.BuiltInJSTypeName.WeakRef, ["\u2192", false]],
+    [JSGraphConstants.BuiltInJSTypeName.FinalizationRegistry, ["\u267b", false]],
+  ]);
 
-function addIconAndTitle(svg: SelectionAlias, builtIn: string, icon: string, isStrong: boolean): void {
-  const selection = svg.selectAll(`.nodes > .builtin-${builtIn}`);
-  let classes: string = icon.length === 1 ? "builtin-icon" : "builtin-icon-pair";
-  if (!isStrong) {
-    classes += " grey";
+  readonly #element: SVGGElement;
+
+  constructor(
+    element: SVGGElement,
+    nodeId: string,
+    builtInType: JSGraphConstants.BuiltInJSTypeName | undefined,
+  )
+  {
+    this.#element = element;
+
+    if (nodeId === "target:0" || nodeId === "heldValues:1") {
+      this.#addInnerCircle();
+    }
+
+    if (builtInType) {
+      const iconAndIsStrongRef = SVGGraphNodeView.#iconAndIsStrongMap.get(builtInType);
+      if (iconAndIsStrongRef) {
+        const [icon, isStrong] = iconAndIsStrongRef;
+
+        const textElement: SVGTextElement = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        textElement.classList.add(icon.length === 1 ? "builtin-icon" : "builtin-icon-pair");
+        if (!isStrong)
+          textElement.classList.add("grey");
+        textElement.append(icon);
+
+        const titleElement: SVGTitleElement = document.createElementNS("http://www.w3.org/2000/svg", "title");
+        titleElement.append(builtInType);
+
+        element.append(textElement, titleElement);
+      }
+    }
   }
-  selection.append("text").classed(classes, true).text(icon);
-  selection.append("title").text(builtIn);
+
+  #addInnerCircle(): void {
+    const outerCircle = this.#element.firstElementChild as SVGCircleElement;
+    const innerCircle = outerCircle.cloneNode(false) as SVGCircleElement;
+    const outerRadius: number = parseInt(outerCircle.getAttribute("r")!);
+    innerCircle.setAttribute("r", (outerRadius - 6).toString(10));
+    outerCircle.after(innerCircle);
+  }
+
+  showSelected(): void {
+    this.#element.classList.add("selected");
+  }
+
+  hideSelected(): void {
+    this.#element.classList.remove("selected");
+  }
+
+  scrollIntoView(): void {
+    this.#element.scrollIntoView({block: "center", inline: "center"});
+  }
 }
