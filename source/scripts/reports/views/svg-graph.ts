@@ -16,10 +16,16 @@ import {
 type IconAndIsStrongRef = readonly [string, boolean];
 
 interface GraphNode extends JSGraphNode {
-  elem: SVGGElement;
+  readonly elem: SVGGElement;
 }
 
-export class SVGGraphView implements BaseView {
+interface SVGGraphViewIfc {
+  readonly graph: Pick<dagre.graphlib.Graph, "inEdges" | "outEdges">;
+  selectNode(nodeId: string): void;
+  readonly popupsParent: SVGGElement;
+}
+
+export class SVGGraphView implements BaseView, SVGGraphViewIfc {
   static readonly #templateNode: DocumentFragment = (document.getElementById("svg-graph-base") as HTMLTemplateElement).content;
   static #idCounter = 0;
 
@@ -27,11 +33,12 @@ export class SVGGraphView implements BaseView {
     return parseInt(id.substring(id.lastIndexOf(":") + 1));
   }
 
-  #graph: dagre.graphlib.Graph;
+  readonly graph: dagre.graphlib.Graph;
 
-  displayElement: HTMLElement;
-  #svgElement: SVGSVGElement;
-  #graphicsElement: SVGGraphicsElement;
+  readonly displayElement: HTMLElement;
+  readonly #svgElement: SVGSVGElement;
+  readonly #graphicsElement: SVGGraphicsElement;
+  readonly popupsParent: SVGGElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
   readonly #nodeIdToViewMap = new Map<string, SVGGraphNodeView>;
   #selectedId: string = "";
@@ -44,7 +51,7 @@ export class SVGGraphView implements BaseView {
     graph: dagre.graphlib.Graph,
   )
   {
-    this.#graph = dagre.graphlib.json.read(dagre.graphlib.json.write(graph));
+    this.graph = dagre.graphlib.json.read(dagre.graphlib.json.write(graph));
 
     this.displayElement = document.createElement("div");
     this.displayElement.append(SVGGraphView.#templateNode.cloneNode(true));
@@ -84,7 +91,7 @@ export class SVGGraphView implements BaseView {
   }
 
   getNodeIds(): readonly string[] {
-    const nodes = this.#graph.nodes() as readonly (`${string}:${number}`)[];
+    const nodes = this.graph.nodes() as readonly (`${string}:${number}`)[];
     const results: string[] = [];
     results.length = nodes.length;
     nodes.forEach(n => {
@@ -111,13 +118,15 @@ export class SVGGraphView implements BaseView {
     const svg = d3.select(this.svgSelector);
     const group = svg.select("g");
 
-    renderer(group, this.#graph);
-    svg.attr("width", this.#graph.graph().width!);
-    svg.attr("height", this.#graph.graph().height! + 40);
+    renderer(group, this.graph);
+    svg.attr("width", this.graph.graph().width!);
+    svg.attr("height", this.graph.graph().height! + 40);
 
-    this.#graph.nodes().forEach((nodeId: string): void => {
-      const node = this.#graph.node(nodeId) as unknown as GraphNode;
-      const view = new SVGGraphNodeView(node.elem, nodeId, node.metadata?.builtInJSTypeName);
+    this.#graphicsElement.querySelector(".output")!.append(this.popupsParent);
+
+    this.graph.nodes().forEach((nodeId: string): void => {
+      const node = this.graph.node(nodeId) as unknown as GraphNode;
+      const view = new SVGGraphNodeView(nodeId, node, this);
       this.#nodeIdToViewMap.set(nodeId, view);
     });
 
@@ -147,20 +156,36 @@ class SVGGraphNodeView {
     [JSGraphConstants.BuiltInJSTypeName.FinalizationRegistry, ["\u267b", false]],
   ]);
 
-  readonly #element: SVGGElement;
+  static readonly #popupTemplateNode: SVGForeignObjectElement = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
+  static {
+    this.#popupTemplateNode.setAttribute("x", "50");
+    this.#popupTemplateNode.setAttribute("y", "50");
+    this.#popupTemplateNode.setAttribute("width", "300");
+    this.#popupTemplateNode.setAttribute("height", "200");
+    const template: DocumentFragment = (document.getElementById("svg-node-overlay") as HTMLTemplateElement).content;
+    this.#popupTemplateNode.append(template.cloneNode(true));
+  }
+
+  readonly #id: string;
+  readonly #node: GraphNode;
+  readonly #graphView: SVGGraphViewIfc;
+  #popup?: SVGForeignObjectElement;
 
   constructor(
-    element: SVGGElement,
-    nodeId: string,
-    builtInType: JSGraphConstants.BuiltInJSTypeName | undefined,
+    id: string,
+    node: GraphNode,
+    graphView: SVGGraphViewIfc,
   )
   {
-    this.#element = element;
+    this.#id = id;
+    this.#node = node;
+    this.#graphView = graphView;
 
-    if (nodeId === "target:0" || nodeId === "heldValues:1") {
+    if (id === "target:0" || id === "heldValues:1") {
       this.#addInnerCircle();
     }
 
+    const builtInType = node.metadata?.builtInJSTypeName;
     if (builtInType) {
       const iconAndIsStrongRef = SVGGraphNodeView.#iconAndIsStrongMap.get(builtInType);
       if (iconAndIsStrongRef) {
@@ -175,13 +200,16 @@ class SVGGraphNodeView {
         const titleElement: SVGTitleElement = document.createElementNS("http://www.w3.org/2000/svg", "title");
         titleElement.append(builtInType);
 
-        element.append(textElement, titleElement);
+        this.#node.elem.append(textElement, titleElement);
       }
     }
+
+    if (this.#node.metadata)
+      node.elem.onclick = event => this.#toggleOverlay(event);
   }
 
   #addInnerCircle(): void {
-    const outerCircle = this.#element.firstElementChild as SVGCircleElement;
+    const outerCircle = this.#node.elem.firstElementChild as SVGCircleElement;
     const innerCircle = outerCircle.cloneNode(false) as SVGCircleElement;
     const outerRadius: number = parseInt(outerCircle.getAttribute("r")!);
     innerCircle.setAttribute("r", (outerRadius - 6).toString(10));
@@ -189,14 +217,77 @@ class SVGGraphNodeView {
   }
 
   showSelected(): void {
-    this.#element.classList.add("selected");
+    this.#node.elem.classList.add("selected");
   }
 
   hideSelected(): void {
-    this.#element.classList.remove("selected");
+    this.#node.elem.classList.remove("selected");
   }
 
   scrollIntoView(): void {
-    this.#element.scrollIntoView({block: "center", inline: "center"});
+    this.#node.elem.scrollIntoView({block: "center", inline: "center"});
+  }
+
+  #toggleOverlay(event: MouseEvent): void {
+    event.preventDefault();
+    if (this.#popup) {
+      this.#popup.classList.toggle("hidden");
+      return;
+    }
+
+    this.#popup = SVGGraphNodeView.#popupTemplateNode.cloneNode(true) as SVGForeignObjectElement;
+    const transform = this.#node.elem.getAttribute("transform")!;
+    this.#popup.setAttribute("transform", transform);
+
+    const classElement = this.#popup.querySelector(".className") as HTMLAnchorElement;
+    classElement.append(this.#node.metadata.derivedClassName);
+    if (this.#node.metadata.classSpecifier) {
+      classElement.classList.add("isLink");
+      classElement.onclick = event => this.#handleClassNameClick(event);
+    }
+
+    const inEdgesElement = this.#popup.querySelector("in-edges") as HTMLElement;
+    for (const edge of this.#graphView.graph.inEdges(this.#id)!) {
+      const vIdElm: HTMLAnchorElement = document.createElement("a");
+      vIdElm.href = "#";
+      vIdElm.onclick = event => {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      vIdElm.append(edge.v);
+
+      const nameElm: HTMLSpanElement = document.createElement("span");
+      nameElm.append(edge.name!);
+
+      const outerSpan: HTMLSpanElement = document.createElement("span");
+      outerSpan.append(vIdElm, nameElm);
+      inEdgesElement.append(outerSpan);
+    }
+
+    const outEdgesElement = this.#popup.querySelector("out-edges") as HTMLElement;
+    for (const edge of this.#graphView.graph.outEdges(this.#id)!) {
+      const nameElm: HTMLSpanElement = document.createElement("span");
+      nameElm.append(edge.name!);
+
+      const wIdElm: HTMLAnchorElement = document.createElement("a");
+      wIdElm.href = "#";
+      wIdElm.onclick = event => {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+      wIdElm.append(edge.w);
+
+      const outerSpan: HTMLSpanElement = document.createElement("span");
+      outerSpan.append(nameElm, wIdElm);
+      outEdgesElement.append(outerSpan);
+    }
+
+    this.#graphView.popupsParent.append(this.#popup);
+    this.#popup.onclick = event => this.#toggleOverlay(event);
+  }
+
+  #handleClassNameClick(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
   }
 }

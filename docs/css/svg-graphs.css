@@ -64,3 +64,56 @@
     stroke-width: 3px;
   }
 }
+
+.svg-node-overlay {
+  display: grid;
+  grid-template-columns: [in-edges] auto auto 20px 20px [this-out] 20px [out-edges] auto auto [column-end];
+  font-size: 10px;
+  border: 1px dashed black;
+  background-color: #cccccc;
+}
+
+.svg-node-overlay > .span-all-columns {
+  grid-column-start: 1;
+  grid-column-end: column-end;
+}
+
+.svg-node-overlay > .className {
+  justify-self: center;
+  font-size: larger;
+  font-weight: bold;
+}
+
+.svg-node-overlay > in-edges,
+.svg-node-overlay > in-edges > *,
+.svg-node-overlay > out-edges,
+.svg-node-overlay > out-edges > * {
+  display: contents;
+}
+
+.svg-node-overlay > in-edges > * > :first-child {
+  grid-column-start: in-edges;
+}
+
+.svg-node-overlay > out-edges > * > :first-child {
+  grid-column-start: out-edges;
+}
+
+.svg-node-overlay > in-edges > :first-child > :first-child,
+.svg-node-overlay > out-edges > :first-child > :first-child {
+  grid-row-start: 2;
+}
+
+.svg-node-overlay > in-edges > * > :last-child:before,
+.svg-node-overlay > out-edges > * > :first-child:before {
+  content: "[";
+}
+
+.svg-node-overlay > in-edges > * > :last-child:after,
+.svg-node-overlay > out-edges > * > :first-child:after {
+  content: "] =>";
+}
+
+.svg-node-overlay a {
+  color: #0000ff;
+}
