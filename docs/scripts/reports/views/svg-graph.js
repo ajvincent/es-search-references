@@ -107,12 +107,16 @@ class SVGGraphNodeView {
     ]);
     static #popupTemplateNode = document.createElementNS("http://www.w3.org/2000/svg", "foreignObject");
     static {
-        this.#popupTemplateNode.setAttribute("x", "50");
-        this.#popupTemplateNode.setAttribute("y", "50");
-        this.#popupTemplateNode.setAttribute("width", "300");
-        this.#popupTemplateNode.setAttribute("height", "200");
+        this.#popupTemplateNode.setAttribute("x", "-150");
+        this.#popupTemplateNode.setAttribute("y", "60");
+        this.#popupTemplateNode.setAttribute("width", "360");
+        this.#popupTemplateNode.setAttribute("height", "100");
         const template = document.getElementById("svg-node-overlay").content;
         this.#popupTemplateNode.append(template.cloneNode(true));
+    }
+    static #thisElm = document.createElement("span");
+    static {
+        this.#thisElm.append("this");
     }
     #id;
     #node;
@@ -160,7 +164,7 @@ class SVGGraphNodeView {
         this.#node.elem.scrollIntoView({ block: "center", inline: "center" });
     }
     #toggleOverlay(event) {
-        event.preventDefault();
+        event?.preventDefault();
         if (this.#popup) {
             this.#popup.classList.toggle("hidden");
             return;
@@ -178,38 +182,39 @@ class SVGGraphNodeView {
         for (const edge of this.#graphView.graph.inEdges(this.#id)) {
             const vIdElm = document.createElement("a");
             vIdElm.href = "#";
-            vIdElm.onclick = event => {
-                event.preventDefault();
-                event.stopPropagation();
-            };
+            vIdElm.onclick = this.#handleNodeIdClick.bind(this, edge.v);
             vIdElm.append(edge.v);
             const nameElm = document.createElement("span");
             nameElm.append(edge.name);
+            nameElm.classList.add("edge");
             const outerSpan = document.createElement("span");
-            outerSpan.append(vIdElm, nameElm);
+            outerSpan.append(vIdElm, nameElm, _a.#thisElm.cloneNode(true));
             inEdgesElement.append(outerSpan);
         }
         const outEdgesElement = this.#popup.querySelector("out-edges");
         for (const edge of this.#graphView.graph.outEdges(this.#id)) {
             const nameElm = document.createElement("span");
             nameElm.append(edge.name);
+            nameElm.classList.add("edge");
             const wIdElm = document.createElement("a");
             wIdElm.href = "#";
-            wIdElm.onclick = event => {
-                event.preventDefault();
-                event.stopPropagation();
-            };
+            wIdElm.onclick = this.#handleNodeIdClick.bind(this, edge.w);
             wIdElm.append(edge.w);
             const outerSpan = document.createElement("span");
-            outerSpan.append(nameElm, wIdElm);
+            outerSpan.append(_a.#thisElm.cloneNode(true), nameElm, wIdElm);
             outEdgesElement.append(outerSpan);
         }
         this.#graphView.popupsParent.append(this.#popup);
-        this.#popup.onclick = event => this.#toggleOverlay(event);
     }
     #handleClassNameClick(event) {
         event.preventDefault();
         event.stopPropagation();
+    }
+    #handleNodeIdClick(nodeId, event) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.#toggleOverlay();
+        this.#graphView.selectNode(nodeId);
     }
 }
 _a = SVGGraphNodeView;
