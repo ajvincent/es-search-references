@@ -35,6 +35,10 @@ export class FileEditorMapView {
     selectFile(filePath) {
         this.#panelsView.activeViewKey = filePath;
     }
+    scrollToLine(lineNumber) {
+        const editorView = this.#editorPanelViews.get(this.#panelsView.activeViewKey);
+        editorView.scrollToLine(lineNumber);
+    }
     updateFileMap() {
         const unvisited = new Set(this.#fileMap.keys());
         for (const [key, editorView] of this.#editorPanelViews) {

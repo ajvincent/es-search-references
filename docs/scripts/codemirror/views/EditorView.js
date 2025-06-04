@@ -7,4 +7,7 @@ export class EditorPanelView {
     getContents() {
         return this.displayElement.getContents();
     }
+    scrollToLine(lineNumber) {
+        this.displayElement.scrollToLine(lineNumber);
+    }
 }

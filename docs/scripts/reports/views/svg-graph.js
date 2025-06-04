@@ -209,6 +209,13 @@ class SVGGraphNodeView {
     #handleClassNameClick(event) {
         event.preventDefault();
         event.stopPropagation();
+        const specifierEvent = new CustomEvent("classClick", {
+            detail: {
+                classSpecifier: this.#node.metadata.classSpecifier,
+                classLineNumber: this.#node.metadata.classLineNumber
+            }
+        });
+        this.#node.elem.dispatchEvent(specifierEvent);
     }
     #handleNodeIdClick(nodeId, event) {
         event.preventDefault();

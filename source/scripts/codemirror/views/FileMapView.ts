@@ -51,6 +51,11 @@ export class FileEditorMapView implements BaseView {
     this.#panelsView.activeViewKey = filePath;
   }
 
+  public scrollToLine(lineNumber: number): void {
+    const editorView: EditorPanelView = this.#editorPanelViews.get(this.#panelsView.activeViewKey)!;
+    editorView.scrollToLine(lineNumber);
+  }
+
   public updateFileMap(): void {
     const unvisited = new Set<string>(this.#fileMap.keys());
     for (const [key, editorView] of this.#editorPanelViews) {

@@ -12,7 +12,7 @@ export class FileSystemController {
     filesCheckedSet = this.#filesCheckedSet;
     #fileToRowMap = new Map;
     #fileSystemView;
-    referenceFileMapView;
+    editorMapView;
     constructor(rootId, isReadonly, fileMap, codeMirrorPanelsElement) {
         this.displayElement = document.getElementById("fss:" + rootId);
         if (!this.displayElement)
@@ -26,7 +26,7 @@ export class FileSystemController {
         for (const key of this.fileMap.keys()) {
             this.#addFileKey(key, directoriesSet);
         }
-        this.referenceFileMapView = new FileEditorMapView(fileMap, rootId, codeMirrorPanelsElement);
+        this.editorMapView = new FileEditorMapView(fileMap, rootId, codeMirrorPanelsElement);
     }
     #fileCheckToggled(pathToFile, isChecked) {
         if (isChecked)
@@ -41,10 +41,14 @@ export class FileSystemController {
             this.#fileCheckToggled(key, view.checkboxElement.checked);
         };
         view.radioElement.onclick = (ev) => {
-            this.referenceFileMapView.selectFile(key);
+            this.editorMapView.selectFile(key);
         };
         view.rowElement.onclick = (ev) => {
             ev.stopPropagation();
         };
+    }
+    showFileAndLineNumber(specifier, lineNumber) {
+        this.#fileSystemView.showFile(specifier);
+        this.editorMapView.scrollToLine(lineNumber);
     }
 }

@@ -48,9 +48,16 @@ import {
 } from "./tab-panels/panelView.js";
 //#endregion preamble
 
+interface ClassClickDetails {
+  classSpecifier: string;
+  classLineNumber: number;
+}
+
 class Workbench_Base {
   #outputController?: OutputController;
   #reportSelectorController?: ReportSelectController;
+
+  readonly #displayElement: HTMLDivElement;
 
   readonly #fsSelector: HTMLSelectElement;
   readonly #fileSystemToControllerMap = new Map<string, FileSystemController>;
@@ -64,6 +71,7 @@ class Workbench_Base {
   #lastRunSpan?: HTMLElement;
 
   constructor() {
+    this.#displayElement = document.getElementById("workbench") as HTMLDivElement;
     this.#fsSelector = document.getElementById("workspace-selector") as HTMLSelectElement;
     window.onload = () => this.#initialize();
   }
@@ -142,6 +150,12 @@ class Workbench_Base {
 
     this.#fsSelector.onchange = this.#onWorkspaceSelect.bind(this);
     this.#fileUploadsView!.displayElement.onsubmit = this.#doFileUpload.bind(this);
+
+    this.#displayElement.addEventListener(
+      "classClick",
+      (event) => this.#handleClassClick(event as CustomEvent),
+      { capture: true, passive: true }
+    );
   }
 
   #selectOutputReportTab(tabKey: string, event: MouseEvent): void {
@@ -219,10 +233,20 @@ class Workbench_Base {
       option.value, isReadOnly, fileSystem, this.#codeMirrorPanels!.rootElement
     );
     this.#fileSystemPanels!.addPanel(fsDisplayElement.id, fsController);
-    this.#codeMirrorPanels!.addPanel(option.value, fsController.referenceFileMapView);
+    this.#codeMirrorPanels!.addPanel(option.value, fsController.editorMapView);
 
     this.#fileSystemToControllerMap.set(option.value, fsController);
     return option;
+  }
+
+  #handleClassClick(event: CustomEvent): void {
+    const {
+      classSpecifier,
+      classLineNumber
+    } = event.detail as ClassClickDetails;
+
+    const currentFS: FileSystemController = this.#fileSystemToControllerMap.get(this.#fsSelector.value)!;
+    currentFS.showFileAndLineNumber(classSpecifier, classLineNumber);
   }
 }
 

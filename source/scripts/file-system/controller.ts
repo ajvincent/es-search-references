@@ -39,7 +39,7 @@ export class FileSystemController implements BaseView {
   readonly #fileToRowMap = new Map<string, TreeRowView>;
   readonly #fileSystemView: FileSystemView<DirectoryRowView, FileRowView>;
 
-  readonly referenceFileMapView: FileEditorMapView;
+  readonly editorMapView: FileEditorMapView;
 
   constructor(
     rootId: string,
@@ -64,7 +64,7 @@ export class FileSystemController implements BaseView {
       this.#addFileKey(key, directoriesSet);
     }
 
-    this.referenceFileMapView = new FileEditorMapView(fileMap, rootId, codeMirrorPanelsElement);
+    this.editorMapView = new FileEditorMapView(fileMap, rootId, codeMirrorPanelsElement);
   }
 
   #fileCheckToggled(pathToFile: string, isChecked: boolean): void {
@@ -82,11 +82,20 @@ export class FileSystemController implements BaseView {
       this.#fileCheckToggled(key, view.checkboxElement!.checked);
     };
     view.radioElement!.onclick = (ev: Event): void => {
-      this.referenceFileMapView!.selectFile(key);
+      this.editorMapView.selectFile(key);
     };
 
     view.rowElement!.onclick = (ev: MouseEvent): void => {
       ev.stopPropagation();
     }
+  }
+
+  showFileAndLineNumber(
+    specifier: string,
+    lineNumber: number
+  ): void
+  {
+    this.#fileSystemView.showFile(specifier);
+    this.editorMapView!.scrollToLine(lineNumber);
   }
 }

@@ -26,4 +26,8 @@ export class BaseFileRowView extends TreeRowView {
     event.stopPropagation();
     this.rowElement!.toggleCollapsed();
   }
+
+  selectFile(key: string): void {
+    throw new Error("not implemented");
+  }
 }

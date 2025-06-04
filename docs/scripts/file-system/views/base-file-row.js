@@ -19,4 +19,7 @@ export class BaseFileRowView extends TreeRowView {
         event.stopPropagation();
         this.rowElement.toggleCollapsed();
     }
+    selectFile(key) {
+        throw new Error("not implemented");
+    }
 }

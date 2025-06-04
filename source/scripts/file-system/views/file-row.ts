@@ -37,4 +37,11 @@ export class FileRowView extends BaseFileRowView {
     radio.name = "currentRow";
     return radio;
   }
+
+  public selectFile(
+    key: string
+  ): void
+  {
+    this.radioElement!.click();
+  }
 }

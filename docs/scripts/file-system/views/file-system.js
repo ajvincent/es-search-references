@@ -60,5 +60,8 @@ export class FileSystemView {
         }
         directoriesSet.add(key);
     }
+    showFile(key) {
+        this.#fileToRowMap.get(key).selectFile(key);
+    }
 }
 _a = FileSystemView;

@@ -40,7 +40,7 @@ export class FileSystemView<
   }
 
   readonly #isFileCollapsible: boolean;
-  readonly #fileToRowMap = new Map<string, TreeRowView>;
+  readonly #fileToRowMap = new Map<string, FileView | DirectoryView>;
   readonly #treeRowsElement: HTMLElement;
 
   readonly #DirectoryViewClass: Class<DirectoryView, DirectoryArguments>;
@@ -99,5 +99,12 @@ export class FileSystemView<
       this.#treeRowsElement.append(view.rowElement!);
     }
     directoriesSet.add(key);
+  }
+
+  showFile(
+    key: string
+  ): void
+  {
+    (this.#fileToRowMap.get(key) as FileView).selectFile(key);
   }
 }

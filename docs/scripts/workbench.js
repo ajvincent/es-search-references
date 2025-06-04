@@ -8,10 +8,10 @@ import { FileSystemMap } from "./storage/FileSystemMap.js";
 import { OutputController } from "./reports/outputController.js";
 import { ReportSelectController } from "./reports/selectController.js";
 import { GenericPanelView } from "./tab-panels/panelView.js";
-//#endregion preamble
 class Workbench_Base {
     #outputController;
     #reportSelectorController;
+    #displayElement;
     #fsSelector;
     #fileSystemToControllerMap = new Map;
     #fileSystemControlsLeftView;
@@ -20,6 +20,7 @@ class Workbench_Base {
     #fileSystemPanels;
     #lastRunSpan;
     constructor() {
+        this.#displayElement = document.getElementById("workbench");
         this.#fsSelector = document.getElementById("workspace-selector");
         window.onload = () => this.#initialize();
     }
@@ -73,6 +74,7 @@ class Workbench_Base {
         }
         this.#fsSelector.onchange = this.#onWorkspaceSelect.bind(this);
         this.#fileUploadsView.displayElement.onsubmit = this.#doFileUpload.bind(this);
+        this.#displayElement.addEventListener("classClick", (event) => this.#handleClassClick(event), { capture: true, passive: true });
     }
     #selectOutputReportTab(tabKey, event) {
         event.preventDefault();
@@ -130,9 +132,14 @@ class Workbench_Base {
         this.#fileSystemPanels.rootElement.append(fsDisplayElement);
         const fsController = new FileSystemController(option.value, isReadOnly, fileSystem, this.#codeMirrorPanels.rootElement);
         this.#fileSystemPanels.addPanel(fsDisplayElement.id, fsController);
-        this.#codeMirrorPanels.addPanel(option.value, fsController.referenceFileMapView);
+        this.#codeMirrorPanels.addPanel(option.value, fsController.editorMapView);
         this.#fileSystemToControllerMap.set(option.value, fsController);
         return option;
+    }
+    #handleClassClick(event) {
+        const { classSpecifier, classLineNumber } = event.detail;
+        const currentFS = this.#fileSystemToControllerMap.get(this.#fsSelector.value);
+        currentFS.showFileAndLineNumber(classSpecifier, classLineNumber);
     }
 }
 const Workbench = new Workbench_Base();

@@ -18,5 +18,17 @@ export class CodeMirrorElement extends HTMLElement {
   getContents(): string {
     return this.editorView.state.doc.toString();
   }
+
+  scrollToLine(lineNumber: number): void {
+    const view = this.editorView;
+    const line = view.state.doc.line(lineNumber);
+    const effect = CodeMirror.EditorView.scrollIntoView(
+      line.from, { y: "start", x: "start", }
+    );
+    view.dispatch({
+      effects: [effect]
+    });
+    this.scrollIntoView({ block: "start" });
+  }
 }
 customElements.define("codemirror-editor", CodeMirrorElement);

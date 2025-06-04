@@ -15,4 +15,8 @@ export class EditorPanelView implements BaseView {
   getContents(): string {
     return this.displayElement.getContents();
   }
+
+  scrollToLine(lineNumber: number): void {
+    this.displayElement.scrollToLine(lineNumber);
+  }
 }
