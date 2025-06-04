@@ -57,8 +57,12 @@ class Workbench_Base {
     async #runSearches(event) {
         event.preventDefault();
         event.stopPropagation();
+        this.#reportSelectorController.clear();
         this.#outputController.clearResults();
         const fsController = this.#getCurrentFSController();
+        if (!fsController) {
+            return;
+        }
         const driver = new SearchDriver(fsController.fileMap);
         const fileSet = fsController.filesCheckedSet;
         const resultsMap = await driver.run(Array.from(fileSet));
@@ -87,6 +91,8 @@ class Workbench_Base {
         const { value } = this.#fsSelector;
         this.#fileSystemPanels.activeViewKey = "fss:" + value;
         this.#codeMirrorPanels.activeViewKey = value;
+        this.#reportSelectorController?.clear();
+        this.#outputController?.clearResults();
     }
     async #doFileUpload(event) {
         event.preventDefault();

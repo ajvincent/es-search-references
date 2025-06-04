@@ -15,7 +15,12 @@ export class FileEditorMapView implements BaseView {
   public readonly panelSetId: string;
   public readonly displayElement: HTMLElement;
 
-  constructor(fileMap: Map<string, string>, panelSetId: string, parentElement: HTMLElement) {
+  constructor(
+    fileMap: Map<string, string>,
+    panelSetId: string,
+    parentElement: HTMLElement
+  )
+  {
     this.#fileMap = fileMap;
 
     this.panelSetId = panelSetId;

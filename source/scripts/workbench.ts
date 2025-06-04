@@ -1,5 +1,5 @@
 //#region preamble
-import {
+import type {
   FileEditorMapView
 } from "./codemirror/views/FileMapView.js";
 
@@ -128,8 +128,12 @@ class Workbench_Base {
     event.preventDefault();
     event.stopPropagation();
 
+    this.#reportSelectorController!.clear();
     this.#outputController!.clearResults();
     const fsController = this.#getCurrentFSController();
+    if (!fsController) {
+      return;
+    }
 
     const driver = new SearchDriver(fsController!.fileMap);
     const fileSet = fsController!.filesCheckedSet;
@@ -171,6 +175,9 @@ class Workbench_Base {
     const { value } = this.#fsSelector;
     this.#fileSystemPanels!.activeViewKey = "fss:" + value;
     this.#codeMirrorPanels!.activeViewKey = value;
+
+    this.#reportSelectorController?.clear();
+    this.#outputController?.clearResults();
   }
 
   async #doFileUpload(event: SubmitEvent): Promise<void> {

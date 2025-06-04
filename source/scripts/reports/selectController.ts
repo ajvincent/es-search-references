@@ -43,10 +43,13 @@ export class ReportSelectController {
     this.#outputController = outputController;
   }
 
-  refreshTree(): void {
+  clear(): void {
     this.#rootElement.treeRows!.replaceChildren();
     this.#fileSystemView.clearRowMap();
+  }
 
+  refreshTree(): void {
+    this.clear();
     const directoriesSet = new Set<string>;
 
     const fileKeys = Array.from(this.#outputController.filePathsAndSearchKeys.keys());

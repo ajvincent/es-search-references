@@ -14,9 +14,12 @@ export class ReportSelectController {
         this.#fileSystemView = new FileSystemView(BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows);
         this.#outputController = outputController;
     }
-    refreshTree() {
+    clear() {
         this.#rootElement.treeRows.replaceChildren();
         this.#fileSystemView.clearRowMap();
+    }
+    refreshTree() {
+        this.clear();
         const directoriesSet = new Set;
         const fileKeys = Array.from(this.#outputController.filePathsAndSearchKeys.keys());
         fileKeys.sort();
