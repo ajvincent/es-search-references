@@ -1,8 +1,4 @@
 //#region preamble
-import type {
-  FileEditorMapView
-} from "./codemirror/views/FileMapView.js";
-
 import {
   FileSystemController,
 } from "./file-system/controller.js";
@@ -46,6 +42,10 @@ import {
 import {
   GenericPanelView
 } from "./tab-panels/panelView.js";
+
+import type {
+  OrderedKeyMap
+} from "./utilities/OrderedKeyMap.js";
 //#endregion preamble
 
 interface ClassClickDetails {
@@ -105,15 +105,13 @@ class Workbench_Base {
     this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView);
     this.#fileUploadsView = new FileUploadsView();
 
-    const fileSystems: Map<string, FileSystemMap> = FileSystemMap.getAll();
+    const fileSystems: OrderedKeyMap<FileSystemMap> = FileSystemMap.getAll();
 
     const optionPromises: Promise<HTMLOptionElement>[] = [];
     for (const [systemKey, fileSystem] of fileSystems) {
       optionPromises.push(this.#addFileSystemOption(systemKey, fileSystem, true, false));
     }
     const options = await Promise.all(optionPromises);
-
-    options.sort((a, b) => a.text.localeCompare(b.text));
     this.#fsSelector.append(refSpecOption, ...options);
 
     this.#fsSelector.value = "reference-spec-filesystem";
@@ -196,17 +194,16 @@ class Workbench_Base {
         }
       });
     } else {
-      const fs = new FileSystemMap(targetFileSystem, newFileEntries);
-      if (!fs.has("es-search-references/guest")) {
+      if (newFileEntries.every(pathAndContents => pathAndContents[0] !== "es-search-references/guest")) {
         const guestFile = this.#fileSystemToControllerMap.get("reference-spec-filesystem")?.fileMap.get("es-search-references/guest");
         if (!guestFile) {
           throw new Error("no guest file?");
         }
-        fs.set(
-          "es-search-references/guest",
-          guestFile
-        );
+        newFileEntries.push(["es-search-references/guest", guestFile]);
       }
+
+      const fs = new FileSystemMap(targetFileSystem, newFileEntries);
+
       const option: HTMLOptionElement = await this.#addFileSystemOption(targetFileSystem, fs, true, false);
       let referenceOption: HTMLOptionElement | null = null;
       for (const currentOption of Array.from(this.#fsSelector.options).slice(2)) {
@@ -224,25 +221,26 @@ class Workbench_Base {
 
   async #addFileSystemOption(
     systemKey: string,
-    fileSystem: Map<string, string>,
+    fileSystem: FileSystemMap,
     useFSPrefix: boolean,
     isReadOnly: boolean,
   ): Promise<HTMLOptionElement>
   {
     const option: HTMLOptionElement = document.createElement("option");
-    option.value = useFSPrefix ? "filesystem:" + systemKey : systemKey;
+    const key = useFSPrefix ? "filesystem:" + systemKey : systemKey;
+    option.value = key;
     option.append(systemKey);
 
     const fsDisplayElement = new FileSystemElement();
-    fsDisplayElement.id = "fss:" + option.value;
+    fsDisplayElement.id = "fss:" + key;
     this.#fileSystemPanels!.rootElement.append(fsDisplayElement);
     const fsController = new FileSystemController(
-      option.value, isReadOnly, fileSystem, this.#codeMirrorPanels!.rootElement
+      key, isReadOnly, fileSystem, this.#codeMirrorPanels!.rootElement
     );
     this.#fileSystemPanels!.addPanel(fsDisplayElement.id, fsController);
-    this.#codeMirrorPanels!.addPanel(option.value, fsController.editorMapView);
+    this.#codeMirrorPanels!.addPanel(key, fsController.editorMapView);
 
-    this.#fileSystemToControllerMap.set(option.value, fsController);
+    this.#fileSystemToControllerMap.set(key, fsController);
     return option;
   }
 

@@ -18,9 +18,7 @@ export class FileSystemController {
         if (!this.displayElement)
             throw new Error("no element for root id: " + rootId);
         this.isReadOnly = isReadonly;
-        const fileEntries = Array.from(fileMap.entries());
-        fileEntries.sort((a, b) => a[0].localeCompare(b[0]));
-        this.fileMap = new Map(fileEntries);
+        this.fileMap = fileMap;
         this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows);
         const directoriesSet = new Set;
         for (const key of this.fileMap.keys()) {

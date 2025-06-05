@@ -3,6 +3,10 @@ import {
 } from "../codemirror/views/FileMapView.js";
 
 import type {
+  FileSystemMap
+} from "../storage/FileSystemMap.js";
+
+import type {
   BaseView
 } from "../tab-panels/tab-panels-view.js";
 
@@ -32,7 +36,7 @@ export class FileSystemController implements BaseView {
   readonly isReadOnly: boolean;
   readonly displayElement: FileSystemElement;
 
-  readonly fileMap: ReadonlyMap<string, string>;
+  readonly fileMap: FileSystemMap;
   readonly #filesCheckedSet = new Set<string>;
   readonly filesCheckedSet: ReadonlySet<string> = this.#filesCheckedSet;
 
@@ -44,7 +48,7 @@ export class FileSystemController implements BaseView {
   constructor(
     rootId: string,
     isReadonly: boolean,
-    fileMap: Map<string, string>,
+    fileMap: FileSystemMap,
     codeMirrorPanelsElement: HTMLElement,
   )
   {
@@ -52,10 +56,7 @@ export class FileSystemController implements BaseView {
     if (!this.displayElement)
       throw new Error("no element for root id: " + rootId);
     this.isReadOnly = isReadonly;
-
-    const fileEntries = Array.from(fileMap.entries());
-    fileEntries.sort((a, b) => a[0].localeCompare(b[0]));
-    this.fileMap = new Map(fileEntries);
+    this.fileMap = fileMap;
 
     this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows!);
 

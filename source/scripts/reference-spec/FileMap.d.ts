@@ -1,1 +1,5 @@
-export const ReferenceSpecFileMap: Map<string, string>;
+import {
+  FileSystemMap
+} from "../storage/FileSystemMap.js";
+
+export const ReferenceSpecFileMap: FileSystemMap;

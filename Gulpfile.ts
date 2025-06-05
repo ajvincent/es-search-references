@@ -89,7 +89,12 @@ export {};
   ])
 
   const serialized = JSON.stringify(fileEntries);
-  const moduleSource = `export const ReferenceSpecFileMap = new Map(${serialized});\n`;
+  const moduleSource = `
+import {
+  FileSystemMap
+} from "../storage/FileSystemMap.js";
+export const ReferenceSpecFileMap = new FileSystemMap("reference-file-system", ${serialized});
+`.trim();
 
   await fs.writeFile(
     path.join(projectRoot, "docs/scripts/reference-spec/FileMap.js"),

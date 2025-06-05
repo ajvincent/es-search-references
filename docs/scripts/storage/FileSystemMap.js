@@ -1,6 +1,7 @@
 var _a;
 import { JSONStorage } from "./JSONStorage.js";
-export class FileSystemMap extends Map {
+import { OrderedKeyMap } from "../utilities/OrderedKeyMap.js";
+export class FileSystemMap extends OrderedKeyMap {
     static #storage = new JSONStorage(window.localStorage, "es-search-references/files");
     static getAll() {
         const entries = [];
@@ -8,15 +9,15 @@ export class FileSystemMap extends Map {
             const items = this.#storage.getItem(systemKey);
             entries.push([systemKey, new _a(systemKey, items)]);
         }
-        return new Map(entries);
+        return new OrderedKeyMap(entries);
     }
     #systemKey;
-    #isBatchUpdate = true;
+    #isBatchUpdate = false;
     constructor(systemKey, entries) {
         super(entries);
         this.#systemKey = systemKey;
-        this.#isBatchUpdate = false;
         this.#refreshStorage();
+        this.set = this.#set.bind(this);
     }
     #refreshStorage() {
         if (this.size) {
@@ -29,7 +30,7 @@ export class FileSystemMap extends Map {
     batchUpdate(callback) {
         this.#isBatchUpdate = true;
         try {
-            callback();
+            super.batchUpdate(callback);
             this.#refreshStorage();
         }
         finally {
@@ -38,24 +39,20 @@ export class FileSystemMap extends Map {
     }
     clear() {
         super.clear();
-        this.#refreshStorage();
+        if (!this.#isBatchUpdate)
+            this.#refreshStorage();
     }
     delete(key) {
         const rv = super.delete(key);
-        if (rv) {
+        if (rv && !this.#isBatchUpdate) {
             this.#refreshStorage();
         }
         return rv;
     }
-    set(key, value) {
+    #set(key, value) {
         super.set(key, value);
-        try {
-            if (!this.#isBatchUpdate)
-                this.#refreshStorage();
-        }
-        catch (ex) {
-            // do nothing, this is normal during construction
-        }
+        if (!this.#isBatchUpdate)
+            this.#refreshStorage();
         return this;
     }
 }

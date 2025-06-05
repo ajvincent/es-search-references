@@ -1,3 +1,7 @@
+import type {
+  FileSystemMap
+} from "../../storage/FileSystemMap.js";
+
 import {
   type BaseView,
   TabPanelsView
@@ -8,7 +12,7 @@ import {
 } from "./EditorView.js";
 
 export class FileEditorMapView implements BaseView {
-  readonly #fileMap: Map<string, string>;
+  readonly #fileMap: FileSystemMap;
   readonly #panelsView: TabPanelsView;
   readonly #editorPanelViews = new Map<string, EditorPanelView>;
 
@@ -16,7 +20,7 @@ export class FileEditorMapView implements BaseView {
   public readonly displayElement: HTMLElement;
 
   constructor(
-    fileMap: Map<string, string>,
+    fileMap: FileSystemMap,
     panelSetId: string,
     parentElement: HTMLElement
   )
@@ -29,9 +33,8 @@ export class FileEditorMapView implements BaseView {
     parentElement.append(this.displayElement);
     this.#panelsView = new TabPanelsView(panelSetId);
 
-    const keys = Array.from(this.#fileMap.keys());
-    keys.sort();
-    for (const filePath of keys) {
+
+    for (const filePath of this.#fileMap.keys()) {
       const contents = this.#fileMap.get(filePath)!;
       this.addEditorForPath(filePath, contents);
     }
@@ -62,14 +65,16 @@ export class FileEditorMapView implements BaseView {
   }
 
   public updateFileMap(): void {
-    const unvisited = new Set<string>(this.#fileMap.keys());
-    for (const [key, editorView] of this.#editorPanelViews) {
-      this.#fileMap.set(key, editorView.getContents());
-      unvisited.delete(key);
-    }
+    this.#fileMap.batchUpdate(() => {
+      const unvisited = new Set<string>(this.#fileMap.keys());
+      for (const [key, editorView] of this.#editorPanelViews) {
+        this.#fileMap.set(key, editorView.getContents());
+        unvisited.delete(key);
+      }
 
-    for (const key of unvisited) {
-      this.#fileMap.delete(key);
-    }
+      for (const key of unvisited) {
+        this.#fileMap.delete(key);
+      }
+    });
   }
 }

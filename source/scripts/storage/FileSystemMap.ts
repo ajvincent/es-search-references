@@ -2,25 +2,30 @@ import {
   JSONStorage
 } from "./JSONStorage.js";
 
-export class FileSystemMap extends Map<string, string> {
+import {
+  OrderedKeyMap
+} from "../utilities/OrderedKeyMap.js";
+
+export class FileSystemMap extends OrderedKeyMap<string> {
   static readonly #storage = new JSONStorage(window.localStorage, "es-search-references/files");
-  static getAll(): Map<string, FileSystemMap> {
+  static getAll(): OrderedKeyMap<FileSystemMap> {
     const entries: [string, FileSystemMap][] = [];
     for (const systemKey of this.#storage.allKeys()) {
       const items = this.#storage.getItem(systemKey) as [string, string][];
       entries.push([systemKey, new FileSystemMap(systemKey, items)]);
     }
 
-    return new Map(entries);
+    return new OrderedKeyMap(entries);
   }
 
   readonly #systemKey: string;
-  #isBatchUpdate = true;
+  #isBatchUpdate = false;
+
   constructor(systemKey: string, entries: [string, string][]) {
     super(entries);
     this.#systemKey = systemKey;
-    this.#isBatchUpdate = false;
     this.#refreshStorage();
+    this.set = this.#set.bind(this);
   }
 
   #refreshStorage(): void {
@@ -34,34 +39,32 @@ export class FileSystemMap extends Map<string, string> {
   batchUpdate(callback: () => void): void {
     this.#isBatchUpdate = true;
     try {
-      callback();
+      super.batchUpdate(callback);
       this.#refreshStorage();
-    } finally {
+    }
+    finally {
       this.#isBatchUpdate = false;
     }
   }
 
   clear(): void {
     super.clear();
-    this.#refreshStorage();
+    if (!this.#isBatchUpdate)
+      this.#refreshStorage();
   }
 
   delete(key: string): boolean {
     const rv = super.delete(key);
-    if (rv) {
+    if (rv && !this.#isBatchUpdate) {
       this.#refreshStorage();
     }
     return rv;
   }
 
-  set(key: string, value: string): this {
+  #set(key: string, value: string): this {
     super.set(key, value);
-    try {
-      if (!this.#isBatchUpdate)
-        this.#refreshStorage();
-    } catch (ex) {
-      // do nothing, this is normal during construction
-    }
+    if (!this.#isBatchUpdate)
+      this.#refreshStorage();
     return this;
   }
 }

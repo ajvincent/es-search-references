@@ -2,19 +2,19 @@ export class OrderedKeyMap<V> extends Map<string, V> {
   static #keyComparator(a: string, b: string): number {
     return a.localeCompare(b);
   }
+
   static #entryComparator(a: [string, unknown], b: [string, unknown]): number {
     return a[0].localeCompare(b[0]);
   }
 
-  #keysArray: string[] = [];
-  #isBatchUpdate = true;
+  readonly #keysArray: string[];
+  #isBatchUpdate = false;
 
   constructor(entries: [string, V][]) {
     entries.sort(OrderedKeyMap.#entryComparator);
     super(entries);
     this.#keysArray = entries.map(e => e[0]);
-    this.#isBatchUpdate = false;
-    this.set = this.#set;
+    this.set = this.#set.bind(this);
   }
 
   batchUpdate(callback: () => void): void {
@@ -35,30 +35,43 @@ export class OrderedKeyMap<V> extends Map<string, V> {
     return rv;
   }
 
+  #getInsertionIndex(key: string): number {
+    let min = 0, max = this.#keysArray.length;
+    while (min < max) {
+      const mid = (min + max) >> 1;
+      const currentKey = this.#keysArray[mid];
+      if (OrderedKeyMap.#keyComparator(currentKey, key) < 0) {
+        min = mid + 1;
+      } else {
+        max = mid;
+      }
+    }
+
+    return min;
+  }
+
   #set(key: string, value: V): this {
-    const hadValue = this.has(key);
-    const rv = super.set(key, value);
+    const hadValue = super.has(key);
+    super.set(key, value);
     if (hadValue)
-      return rv;
+      return this;
 
     if (this.#isBatchUpdate) {
       this.#keysArray.push(key); // batch update will sort this later.
     }
     else {
-      let min = 0, max = this.#keysArray.length;
-      while (min < max) {
-        const mid = Math.floor((min + max) / 2);
-        const currentKey = this.#keysArray[mid];
-        if (OrderedKeyMap.#keyComparator(currentKey, key) < 0) {
-          min = mid + 1;
-        } else {
-          max = mid;
-        }
-      }
-      this.#keysArray.splice(min, 0, key);
+      const index = this.#getInsertionIndex(key);
+      this.#keysArray.splice(index, 0, key);
     }
 
-    return rv;
+    return this;
+  }
+
+  indexOfKey(key: string): number {
+    const index = this.#getInsertionIndex(key);
+    if (index === this.#keysArray.length)
+      return -1;
+    return this.#keysArray[index] === key ? index : -1;
   }
 
   keys(): IterableIterator<string> {

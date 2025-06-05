@@ -13,9 +13,7 @@ export class FileEditorMapView {
         this.displayElement.id = panelSetId;
         parentElement.append(this.displayElement);
         this.#panelsView = new TabPanelsView(panelSetId);
-        const keys = Array.from(this.#fileMap.keys());
-        keys.sort();
-        for (const filePath of keys) {
+        for (const filePath of this.#fileMap.keys()) {
             const contents = this.#fileMap.get(filePath);
             this.addEditorForPath(filePath, contents);
         }
@@ -40,13 +38,15 @@ export class FileEditorMapView {
         editorView.scrollToLine(lineNumber);
     }
     updateFileMap() {
-        const unvisited = new Set(this.#fileMap.keys());
-        for (const [key, editorView] of this.#editorPanelViews) {
-            this.#fileMap.set(key, editorView.getContents());
-            unvisited.delete(key);
-        }
-        for (const key of unvisited) {
-            this.#fileMap.delete(key);
-        }
+        this.#fileMap.batchUpdate(() => {
+            const unvisited = new Set(this.#fileMap.keys());
+            for (const [key, editorView] of this.#editorPanelViews) {
+                this.#fileMap.set(key, editorView.getContents());
+                unvisited.delete(key);
+            }
+            for (const key of unvisited) {
+                this.#fileMap.delete(key);
+            }
+        });
     }
 }
