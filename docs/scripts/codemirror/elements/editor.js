@@ -2,12 +2,16 @@ import * as CodeMirror from "../../../lib/packages/CodeMirror.mjs";
 export class CodeMirrorElement extends HTMLElement {
     #shadowRoot;
     editorView;
-    constructor(pathToFile, contents) {
+    constructor(pathToFile, contents, isReadonly) {
         super();
         this.dataset.pathtofile = pathToFile;
         this.#shadowRoot = this.attachShadow({ mode: "closed" });
+        const extensions = [CodeMirror.basicSetup, CodeMirror.javascript()];
+        if (isReadonly) {
+            extensions.push(CodeMirror.EditorView.editable.of(false));
+        }
         this.editorView = new CodeMirror.EditorView({
-            extensions: [CodeMirror.basicSetup, CodeMirror.javascript()],
+            extensions,
             parent: this.#shadowRoot,
             doc: contents,
         });

@@ -63,6 +63,7 @@ class Workbench_Base {
         if (!fsController) {
             return;
         }
+        fsController.updateFileMap();
         const driver = new SearchDriver(fsController.fileMap);
         const fileSet = fsController.filesCheckedSet;
         const resultsMap = await driver.run(Array.from(fileSet));

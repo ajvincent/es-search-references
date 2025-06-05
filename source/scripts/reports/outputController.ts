@@ -83,7 +83,7 @@ export class OutputController {
     const hash = JSON.stringify(this.#selected);
     this.#reportPanels.activeViewKey = hash;
 
-    const currentGraphView: BaseView | undefined = this.#reportPanels.viewsMap.get(hash);
+    const currentGraphView: BaseView | undefined = this.#reportPanels.currentPanel;
     if (currentGraphView instanceof SVGGraphView) {
       this.#graphControls.currentGraphView = currentGraphView;
     } else {

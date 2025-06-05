@@ -2,7 +2,6 @@ export class TabPanelsView {
     rootElement;
     #viewsMap = new Map;
     #activeViewKey;
-    viewsMap = this.#viewsMap;
     constructor(id) {
         this.rootElement = document.getElementById(id);
         if (!this.rootElement) {
@@ -47,5 +46,17 @@ export class TabPanelsView {
                 newView.handleActivated();
         }
         this.#activeViewKey = newKey;
+    }
+    entries() {
+        return this.#viewsMap.entries();
+    }
+    get currentPanel() {
+        return this.#viewsMap.get(this.#activeViewKey);
+    }
+    getPanel(key) {
+        return this.#viewsMap.get(key);
+    }
+    hasPanel(key) {
+        return this.#viewsMap.has(key);
     }
 }

@@ -8,8 +8,8 @@ import {
 
 export class EditorPanelView implements BaseView {
   readonly displayElement: CodeMirrorElement;
-  constructor(pathToFile: string, contents: string) {
-    this.displayElement = new CodeMirrorElement(pathToFile, contents);
+  constructor(pathToFile: string, contents: string, isReadonly: boolean) {
+    this.displayElement = new CodeMirrorElement(pathToFile, contents, isReadonly);
   }
 
   getContents(): string {

@@ -133,6 +133,8 @@ class Workbench_Base {
       return;
     }
 
+    fsController.updateFileMap();
+
     const driver = new SearchDriver(fsController!.fileMap);
     const fileSet = fsController!.filesCheckedSet;
     const resultsMap: ReadonlyMap<string, ReadonlyMap<string, SearchResults>> = await driver.run(Array.from(fileSet));

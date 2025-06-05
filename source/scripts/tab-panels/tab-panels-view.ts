@@ -3,12 +3,10 @@ export interface BaseView {
   handleActivated?: () => void;
 }
 
-export class TabPanelsView {
+export class TabPanelsView<PanelView extends BaseView = BaseView> {
   readonly rootElement: HTMLElement;
-  readonly #viewsMap = new Map<string, BaseView>;
+  readonly #viewsMap = new Map<string, PanelView>;
   #activeViewKey: string;
-
-  readonly viewsMap: ReadonlyMap<string, BaseView> = this.#viewsMap;
 
   constructor(id: string)
   {
@@ -25,7 +23,7 @@ export class TabPanelsView {
     this.#activeViewKey = "";
   }
 
-  addPanel(hash: string, view: BaseView): void {
+  addPanel(hash: string, view: PanelView): void {
     if (hash === "") {
       throw new Error("The empty hash is reserved for 'show none'.");
     }
@@ -63,5 +61,21 @@ export class TabPanelsView {
     }
 
     this.#activeViewKey = newKey;
+  }
+
+  entries(): IterableIterator<[string, PanelView]> {
+    return this.#viewsMap.entries();
+  }
+
+  get currentPanel(): PanelView | undefined {
+    return this.#viewsMap.get(this.#activeViewKey);
+  }
+
+  getPanel(key: string): PanelView | undefined {
+    return this.#viewsMap.get(key);
+  }
+
+  hasPanel(key: string): boolean {
+    return this.#viewsMap.has(key);
   }
 }

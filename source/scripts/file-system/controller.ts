@@ -1,6 +1,6 @@
 import {
   FileEditorMapView
-} from "../codemirror/views/FileMapView.js";
+} from "../codemirror/views/FileEditorMapView.js";
 
 import type {
   FileSystemMap
@@ -65,7 +65,7 @@ export class FileSystemController implements BaseView {
       this.#addFileKey(key, directoriesSet);
     }
 
-    this.editorMapView = new FileEditorMapView(fileMap, rootId, codeMirrorPanelsElement);
+    this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
   }
 
   #fileCheckToggled(pathToFile: string, isChecked: boolean): void {
@@ -98,5 +98,9 @@ export class FileSystemController implements BaseView {
   {
     this.#fileSystemView.showFile(specifier);
     this.editorMapView!.scrollToLine(lineNumber);
+  }
+
+  updateFileMap(): void {
+    this.editorMapView.updateFileMap();
   }
 }

@@ -1,4 +1,4 @@
-import { FileEditorMapView } from "../codemirror/views/FileMapView.js";
+import { FileEditorMapView } from "../codemirror/views/FileEditorMapView.js";
 import { FileRowView } from "./views/file-row.js";
 import { DirectoryRowView } from "./views/directory-row.js";
 import { FileSystemView } from "./views/file-system.js";
@@ -24,7 +24,7 @@ export class FileSystemController {
         for (const key of this.fileMap.keys()) {
             this.#addFileKey(key, directoriesSet);
         }
-        this.editorMapView = new FileEditorMapView(fileMap, rootId, codeMirrorPanelsElement);
+        this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
     }
     #fileCheckToggled(pathToFile, isChecked) {
         if (isChecked)
@@ -48,5 +48,8 @@ export class FileSystemController {
     showFileAndLineNumber(specifier, lineNumber) {
         this.#fileSystemView.showFile(specifier);
         this.editorMapView.scrollToLine(lineNumber);
+    }
+    updateFileMap() {
+        this.editorMapView.updateFileMap();
     }
 }

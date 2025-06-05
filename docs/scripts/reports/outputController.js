@@ -48,7 +48,7 @@ export class OutputController {
     #updateSelectedPanel() {
         const hash = JSON.stringify(this.#selected);
         this.#reportPanels.activeViewKey = hash;
-        const currentGraphView = this.#reportPanels.viewsMap.get(hash);
+        const currentGraphView = this.#reportPanels.currentPanel;
         if (currentGraphView instanceof SVGGraphView) {
             this.#graphControls.currentGraphView = currentGraphView;
         }

@@ -3,11 +3,12 @@ import { EditorPanelView } from "./EditorView.js";
 export class FileEditorMapView {
     #fileMap;
     #panelsView;
-    #editorPanelViews = new Map;
     panelSetId;
     displayElement;
-    constructor(fileMap, panelSetId, parentElement) {
+    #isReadonly;
+    constructor(fileMap, panelSetId, isReadonly, parentElement) {
         this.#fileMap = fileMap;
+        this.#isReadonly = isReadonly;
         this.panelSetId = panelSetId;
         this.displayElement = document.createElement("tab-panels");
         this.displayElement.id = panelSetId;
@@ -22,25 +23,23 @@ export class FileEditorMapView {
         if (!this.displayElement) {
             throw new Error("no parent element for editor, call this.createEditors() first!");
         }
-        if (this.#editorPanelViews.has(filePath)) {
+        if (this.#panelsView.hasPanel(filePath)) {
             throw new Error("we already have an editor for " + filePath);
         }
-        const editorPanelView = new EditorPanelView(filePath, contents);
+        const editorPanelView = new EditorPanelView(filePath, contents, this.#isReadonly);
         this.displayElement.append(editorPanelView.displayElement);
-        this.#editorPanelViews.set(filePath, editorPanelView);
         this.#panelsView.addPanel(filePath, editorPanelView);
     }
     selectFile(filePath) {
         this.#panelsView.activeViewKey = filePath;
     }
     scrollToLine(lineNumber) {
-        const editorView = this.#editorPanelViews.get(this.#panelsView.activeViewKey);
-        editorView.scrollToLine(lineNumber);
+        this.#panelsView.currentPanel.scrollToLine(lineNumber);
     }
     updateFileMap() {
         this.#fileMap.batchUpdate(() => {
             const unvisited = new Set(this.#fileMap.keys());
-            for (const [key, editorView] of this.#editorPanelViews) {
+            for (const [key, editorView] of this.#panelsView.entries()) {
                 this.#fileMap.set(key, editorView.getContents());
                 unvisited.delete(key);
             }
