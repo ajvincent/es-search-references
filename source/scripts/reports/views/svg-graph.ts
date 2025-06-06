@@ -215,8 +215,7 @@ class SVGGraphNodeView {
       }
     }
 
-    if (this.#node.metadata)
-      node.elem.onclick = event => this.#toggleOverlay(event);
+    node.elem.onclick = event => this.#toggleOverlay(event);
   }
 
   #addInnerCircle(): void {
@@ -252,10 +251,12 @@ class SVGGraphNodeView {
     this.#popup.setAttribute("transform", transform);
 
     const classElement = this.#popup.querySelector(".className") as HTMLAnchorElement;
-    classElement.append(this.#node.metadata.derivedClassName);
-    if (this.#node.metadata.classSpecifier) {
-      classElement.classList.add("isLink");
-      classElement.onclick = event => this.#handleClassNameClick(event);
+    if (this.#node.metadata) {
+      classElement.append(this.#node.metadata.derivedClassName);
+      if (this.#node.metadata.classSpecifier) {
+        classElement.classList.add("isLink");
+        classElement.onclick = event => this.#handleClassNameClick(event);
+      }
     }
 
     const inEdgesElement: HTMLElement = this.#popup.querySelector("in-edges") as HTMLElement;

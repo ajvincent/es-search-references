@@ -149,8 +149,7 @@ class SVGGraphNodeView {
                 this.#node.elem.append(textElement, titleElement);
             }
         }
-        if (this.#node.metadata)
-            node.elem.onclick = event => this.#toggleOverlay(event);
+        node.elem.onclick = event => this.#toggleOverlay(event);
     }
     #addInnerCircle() {
         const outerCircle = this.#node.elem.firstElementChild;
@@ -178,10 +177,12 @@ class SVGGraphNodeView {
         const transform = this.#node.elem.getAttribute("transform");
         this.#popup.setAttribute("transform", transform);
         const classElement = this.#popup.querySelector(".className");
-        classElement.append(this.#node.metadata.derivedClassName);
-        if (this.#node.metadata.classSpecifier) {
-            classElement.classList.add("isLink");
-            classElement.onclick = event => this.#handleClassNameClick(event);
+        if (this.#node.metadata) {
+            classElement.append(this.#node.metadata.derivedClassName);
+            if (this.#node.metadata.classSpecifier) {
+                classElement.classList.add("isLink");
+                classElement.onclick = event => this.#handleClassNameClick(event);
+            }
         }
         const inEdgesElement = this.#popup.querySelector("in-edges");
         for (const edge of this.#graphView.graph.inEdges(this.#id)) {
