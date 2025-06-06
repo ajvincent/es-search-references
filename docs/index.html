@@ -72,48 +72,36 @@
 
     <tab-panels id="codemirror-panels">
       <div id="filesystem-controls-right">
-        <h2>Upload Files To Virtual File System</h2>
-        <form id="file-system-upload-form" class="file-system-controls-grid">
-          <label for="file-system-upload-selector">File system key:</label>
-          <input id="file-system-upload-selector" list="file-system-list" required>
-
-          <label for="file-upload-root">Specify upload root</label>
-          <input id="file-upload-root" list="file-upload-root-list">
-
-          <label for="file-upload-picker">Select ZIP:</label>
-          <input id="file-upload-picker" type="file" accept=".zip" required>
-
-          <span><!-- empty on purpose --></span>
-          <button id="uploadFiles" type="submit">Upload files!</button>
-        </form>
-        <hr>
-
         <h2>Virtual File System Commands</h2>
-        <form class="file-system-controls-grid">
-          <label for="cloneOrRenameCommand">Operation</label>
-          <select id="cloneOrRenameCommand">
+        <form id="filesystem-controls-form" class="file-system-controls-grid">
+          <label for="filesystem-operation">Operation</label>
+          <select id="filesystem-operation" data-supported="*" required>
             <option value="" selected></option>
+            <!--
             <option value="clone">Clone</option>
-            <option value="uxpload">Upload</option>
+            -->
+            <option value="upload">Upload</option>
+            <!--
             <option value="rename">Rename</option>
             <option value="export">Export</option>
             <option value="delete">Delete</option>
+            -->
           </select>
 
           <label for="file-system-source-selector">File system key:</label>
-          <input id=""file-system-source-selector" list="file-system-list" required disabled>
+          <input id="file-system-source-selector" list="file-system-list" data-supported="*" required disabled>
 
           <label for="file-upload-root" class="hidden" data-supported="upload">Specify upload root</label>
-          <input id="file-upload-root" list="file-upload-root-list" class="hidden" data-supported="upload">
+          <input id="file-upload-root" list="file-upload-root-list" class="hidden" data-supported="upload" data-required="true">
 
           <label for="file-upload-picker" class="hidden" data-supported="upload">Select ZIP:</label>
-          <input id="file-upload-picker" type="file" accept=".zip" required class="hidden" data-supported="upload">
+          <input id="file-upload-picker" type="file" accept=".zip" data-required="true" class="hidden" data-supported="upload">
 
           <label for="file-system-target" class="hidden" data-supported="clone,rename">New system key:</label>
-          <input id="file-system-target" size="20" required class="hidden" data-supported="clone,rename">
+          <input id="file-system-target" size="20" data-required="true" class="hidden" data-supported="clone,rename">
 
           <span><!-- empty on purpose --></span>
-          <button id="cloneOrRenameFileSystem" type="submit" disabled>Execute</button>
+          <button id="filesystem-submit" type="submit" disabled>Execute</button>
         </form>
         <datalist id="file-system-list"></datalist>
         <datalist id="file-upload-root-list">

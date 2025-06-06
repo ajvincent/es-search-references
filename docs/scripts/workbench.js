@@ -1,7 +1,7 @@
 //#region preamble
 import { FileSystemController, } from "./file-system/controller.js";
 import { FileSystemElement } from "./file-system/elements/file-system.js";
-import { FileUploadsView } from "./file-system/views/uploads.js";
+import { FileSystemSetController, ValidFileOperations } from "./file-system/setController.js";
 import { TabPanelsView, } from "./tab-panels/tab-panels-view.js";
 import { ReferenceSpecFileMap } from "./reference-spec/FileMap.js";
 import { SearchDriver } from "./search/Driver.js";
@@ -16,7 +16,7 @@ class Workbench_Base {
     #fsSelector;
     #fileSystemToControllerMap = new Map;
     #fileSystemControlsLeftView;
-    #fileUploadsView;
+    #fileSystemSetController;
     #codeMirrorPanels;
     #fileSystemPanels;
     #lastRunSpan;
@@ -28,7 +28,7 @@ class Workbench_Base {
     async #initialize() {
         this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
         await this.#fillFileSystemPanels();
-        this.#codeMirrorPanels.addPanel("filesystem-controls", new GenericPanelView("filesystem-controls-right"));
+        this.#codeMirrorPanels.addPanel("filesystem-controls", this.#fileSystemSetController.view);
         this.#codeMirrorPanels.activeViewKey = "reference-spec-filesystem";
         this.#outputController = new OutputController;
         this.#reportSelectorController = new ReportSelectController("report-selector", this.#outputController);
@@ -40,7 +40,7 @@ class Workbench_Base {
         const refSpecOption = await this.#addFileSystemOption("reference-spec-filesystem", ReferenceSpecFileMap, false, true);
         this.#fileSystemControlsLeftView = new GenericPanelView("filesystem-controls-left");
         this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView);
-        this.#fileUploadsView = new FileUploadsView();
+        this.#fileSystemSetController = new FileSystemSetController();
         const fileSystems = FileSystemMap.getAll();
         const optionPromises = [];
         for (const [systemKey, fileSystem] of fileSystems) {
@@ -78,7 +78,7 @@ class Workbench_Base {
             tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey);
         }
         this.#fsSelector.onchange = this.#onWorkspaceSelect.bind(this);
-        this.#fileUploadsView.displayElement.onsubmit = this.#doFileUpload.bind(this);
+        this.#fileSystemSetController.form.onsubmit = this.#onFileSetControllerSubmit.bind(this);
         this.#displayElement.addEventListener("classClick", (event) => this.#handleClassClick(event), { capture: true, passive: true });
     }
     #selectOutputReportTab(tabKey, event) {
@@ -95,12 +95,19 @@ class Workbench_Base {
         this.#reportSelectorController?.clear();
         this.#outputController?.clearResults();
     }
-    async #doFileUpload(event) {
+    #onFileSetControllerSubmit(event) {
         event.preventDefault();
         event.stopPropagation();
-        const targetFileSystem = this.#fileUploadsView.getSelectedFileSystem();
-        const newFileEntries = await this.#fileUploadsView.getFileEntries();
-        this.#fileUploadsView.displayElement.reset();
+        switch (this.#fileSystemSetController.selectedOperation) {
+            case ValidFileOperations.upload:
+                return this.#doFileUpload();
+        }
+        return Promise.reject(new Error("unsupported operation"));
+    }
+    async #doFileUpload() {
+        const targetFileSystem = this.#fileSystemSetController.getSelectedFileSystem();
+        const newFileEntries = await this.#fileSystemSetController.getFileEntries();
+        this.#fileSystemSetController.form.reset();
         let fs = this.#fileSystemToControllerMap.get(targetFileSystem)?.fileMap;
         if (fs) {
             fs.batchUpdate(() => {

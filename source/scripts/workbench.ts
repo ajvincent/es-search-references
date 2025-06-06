@@ -8,8 +8,9 @@ import {
 } from "./file-system/elements/file-system.js";
 
 import {
-  FileUploadsView
-} from "./file-system/views/uploads.js";
+  FileSystemSetController,
+  ValidFileOperations
+} from "./file-system/setController.js";
 
 import {
   TabPanelsView,
@@ -63,7 +64,7 @@ class Workbench_Base {
   readonly #fileSystemToControllerMap = new Map<string, FileSystemController>;
 
   #fileSystemControlsLeftView?: GenericPanelView;
-  #fileUploadsView?: FileUploadsView;
+  #fileSystemSetController?: FileSystemSetController;
 
   #codeMirrorPanels?: TabPanelsView;
   #fileSystemPanels?: TabPanelsView;
@@ -81,7 +82,7 @@ class Workbench_Base {
 
     await this.#fillFileSystemPanels();
 
-    this.#codeMirrorPanels.addPanel("filesystem-controls", new GenericPanelView("filesystem-controls-right"));
+    this.#codeMirrorPanels.addPanel("filesystem-controls", this.#fileSystemSetController!.view);
     this.#codeMirrorPanels.activeViewKey = "reference-spec-filesystem";
 
     this.#outputController = new OutputController;
@@ -103,7 +104,7 @@ class Workbench_Base {
 
     this.#fileSystemControlsLeftView = new GenericPanelView("filesystem-controls-left");
     this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView);
-    this.#fileUploadsView = new FileUploadsView();
+    this.#fileSystemSetController = new FileSystemSetController();
 
     const fileSystems: OrderedKeyMap<FileSystemMap> = FileSystemMap.getAll();
 
@@ -153,7 +154,7 @@ class Workbench_Base {
     }
 
     this.#fsSelector.onchange = this.#onWorkspaceSelect.bind(this);
-    this.#fileUploadsView!.displayElement.onsubmit = this.#doFileUpload.bind(this);
+    this.#fileSystemSetController!.form.onsubmit = this.#onFileSetControllerSubmit.bind(this);
 
     this.#displayElement.addEventListener(
       "classClick",
@@ -180,13 +181,22 @@ class Workbench_Base {
     this.#outputController?.clearResults();
   }
 
-  async #doFileUpload(event: SubmitEvent): Promise<void> {
+  #onFileSetControllerSubmit(event: SubmitEvent): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
 
-    const targetFileSystem: string = this.#fileUploadsView!.getSelectedFileSystem();
-    const newFileEntries: [string, string][] = await this.#fileUploadsView!.getFileEntries();
-    this.#fileUploadsView!.displayElement.reset();
+    switch (this.#fileSystemSetController!.selectedOperation) {
+      case ValidFileOperations.upload:
+        return this.#doFileUpload();
+    }
+
+    return Promise.reject(new Error("unsupported operation"));
+  }
+
+  async #doFileUpload(): Promise<void> {
+    const targetFileSystem: string = this.#fileSystemSetController!.getSelectedFileSystem();
+    const newFileEntries: [string, string][] = await this.#fileSystemSetController!.getFileEntries();
+    this.#fileSystemSetController!.form.reset();
 
     let fs = this.#fileSystemToControllerMap.get(targetFileSystem)?.fileMap as FileSystemMap | undefined;
     if (fs) {
