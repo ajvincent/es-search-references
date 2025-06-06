@@ -14,7 +14,8 @@ export class FileSystemSetController {
         return this.view.sourceSelector.value;
     }
     async getFileEntries() {
-        const firstFile = await this.view.fileUploadPicker.files[0].bytes();
+        const buffer = await this.view.fileUploadPicker.files[0].arrayBuffer();
+        const firstFile = new Uint8Array(buffer);
         const deferred = Promise.withResolvers();
         const filter = file => {
             return file.size > 0;

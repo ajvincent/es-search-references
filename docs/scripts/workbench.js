@@ -63,7 +63,6 @@ class Workbench_Base {
         if (!fsController) {
             return;
         }
-        fsController.updateFileMap();
         const driver = new SearchDriver(fsController.fileMap);
         const fileSet = fsController.filesCheckedSet;
         const resultsMap = await driver.run(Array.from(fileSet));
@@ -105,7 +104,11 @@ class Workbench_Base {
         return Promise.reject(new Error("unsupported operation"));
     }
     async #doFileUpload() {
-        const targetFileSystem = this.#fileSystemSetController.getSelectedFileSystem();
+        const targetFileSystem = this.#fileSystemSetController.getSelectedFileSystem().trim();
+        if (targetFileSystem === "reference-spec-filesystem" || targetFileSystem === "File system controls") {
+            alert(`The "${targetFileSystem}" name is reserved.`);
+            return;
+        }
         const newFileEntries = await this.#fileSystemSetController.getFileEntries();
         this.#fileSystemSetController.form.reset();
         let fs = this.#fileSystemToControllerMap.get(targetFileSystem)?.fileMap;

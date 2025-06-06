@@ -129,12 +129,10 @@ class Workbench_Base {
 
     this.#reportSelectorController!.clear();
     this.#outputController!.clearResults();
-    const fsController = this.#getCurrentFSController();
+    const fsController: FileSystemController | undefined = this.#getCurrentFSController();
     if (!fsController) {
       return;
     }
-
-    fsController.updateFileMap();
 
     const driver = new SearchDriver(fsController!.fileMap);
     const fileSet = fsController!.filesCheckedSet;
@@ -194,7 +192,11 @@ class Workbench_Base {
   }
 
   async #doFileUpload(): Promise<void> {
-    const targetFileSystem: string = this.#fileSystemSetController!.getSelectedFileSystem();
+    const targetFileSystem: string = this.#fileSystemSetController!.getSelectedFileSystem().trim();
+    if (targetFileSystem === "reference-spec-filesystem" || targetFileSystem === "File system controls") {
+      alert(`The "${targetFileSystem}" name is reserved.`);
+      return;
+    }
     const newFileEntries: [string, string][] = await this.#fileSystemSetController!.getFileEntries();
     this.#fileSystemSetController!.form.reset();
 

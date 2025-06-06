@@ -34,7 +34,8 @@ export class FileSystemSetController {
   }
 
   async getFileEntries(): Promise<[string, string][]> {
-    const firstFile: Uint8Array = await this.view.fileUploadPicker.files![0]!.bytes();
+    const buffer: ArrayBuffer = await this.view.fileUploadPicker.files![0]!.arrayBuffer();
+    const firstFile = new Uint8Array(buffer);
 
     const deferred = Promise.withResolvers<Record<string, Uint8Array>>();
     const filter: UnzipFileFilter = file => {

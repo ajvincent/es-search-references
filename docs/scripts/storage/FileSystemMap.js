@@ -6,25 +6,30 @@ export class FileSystemMap extends OrderedKeyMap {
     static getAll() {
         const entries = [];
         for (const systemKey of this.#storage.allKeys()) {
+            if (systemKey === "reference-spec-filesystem") {
+                continue;
+            }
             const items = this.#storage.getItem(systemKey);
             entries.push([systemKey, new _a(systemKey, items)]);
         }
         return new OrderedKeyMap(entries);
     }
-    #systemKey;
+    systemKey;
     #isBatchUpdate = false;
     constructor(systemKey, entries) {
         super(entries);
-        this.#systemKey = systemKey;
+        this.systemKey = systemKey;
         this.#refreshStorage();
         this.set = this.#set.bind(this);
     }
     #refreshStorage() {
+        if (this.systemKey === "reference-spec-filesystem")
+            return;
         if (this.size) {
-            _a.#storage.setItem(this.#systemKey, Array.from(this.entries()));
+            _a.#storage.setItem(this.systemKey, Array.from(this.entries()));
         }
         else {
-            _a.#storage.removeItem(this.#systemKey);
+            _a.#storage.removeItem(this.systemKey);
         }
     }
     batchUpdate(callback) {

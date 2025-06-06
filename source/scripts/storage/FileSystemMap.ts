@@ -11,6 +11,9 @@ export class FileSystemMap extends OrderedKeyMap<string> {
   static getAll(): OrderedKeyMap<FileSystemMap> {
     const entries: [string, FileSystemMap][] = [];
     for (const systemKey of this.#storage.allKeys()) {
+      if (systemKey === "reference-spec-filesystem") {
+        continue;
+      }
       const items = this.#storage.getItem(systemKey) as [string, string][];
       entries.push([systemKey, new FileSystemMap(systemKey, items)]);
     }
@@ -18,21 +21,23 @@ export class FileSystemMap extends OrderedKeyMap<string> {
     return new OrderedKeyMap(entries);
   }
 
-  readonly #systemKey: string;
+  readonly systemKey: string;
   #isBatchUpdate = false;
 
   constructor(systemKey: string, entries: [string, string][]) {
     super(entries);
-    this.#systemKey = systemKey;
+    this.systemKey = systemKey;
     this.#refreshStorage();
     this.set = this.#set.bind(this);
   }
 
   #refreshStorage(): void {
+    if (this.systemKey === "reference-spec-filesystem")
+      return;
     if (this.size) {
-      FileSystemMap.#storage.setItem(this.#systemKey, Array.from(this.entries()));
+      FileSystemMap.#storage.setItem(this.systemKey, Array.from(this.entries()));
     } else {
-      FileSystemMap.#storage.removeItem(this.#systemKey);
+      FileSystemMap.#storage.removeItem(this.systemKey);
     }
   }
 

@@ -93,7 +93,7 @@ export {};
 import {
   FileSystemMap
 } from "../storage/FileSystemMap.js";
-export const ReferenceSpecFileMap = new FileSystemMap("reference-file-system", ${serialized});
+export const ReferenceSpecFileMap = new FileSystemMap("reference-spec-filesystem", ${serialized});
 `.trim();
 
   await fs.writeFile(
