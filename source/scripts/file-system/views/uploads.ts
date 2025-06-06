@@ -21,11 +21,11 @@ export class FileUploadsView implements BaseView {
   readonly #fileSystemSelector: HTMLInputElement;
 
   constructor() {
-    this.displayElement = document.getElementById("file-system-controls-grid") as HTMLFormElement;
+    this.displayElement = document.getElementById("file-system-upload-form") as HTMLFormElement;
     const { elements } = this.displayElement;
     this.#fileUploadPicker = elements.namedItem("file-upload-picker") as HTMLInputElement;
     this.#uploadRoot = elements.namedItem("file-upload-root") as HTMLInputElement;
-    this.#fileSystemSelector = elements.namedItem("file-system-selector") as HTMLInputElement;
+    this.#fileSystemSelector = elements.namedItem("file-system-upload-selector") as HTMLInputElement;
   }
 
   getSelectedFileSystem(): string {

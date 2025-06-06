@@ -6,11 +6,11 @@ export class FileUploadsView {
     #uploadRoot;
     #fileSystemSelector;
     constructor() {
-        this.displayElement = document.getElementById("file-system-controls-grid");
+        this.displayElement = document.getElementById("file-system-upload-form");
         const { elements } = this.displayElement;
         this.#fileUploadPicker = elements.namedItem("file-upload-picker");
         this.#uploadRoot = elements.namedItem("file-upload-root");
-        this.#fileSystemSelector = elements.namedItem("file-system-selector");
+        this.#fileSystemSelector = elements.namedItem("file-system-upload-selector");
     }
     getSelectedFileSystem() {
         return this.#fileSystemSelector.value;

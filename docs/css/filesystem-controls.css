@@ -1,9 +1,9 @@
-#file-system-controls-grid {
+.file-system-controls-grid {
   display: grid;
   grid-template-columns: 200px 200px;
   row-gap: 5px;
 }
 
-#file-system-selector {
+input[list="file-systems-list"] {
   width: 200px;
 }

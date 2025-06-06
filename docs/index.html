@@ -61,7 +61,7 @@
     </div>
 
     <select id="workspace-selector">
-      <option value="filesystem-controls">Upload files to virtual file system</option>
+      <option value="filesystem-controls">File system controls</option>
     </select>
 
     <button id="runSearchesButton">Run Searches!</button>
@@ -73,9 +73,9 @@
     <tab-panels id="codemirror-panels">
       <div id="filesystem-controls-right">
         <h2>Upload Files To Virtual File System</h2>
-        <form id="file-system-controls-grid">
-          <label for="file-system-selector">Use file system:</label>
-          <input id="file-system-selector" list="file-system-list" required>
+        <form id="file-system-upload-form" class="file-system-controls-grid">
+          <label for="file-system-upload-selector">File system key:</label>
+          <input id="file-system-upload-selector" list="file-system-list" required>
 
           <label for="file-upload-root">Specify upload root</label>
           <input id="file-upload-root" list="file-upload-root-list">
@@ -86,14 +86,43 @@
           <span><!-- empty on purpose --></span>
           <button id="uploadFiles" type="submit">Upload files!</button>
         </form>
+        <hr>
+
+        <h2>Virtual File System Commands</h2>
+        <form class="file-system-controls-grid">
+          <label for="cloneOrRenameCommand">Operation</label>
+          <select id="cloneOrRenameCommand">
+            <option value="" selected></option>
+            <option value="clone">Clone</option>
+            <option value="uxpload">Upload</option>
+            <option value="rename">Rename</option>
+            <option value="export">Export</option>
+            <option value="delete">Delete</option>
+          </select>
+
+          <label for="file-system-source-selector">File system key:</label>
+          <input id=""file-system-source-selector" list="file-system-list" required disabled>
+
+          <label for="file-upload-root" class="hidden" data-supported="upload">Specify upload root</label>
+          <input id="file-upload-root" list="file-upload-root-list" class="hidden" data-supported="upload">
+
+          <label for="file-upload-picker" class="hidden" data-supported="upload">Select ZIP:</label>
+          <input id="file-upload-picker" type="file" accept=".zip" required class="hidden" data-supported="upload">
+
+          <label for="file-system-target" class="hidden" data-supported="clone,rename">New system key:</label>
+          <input id="file-system-target" size="20" required class="hidden" data-supported="clone,rename">
+
+          <span><!-- empty on purpose --></span>
+          <button id="cloneOrRenameFileSystem" type="submit" disabled>Execute</button>
+        </form>
+        <datalist id="file-system-list"></datalist>
+        <datalist id="file-upload-root-list">
+          <option value="">(top-level package)</option>
+          <option value="virtual://">virtual://</option>
+          <option value="virtual://home/">virtual://home/</option>
+        </datalist>
       </div>
     </tab-panels>
-    <datalist id="file-system-list"></datalist>
-    <datalist id="file-upload-root-list">
-      <option value="">(top-level package)</option>
-      <option value="virtual://">virtual://</option>
-      <option value="virtual://home/">virtual://home/</option>
-    </datalist>
   </div>
 
   <template id="shadow-filesystem-base">
