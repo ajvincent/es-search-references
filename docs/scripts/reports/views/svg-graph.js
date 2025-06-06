@@ -118,6 +118,11 @@ class SVGGraphNodeView {
     static {
         this.#thisElm.append("this");
     }
+    static #addPopupRow(parent, ...grandchildren) {
+        const outerSpan = document.createElement("span");
+        outerSpan.append(...grandchildren);
+        parent.append(outerSpan);
+    }
     #id;
     #node;
     #graphView;
@@ -180,31 +185,34 @@ class SVGGraphNodeView {
         }
         const inEdgesElement = this.#popup.querySelector("in-edges");
         for (const edge of this.#graphView.graph.inEdges(this.#id)) {
-            const vIdElm = document.createElement("a");
-            vIdElm.href = "#";
-            vIdElm.onclick = this.#handleNodeIdClick.bind(this, edge.v);
-            vIdElm.append(edge.v);
-            const nameElm = document.createElement("span");
-            nameElm.append(edge.name);
-            nameElm.classList.add("edge");
-            const outerSpan = document.createElement("span");
-            outerSpan.append(vIdElm, nameElm, _a.#thisElm.cloneNode(true));
-            inEdgesElement.append(outerSpan);
+            const vIdElm = this.#buildNodeLink(edge.v);
+            const nameElm = this.#buildNameElm(edge);
+            _a.#addPopupRow(inEdgesElement, vIdElm, nameElm, _a.#thisElm.cloneNode(true));
         }
         const outEdgesElement = this.#popup.querySelector("out-edges");
         for (const edge of this.#graphView.graph.outEdges(this.#id)) {
-            const nameElm = document.createElement("span");
-            nameElm.append(edge.name);
-            nameElm.classList.add("edge");
-            const wIdElm = document.createElement("a");
-            wIdElm.href = "#";
-            wIdElm.onclick = this.#handleNodeIdClick.bind(this, edge.w);
-            wIdElm.append(edge.w);
-            const outerSpan = document.createElement("span");
-            outerSpan.append(_a.#thisElm.cloneNode(true), nameElm, wIdElm);
-            outEdgesElement.append(outerSpan);
+            const nameElm = this.#buildNameElm(edge);
+            const wIdElm = this.#buildNodeLink(edge.w);
+            _a.#addPopupRow(outEdgesElement, _a.#thisElm.cloneNode(true), nameElm, wIdElm);
         }
         this.#graphView.popupsParent.append(this.#popup);
+    }
+    #buildNodeLink(nodeId) {
+        const anchorElm = document.createElement("a");
+        anchorElm.href = "#";
+        anchorElm.onclick = this.#handleNodeIdClick.bind(this, nodeId);
+        anchorElm.append(nodeId);
+        return anchorElm;
+    }
+    #buildNameElm(edge) {
+        const nameElm = document.createElement("span");
+        nameElm.append(edge.name);
+        nameElm.classList.add("edge");
+        const { isStrongReference } = this.#graphView.graph.edge(edge);
+        if (!isStrongReference) {
+            nameElm.classList.add("weakreference");
+        }
+        return nameElm;
     }
     #handleClassNameClick(event) {
         event.preventDefault();

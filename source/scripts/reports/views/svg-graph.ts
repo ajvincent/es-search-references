@@ -20,7 +20,7 @@ interface GraphNode extends JSGraphNode {
 }
 
 interface SVGGraphViewIfc {
-  readonly graph: Pick<dagre.graphlib.Graph, "inEdges" | "outEdges">;
+  readonly graph: Pick<dagre.graphlib.Graph, "inEdges" | "outEdges" | "edge">;
   selectNode(nodeId: string): void;
   readonly popupsParent: SVGGElement;
 }
@@ -171,6 +171,12 @@ class SVGGraphNodeView {
     this.#thisElm.append("this");
   }
 
+  static #addPopupRow(parent: HTMLElement, ...grandchildren: readonly Node[]): void {
+    const outerSpan: HTMLSpanElement = document.createElement("span");
+    outerSpan.append(...grandchildren);
+    parent.append(outerSpan);
+  }
+
   readonly #id: string;
   readonly #node: GraphNode;
   readonly #graphView: SVGGraphViewIfc;
@@ -252,39 +258,42 @@ class SVGGraphNodeView {
       classElement.onclick = event => this.#handleClassNameClick(event);
     }
 
-    const inEdgesElement = this.#popup.querySelector("in-edges") as HTMLElement;
+    const inEdgesElement: HTMLElement = this.#popup.querySelector("in-edges") as HTMLElement;
     for (const edge of this.#graphView.graph.inEdges(this.#id)!) {
-      const vIdElm: HTMLAnchorElement = document.createElement("a");
-      vIdElm.href = "#";
-      vIdElm.onclick = this.#handleNodeIdClick.bind(this, edge.v);
-      vIdElm.append(edge.v);
-
-      const nameElm: HTMLSpanElement = document.createElement("span");
-      nameElm.append(edge.name!);
-      nameElm.classList.add("edge");
-
-      const outerSpan: HTMLSpanElement = document.createElement("span");
-      outerSpan.append(vIdElm, nameElm, SVGGraphNodeView.#thisElm.cloneNode(true));
-      inEdgesElement.append(outerSpan);
+      const vIdElm: HTMLAnchorElement = this.#buildNodeLink(edge.v);
+      const nameElm: HTMLSpanElement = this.#buildNameElm(edge);
+      SVGGraphNodeView.#addPopupRow(inEdgesElement, vIdElm, nameElm, SVGGraphNodeView.#thisElm.cloneNode(true));
     }
 
-    const outEdgesElement = this.#popup.querySelector("out-edges") as HTMLElement;
+    const outEdgesElement: HTMLElement = this.#popup.querySelector("out-edges") as HTMLElement;
     for (const edge of this.#graphView.graph.outEdges(this.#id)!) {
-      const nameElm: HTMLSpanElement = document.createElement("span");
-      nameElm.append(edge.name!);
-      nameElm.classList.add("edge");
-
-      const wIdElm: HTMLAnchorElement = document.createElement("a");
-      wIdElm.href = "#";
-      wIdElm.onclick = this.#handleNodeIdClick.bind(this, edge.w);
-      wIdElm.append(edge.w);
-
-      const outerSpan: HTMLSpanElement = document.createElement("span");
-      outerSpan.append(SVGGraphNodeView.#thisElm.cloneNode(true), nameElm, wIdElm);
-      outEdgesElement.append(outerSpan);
+      const nameElm: HTMLSpanElement = this.#buildNameElm(edge);
+      const wIdElm: HTMLAnchorElement = this.#buildNodeLink(edge.w);
+      SVGGraphNodeView.#addPopupRow(outEdgesElement, SVGGraphNodeView.#thisElm.cloneNode(true), nameElm, wIdElm);
     }
 
     this.#graphView.popupsParent.append(this.#popup);
+  }
+
+  #buildNodeLink(nodeId: string): HTMLAnchorElement {
+      const anchorElm: HTMLAnchorElement = document.createElement("a");
+      anchorElm.href = "#";
+      anchorElm.onclick = this.#handleNodeIdClick.bind(this, nodeId);
+      anchorElm.append(nodeId);
+      return anchorElm;
+  }
+
+  #buildNameElm(edge: dagre.Edge): HTMLSpanElement {
+    const nameElm: HTMLSpanElement = document.createElement("span");
+    nameElm.append(edge.name!);
+    nameElm.classList.add("edge");
+
+    const { isStrongReference } = this.#graphView.graph.edge(edge);
+    if (!isStrongReference) {
+      nameElm.classList.add("weakreference")
+    }
+
+    return nameElm;
   }
 
   #handleClassNameClick(event: MouseEvent): void {

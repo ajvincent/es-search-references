@@ -112,12 +112,20 @@
   grid-row-start: 2;
 }
 
+.svg-node-overlay .edge.weakreference {
+  font-style: italic;
+}
+
 .svg-node-overlay .edge:before {
   content: "[";
 }
 
 .svg-node-overlay .edge:after {
-  content: "] =";
+  content: "] \21d2";
+}
+
+.svg-node-overlay .edge.weakreference:after {
+  content: "]";
 }
 
 .svg-node-overlay a {
