@@ -4,6 +4,9 @@ export class EditorPanelView {
     constructor(pathToFile, contents, isReadonly) {
         this.displayElement = new CodeMirrorElement(pathToFile, contents, isReadonly);
     }
+    dispose() {
+        this.displayElement.remove();
+    }
     getContents() {
         return this.displayElement.getContents();
     }

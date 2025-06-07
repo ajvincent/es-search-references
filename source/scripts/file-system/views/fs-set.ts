@@ -54,21 +54,31 @@ export class FileSystemSetView implements BaseView {
     this.targetInput = this.#getElement<HTMLInputElement>("file-system-target");
     this.submitButton = this.#getElement<HTMLButtonElement>("filesystem-submit");
 
-    this.operationSelect.onchange = this.#updateElementsVisible.bind(this);
+    this.operationSelect.onchange = this.#handleOperationSelect.bind(this);
     this.targetInput.onchange = this.#customValidateTarget.bind(this);
+  }
+
+  dispose(): void {
+    throw new Error("not implemented, this is a singleton");
   }
 
   handleActivated(): void {
     this.updateExistingSystemSelector();
   };
 
+  #handleOperationSelect(event: Event): void {
+    event.stopPropagation();
+    this.updateExistingSystemSelector();
+    this.#updateElementsVisible();
+  }
+
   updateExistingSystemSelector(): void {
     const currentSystems: readonly string[] = FileSystemMap.allKeys();
-    const options: readonly HTMLOptionElement[] = currentSystems.map(FileSystemSetView.#createOption);
-    this.sourceSelector.replaceChildren(
-      FileSystemSetView.#referenceFileOption,
-      ...options
-    );
+    const options: HTMLOptionElement[] = currentSystems.map(FileSystemSetView.#createOption);
+    if (this.operationSelect.value !== "rename" && this.operationSelect.value !== "delete") {
+      options.unshift(FileSystemSetView.#referenceFileOption);
+    }
+    this.sourceSelector.replaceChildren(...options);
   }
 
   #getElement<
@@ -95,9 +105,7 @@ export class FileSystemSetView implements BaseView {
     return elem;
   }
 
-  #updateElementsVisible(event: Event): void {
-    event.stopPropagation();
-
+  #updateElementsVisible(): void {
     const { selectedOperation } = this;
     if (!selectedOperation) {
       this.submitButton.disabled = true;

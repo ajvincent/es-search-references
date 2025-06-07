@@ -21,9 +21,8 @@ export class TreeRowView {
         this.rowElement = undefined;
         const collectedViews = [this];
         for (const view of this.childRowViews) {
-            collectedViews.push(...view.#disposeAllViews());
+            view.#disposeAllViews();
         }
-        return collectedViews;
     }
     buildPrimaryLabelElement() {
         const label = document.createElement("label");

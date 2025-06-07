@@ -37,18 +37,19 @@ class Workbench_Base {
     }
     async #fillFileSystemPanels() {
         this.#fileSystemPanels = new TabPanelsView("filesystem-selector");
-        const refSpecOption = await this.#addFileSystemOption("reference-spec-filesystem", ReferenceSpecFileMap, false, true);
-        this.#fileSystemControlsLeftView = new GenericPanelView("filesystem-controls-left");
+        const refSpecOption = await this.#addFileSystemOption("reference-spec-filesystem", ReferenceSpecFileMap, true);
+        this.#fileSystemControlsLeftView = new GenericPanelView("filesystem-controls-left", false);
         this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView);
         this.#fileSystemSetController = new FileSystemSetController();
         const fileSystems = FileSystemMap.getAll();
         const optionPromises = [];
         for (const [systemKey, fileSystem] of fileSystems) {
-            optionPromises.push(this.#addFileSystemOption(systemKey, fileSystem, true, false));
+            optionPromises.push(this.#addFileSystemOption(systemKey, fileSystem, false));
         }
         const options = await Promise.all(optionPromises);
         this.#fsSelector.append(refSpecOption, ...options);
         this.#fsSelector.value = "reference-spec-filesystem";
+        this.#fileSystemSetController.reset();
         this.#onWorkspaceSelect();
     }
     #getCurrentFSController() {
@@ -99,28 +100,41 @@ class Workbench_Base {
         this.#reportSelectorController?.clear();
         this.#outputController?.clearResults();
     }
-    #onFileSetControllerSubmit(event) {
+    async #onFileSetControllerSubmit(event) {
         event.preventDefault();
         event.stopPropagation();
         switch (this.#fileSystemSetController.selectedOperation) {
             case ValidFileOperations.clone:
-                return this.#doFileSystemClone();
+                await this.#doFileSystemClone();
+                break;
             case ValidFileOperations.upload:
-                return this.#doFileSystemUpload();
+                await this.#doFileSystemUpload();
+                break;
+            case ValidFileOperations.rename: {
+                await this.#doFileSystemClone();
+                await this.#doFileSystemDelete(true);
+                break;
+            }
+            case ValidFileOperations.delete: {
+                await this.#doFileSystemDelete(false);
+                break;
+            }
+            default:
+                return Promise.reject(new Error("unsupported operation"));
         }
-        return Promise.reject(new Error("unsupported operation"));
+        this.#fileSystemSetController.reset();
     }
     async #doFileSystemClone() {
-        const sourceFileSystem = this.#fileSystemSetController.getSourceFileSystem().trim();
-        const targetFileSystem = this.#fileSystemSetController.getTargetFileSystem().trim();
+        const sourceFileSystem = this.#fileSystemSetController.getSourceFileSystem();
+        const targetFileSystem = this.#fileSystemSetController.getTargetFileSystem();
         const sourceFS = this.#fileSystemToControllerMap.get(sourceFileSystem).fileMap;
         const targetFS = sourceFS.clone(targetFileSystem);
-        const option = await this.#addFileSystemOption(targetFileSystem, targetFS, true, false);
+        const option = await this.#addFileSystemOption(targetFileSystem, targetFS, false);
         this.#insertFileSystemOption(option);
         this.#fsSelector.value = targetFileSystem;
     }
     async #doFileSystemUpload() {
-        const targetFileSystem = this.#fileSystemSetController.getTargetFileSystem().trim();
+        const targetFileSystem = this.#fileSystemSetController.getTargetFileSystem();
         const newFileEntries = await this.#fileSystemSetController.getFileEntries();
         this.#fileSystemSetController.form.reset();
         let fs = this.#fileSystemToControllerMap.get(targetFileSystem)?.fileMap;
@@ -140,10 +154,23 @@ class Workbench_Base {
                 newFileEntries.push(["es-search-references/guest", guestFile]);
             }
             const fs = new FileSystemMap(targetFileSystem, newFileEntries);
-            const option = await this.#addFileSystemOption(targetFileSystem, fs, true, false);
+            const option = await this.#addFileSystemOption(targetFileSystem, fs, false);
             this.#insertFileSystemOption(option);
         }
         this.#fsSelector.value = targetFileSystem;
+    }
+    async #addFileSystemOption(systemKey, fileSystem, isReadOnly) {
+        const option = document.createElement("option");
+        option.value = systemKey;
+        option.append(systemKey);
+        const fsDisplayElement = new FileSystemElement();
+        fsDisplayElement.id = "fss:" + systemKey;
+        this.#fileSystemPanels.rootElement.append(fsDisplayElement);
+        const fsController = new FileSystemController(systemKey, isReadOnly, fileSystem, this.#codeMirrorPanels.rootElement);
+        this.#fileSystemPanels.addPanel(fsDisplayElement.id, fsController);
+        this.#codeMirrorPanels.addPanel(systemKey, fsController.editorMapView);
+        this.#fileSystemToControllerMap.set(systemKey, fsController);
+        return option;
     }
     #insertFileSystemOption(option) {
         const targetFileSystem = option.value;
@@ -156,18 +183,24 @@ class Workbench_Base {
         }
         this.#fsSelector.options.add(option, referenceOption);
     }
-    async #addFileSystemOption(systemKey, fileSystem, useFSPrefix, isReadOnly) {
-        const option = document.createElement("option");
-        option.value = systemKey;
-        option.append(systemKey);
-        const fsDisplayElement = new FileSystemElement();
-        fsDisplayElement.id = "fss:" + systemKey;
-        this.#fileSystemPanels.rootElement.append(fsDisplayElement);
-        const fsController = new FileSystemController(systemKey, isReadOnly, fileSystem, this.#codeMirrorPanels.rootElement);
-        this.#fileSystemPanels.addPanel(fsDisplayElement.id, fsController);
-        this.#codeMirrorPanels.addPanel(systemKey, fsController.editorMapView);
-        this.#fileSystemToControllerMap.set(systemKey, fsController);
-        return option;
+    async #doFileSystemDelete(isRename) {
+        const systemKey = this.#fileSystemSetController.getSourceFileSystem();
+        if (!isRename) {
+            const ok = window.confirm(`Are you sure you want to delete the "${systemKey} file system?  This operation is irreversible!`);
+            if (!ok)
+                return;
+        }
+        const fsController = this.#fileSystemToControllerMap.get(systemKey);
+        fsController.fileMap.clear();
+        fsController.dispose();
+        this.#fileSystemToControllerMap.delete(systemKey);
+        const option = this.#fsSelector.querySelector(`option[value="${systemKey}"]`);
+        option.remove();
+        this.#codeMirrorPanels.removePanel(systemKey);
+        this.#fileSystemPanels.removePanel("fss:" + systemKey);
+        if (!isRename) {
+            this.#fsSelector.selectedIndex = -1;
+        }
     }
     #handleClassClick(event) {
         const { classSpecifier, classLineNumber } = event.detail;

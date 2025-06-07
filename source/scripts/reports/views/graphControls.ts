@@ -30,6 +30,10 @@ export class GraphControlsView implements BaseView {
     this.#scrollToNodeSelect.onchange = event => this.#handleNodeSelect(event);
   }
 
+  dispose(): void {
+    throw new Error("this is not implemented, on a singleton");
+  }
+
   #handleToggleCollapse(event: MouseEvent) {
     event.preventDefault();
     event.stopPropagation();

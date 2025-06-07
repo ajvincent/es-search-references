@@ -1,6 +1,8 @@
 export interface BaseView {
   readonly displayElement: HTMLElement;
   handleActivated?: () => void;
+
+  dispose(): void;
 }
 
 export class TabPanelsView<PanelView extends BaseView = BaseView> {
@@ -23,15 +25,18 @@ export class TabPanelsView<PanelView extends BaseView = BaseView> {
     this.#activeViewKey = "";
   }
 
+  dispose(): void {
+    this.clearPanels();
+    this.rootElement.remove();
+  }
+
   addPanel(hash: string, view: PanelView): void {
     if (hash === "") {
       throw new Error("The empty hash is reserved for 'show none'.");
     }
 
     if (this.#viewsMap.has(hash)) {
-      const oldView = this.#viewsMap.get(hash)!;
-      oldView.displayElement.remove();
-      this.#viewsMap.delete(hash);
+      this.removePanel(hash);
     }
 
     this.#viewsMap.set(hash, view);
@@ -42,6 +47,14 @@ export class TabPanelsView<PanelView extends BaseView = BaseView> {
     }
 
     this.rootElement.append(view.displayElement);
+  }
+
+  removePanel(hash: string): void {
+    const oldView = this.#viewsMap.get(hash);
+    if (!oldView)
+      throw new Error("what panel are you removing? id: " + hash);
+    oldView.dispose();
+    this.#viewsMap.delete(hash);
   }
 
   get activeViewKey(): string {

@@ -27,6 +27,10 @@ export class SVGGraphView {
         this.handleActivated = resolve;
         promise.then(() => this.#createRenderGraph());
     }
+    dispose() {
+        this.displayElement.remove();
+        this.#nodeIdToViewMap.clear();
+    }
     get svgSelector() {
         return `#${this.displayElement.id} > svg`;
     }

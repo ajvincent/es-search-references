@@ -33,7 +33,10 @@ export class OutputController {
   static #createPreformattedView(contents: string): BaseView {
     const pre = document.createElement("pre");
     pre.append(contents);
-    return { displayElement: pre };
+    return {
+      displayElement: pre,
+      dispose: () => pre.remove()
+    };
   }
 
   readonly #selected = {

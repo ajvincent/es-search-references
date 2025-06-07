@@ -16,6 +16,9 @@ export class GraphControlsView {
         this.#zoomLevelElement.onchange = event => this.#handleZoomChange(event);
         this.#scrollToNodeSelect.onchange = event => this.#handleNodeSelect(event);
     }
+    dispose() {
+        throw new Error("this is not implemented, on a singleton");
+    }
     #handleToggleCollapse(event) {
         event.preventDefault();
         event.stopPropagation();

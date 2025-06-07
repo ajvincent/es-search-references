@@ -71,23 +71,23 @@
     </tab-panels>
 
     <tab-panels id="codemirror-panels">
-      <div id="filesystem-controls-right">
+      <form id="filesystem-controls-form">
         <h2>Virtual File System Commands</h2>
-        <form id="filesystem-controls-form" class="file-system-controls-grid">
+        <div class="file-system-controls-grid">
           <label for="filesystem-operation">Operation</label>
           <select id="filesystem-operation" required>
             <option value="" selected></option>
             <option value="clone">Clone</option>
             <option value="upload">Upload</option>
-            <!--
             <option value="rename">Rename</option>
+            <!--
             <option value="export">Export</option>
-            <option value="delete">Delete</option>
             -->
+            <option value="delete">Delete</option>
           </select>
 
           <label for="file-system-source-selector" class="hidden">Current system key:</label>
-          <select id="file-system-source-selector" data-supported="clone,rename,export" class="hidden"></select>
+          <select id="file-system-source-selector" data-supported="clone,rename,export,delete" class="hidden"></select>
 
           <label for="file-upload-root" class="hidden">Specify upload root</label>
           <input id="file-upload-root" list="file-upload-root-list" class="hidden" data-supported="upload">
@@ -100,14 +100,15 @@
 
           <span><!-- empty on purpose --></span>
           <button id="filesystem-submit" type="submit" disabled>Execute</button>
-        </form>
-        <datalist id="file-system-list"></datalist>
-        <datalist id="file-upload-root-list">
-          <option value="">(top-level package)</option>
-          <option value="virtual://">virtual://</option>
-          <option value="virtual://home/">virtual://home/</option>
-        </datalist>
-      </div>
+          <datalist id="file-system-list"></datalist>
+          <datalist id="file-upload-root-list">
+            <option value="">(top-level package)</option>
+            <option value="virtual://">virtual://</option>
+            <option value="virtual://home/">virtual://home/</option>
+          </datalist>
+
+        </div>
+      </form>
     </tab-panels>
   </div>
 

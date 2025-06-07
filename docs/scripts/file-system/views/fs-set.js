@@ -39,17 +39,28 @@ export class FileSystemSetView {
         this.sourceSelector = this.#getElement("file-system-source-selector");
         this.targetInput = this.#getElement("file-system-target");
         this.submitButton = this.#getElement("filesystem-submit");
-        this.operationSelect.onchange = this.#updateElementsVisible.bind(this);
+        this.operationSelect.onchange = this.#handleOperationSelect.bind(this);
         this.targetInput.onchange = this.#customValidateTarget.bind(this);
+    }
+    dispose() {
+        throw new Error("not implemented, this is a singleton");
     }
     handleActivated() {
         this.updateExistingSystemSelector();
     }
     ;
+    #handleOperationSelect(event) {
+        event.stopPropagation();
+        this.updateExistingSystemSelector();
+        this.#updateElementsVisible();
+    }
     updateExistingSystemSelector() {
         const currentSystems = FileSystemMap.allKeys();
         const options = currentSystems.map(FileSystemSetView.#createOption);
-        this.sourceSelector.replaceChildren(FileSystemSetView.#referenceFileOption, ...options);
+        if (this.operationSelect.value !== "rename" && this.operationSelect.value !== "delete") {
+            options.unshift(FileSystemSetView.#referenceFileOption);
+        }
+        this.sourceSelector.replaceChildren(...options);
     }
     #getElement(id) {
         const elem = this.displayElement.elements.namedItem(id);
@@ -63,8 +74,7 @@ export class FileSystemSetView {
         }
         return elem;
     }
-    #updateElementsVisible(event) {
-        event.stopPropagation();
+    #updateElementsVisible() {
         const { selectedOperation } = this;
         if (!selectedOperation) {
             this.submitButton.disabled = true;

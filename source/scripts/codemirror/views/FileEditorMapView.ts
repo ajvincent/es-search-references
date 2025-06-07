@@ -41,6 +41,11 @@ export class FileEditorMapView implements BaseView {
     }
   }
 
+  dispose(): void {
+    this.displayElement.remove();
+    this.#panelsView.dispose();
+  }
+
   public addEditorForPath(filePath: string, contents: string): void {
     if (!this.displayElement) {
       throw new Error("no parent element for editor, call this.createEditors() first!");

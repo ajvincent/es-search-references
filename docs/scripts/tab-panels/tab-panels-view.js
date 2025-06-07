@@ -14,14 +14,16 @@ export class TabPanelsView {
         this.#viewsMap.clear();
         this.#activeViewKey = "";
     }
+    dispose() {
+        this.clearPanels();
+        this.rootElement.remove();
+    }
     addPanel(hash, view) {
         if (hash === "") {
             throw new Error("The empty hash is reserved for 'show none'.");
         }
         if (this.#viewsMap.has(hash)) {
-            const oldView = this.#viewsMap.get(hash);
-            oldView.displayElement.remove();
-            this.#viewsMap.delete(hash);
+            this.removePanel(hash);
         }
         this.#viewsMap.set(hash, view);
         if (hash === this.#activeViewKey) {
@@ -31,6 +33,13 @@ export class TabPanelsView {
             view.displayElement.classList.remove("active");
         }
         this.rootElement.append(view.displayElement);
+    }
+    removePanel(hash) {
+        const oldView = this.#viewsMap.get(hash);
+        if (!oldView)
+            throw new Error("what panel are you removing? id: " + hash);
+        oldView.dispose();
+        this.#viewsMap.delete(hash);
     }
     get activeViewKey() {
         return this.#activeViewKey;

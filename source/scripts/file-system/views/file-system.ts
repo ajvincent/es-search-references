@@ -60,6 +60,8 @@ export class FileSystemView<
   }
 
   clearRowMap(): void {
+    for (const row of this.#fileToRowMap.values())
+      row.removeAndDispose();
     this.#fileToRowMap.clear();
   }
 

@@ -59,4 +59,9 @@ export class FileSystemSetController {
       ([pathToFile, contentsArray]) => [prefix + pathToFile, FileSystemSetController.#decoder.decode(contentsArray)]
     );
   }
+
+  reset(): void {
+    this.view.updateExistingSystemSelector();
+    this.form.reset();
+  }
 }

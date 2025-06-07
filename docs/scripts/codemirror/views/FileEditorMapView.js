@@ -19,6 +19,10 @@ export class FileEditorMapView {
             this.addEditorForPath(filePath, contents);
         }
     }
+    dispose() {
+        this.displayElement.remove();
+        this.#panelsView.dispose();
+    }
     addEditorForPath(filePath, contents) {
         if (!this.displayElement) {
             throw new Error("no parent element for editor, call this.createEditors() first!");

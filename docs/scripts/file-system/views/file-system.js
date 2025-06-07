@@ -24,6 +24,8 @@ export class FileSystemView {
         this.#treeRowsElement = treeRowsElement;
     }
     clearRowMap() {
+        for (const row of this.#fileToRowMap.values())
+            row.removeAndDispose();
         this.#fileToRowMap.clear();
     }
     addFileKey(key, directoriesSet) {

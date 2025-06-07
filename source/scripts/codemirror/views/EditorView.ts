@@ -12,6 +12,10 @@ export class EditorPanelView implements BaseView {
     this.displayElement = new CodeMirrorElement(pathToFile, contents, isReadonly);
   }
 
+  dispose(): void {
+    this.displayElement.remove();
+  }
+
   getContents(): string {
     return this.displayElement.getContents();
   }

@@ -1,4 +1,6 @@
-import { TreeRowElement } from "../elements/tree-row.js";
+import {
+  TreeRowElement
+} from "../elements/tree-row.js";
 
 export abstract class TreeRowView {
   public rowElement?: TreeRowElement;
@@ -18,18 +20,17 @@ export abstract class TreeRowView {
     this.rowElement = new TreeRowElement(this.depth, this.isCollapsible, this.getCellElements());
   }
 
-  public removeAndDispose(): TreeRowView[] {
+  public removeAndDispose(): void {
     this.rowElement?.remove();
     return this.#disposeAllViews();
   }
 
-  #disposeAllViews(): TreeRowView[] {
+  #disposeAllViews(): void {
     this.rowElement = undefined;
     const collectedViews: TreeRowView[] = [this];
     for (const view of this.childRowViews) {
-      collectedViews.push(...view.#disposeAllViews());
+      view.#disposeAllViews();
     }
-    return collectedViews;
   }
 
   protected buildPrimaryLabelElement(): HTMLLabelElement {

@@ -99,10 +99,10 @@ class Workbench_Base {
     this.#fileSystemPanels = new TabPanelsView("filesystem-selector");
 
     const refSpecOption: HTMLOptionElement = await this.#addFileSystemOption(
-      "reference-spec-filesystem", ReferenceSpecFileMap, false, true
+      "reference-spec-filesystem", ReferenceSpecFileMap, true
     );
 
-    this.#fileSystemControlsLeftView = new GenericPanelView("filesystem-controls-left");
+    this.#fileSystemControlsLeftView = new GenericPanelView("filesystem-controls-left", false);
     this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView);
     this.#fileSystemSetController = new FileSystemSetController();
 
@@ -110,12 +110,14 @@ class Workbench_Base {
 
     const optionPromises: Promise<HTMLOptionElement>[] = [];
     for (const [systemKey, fileSystem] of fileSystems) {
-      optionPromises.push(this.#addFileSystemOption(systemKey, fileSystem, true, false));
+      optionPromises.push(this.#addFileSystemOption(systemKey, fileSystem, false));
     }
     const options = await Promise.all(optionPromises);
     this.#fsSelector.append(refSpecOption, ...options);
 
     this.#fsSelector.value = "reference-spec-filesystem";
+
+    this.#fileSystemSetController.reset();
     this.#onWorkspaceSelect();
   }
 
@@ -186,35 +188,50 @@ class Workbench_Base {
     this.#outputController?.clearResults();
   }
 
-  #onFileSetControllerSubmit(event: SubmitEvent): Promise<void> {
+  async #onFileSetControllerSubmit(event: SubmitEvent): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
 
     switch (this.#fileSystemSetController!.selectedOperation) {
       case ValidFileOperations.clone:
-        return this.#doFileSystemClone();
+        await this.#doFileSystemClone();
+        break;
       case ValidFileOperations.upload:
-        return this.#doFileSystemUpload();
+        await this.#doFileSystemUpload();
+        break;
+      case ValidFileOperations.rename: {
+        await this.#doFileSystemClone();
+        await this.#doFileSystemDelete(true);
+        break;
+      }
+
+      case ValidFileOperations.delete: {
+        await this.#doFileSystemDelete(false);
+        break;
+      }
+
+      default:
+        return Promise.reject(new Error("unsupported operation"));
     }
 
-    return Promise.reject(new Error("unsupported operation"));
+    this.#fileSystemSetController!.reset();
   }
 
   async #doFileSystemClone(): Promise<void> {
-    const sourceFileSystem: string = this.#fileSystemSetController!.getSourceFileSystem().trim();
-    const targetFileSystem: string = this.#fileSystemSetController!.getTargetFileSystem().trim();
+    const sourceFileSystem: string = this.#fileSystemSetController!.getSourceFileSystem();
+    const targetFileSystem: string = this.#fileSystemSetController!.getTargetFileSystem();
 
     const sourceFS: FileSystemMap = this.#fileSystemToControllerMap.get(sourceFileSystem)!.fileMap;
     const targetFS: FileSystemMap = sourceFS.clone(targetFileSystem);
 
-    const option = await this.#addFileSystemOption(targetFileSystem, targetFS, true, false);
+    const option = await this.#addFileSystemOption(targetFileSystem, targetFS, false);
     this.#insertFileSystemOption(option);
 
     this.#fsSelector.value = targetFileSystem;
   }
 
   async #doFileSystemUpload(): Promise<void> {
-    const targetFileSystem: string = this.#fileSystemSetController!.getTargetFileSystem().trim();
+    const targetFileSystem: string = this.#fileSystemSetController!.getTargetFileSystem();
 
     const newFileEntries: [string, string][] = await this.#fileSystemSetController!.getFileEntries();
     this.#fileSystemSetController!.form.reset();
@@ -237,30 +254,16 @@ class Workbench_Base {
 
       const fs = new FileSystemMap(targetFileSystem, newFileEntries);
 
-      const option: HTMLOptionElement = await this.#addFileSystemOption(targetFileSystem, fs, true, false);
+      const option: HTMLOptionElement = await this.#addFileSystemOption(targetFileSystem, fs, false);
       this.#insertFileSystemOption(option);
     }
 
     this.#fsSelector.value = targetFileSystem;
   }
 
-  #insertFileSystemOption(option: HTMLOptionElement) {
-    const targetFileSystem = option.value;
-    let referenceOption: HTMLOptionElement | null = null;
-    for (const currentOption of Array.from(this.#fsSelector.options).slice(2)) {
-      if (targetFileSystem.localeCompare(currentOption.text) < 0) {
-        referenceOption = currentOption;
-        break;
-      }
-    }
-
-    this.#fsSelector.options.add(option, referenceOption);
-  }
-
   async #addFileSystemOption(
     systemKey: string,
     fileSystem: FileSystemMap,
-    useFSPrefix: boolean,
     isReadOnly: boolean,
   ): Promise<HTMLOptionElement>
   {
@@ -279,6 +282,44 @@ class Workbench_Base {
 
     this.#fileSystemToControllerMap.set(systemKey, fsController);
     return option;
+  }
+
+  #insertFileSystemOption(option: HTMLOptionElement) {
+    const targetFileSystem = option.value;
+    let referenceOption: HTMLOptionElement | null = null;
+    for (const currentOption of Array.from(this.#fsSelector.options).slice(2)) {
+      if (targetFileSystem.localeCompare(currentOption.text) < 0) {
+        referenceOption = currentOption;
+        break;
+      }
+    }
+
+    this.#fsSelector.options.add(option, referenceOption);
+  }
+
+  async #doFileSystemDelete(isRename: boolean): Promise<void> {
+    const systemKey = this.#fileSystemSetController!.getSourceFileSystem();
+    if (!isRename) {
+      const ok = window.confirm(`Are you sure you want to delete the "${systemKey} file system?  This operation is irreversible!`);
+      if (!ok)
+        return;
+    }
+
+    const fsController: FileSystemController = this.#fileSystemToControllerMap.get(systemKey)!;
+    fsController.fileMap.clear();
+
+    fsController.dispose();
+    this.#fileSystemToControllerMap.delete(systemKey);
+
+    const option = this.#fsSelector.querySelector(`option[value="${systemKey}"]`)!;
+    option.remove();
+
+    this.#codeMirrorPanels!.removePanel(systemKey);
+    this.#fileSystemPanels!.removePanel("fss:" + systemKey);
+
+    if (!isRename) {
+      this.#fsSelector.selectedIndex = -1;
+    }
   }
 
   #handleClassClick(event: CustomEvent): void {

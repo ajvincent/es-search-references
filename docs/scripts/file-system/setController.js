@@ -34,4 +34,8 @@ export class FileSystemSetController {
         const prefix = this.view.uploadRoot.value;
         return Object.entries(fileRecords).map(([pathToFile, contentsArray]) => [prefix + pathToFile, FileSystemSetController.#decoder.decode(contentsArray)]);
     }
+    reset() {
+        this.view.updateExistingSystemSelector();
+        this.form.reset();
+    }
 }

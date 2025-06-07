@@ -68,6 +68,13 @@ export class FileSystemController implements BaseView {
     this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
   }
 
+  dispose(): void {
+    this.displayElement.remove();
+    this.#fileToRowMap.clear();
+    this.#fileSystemView.clearRowMap();
+    this.editorMapView.dispose();
+  }
+
   #fileCheckToggled(pathToFile: string, isChecked: boolean): void {
     if (isChecked)
       this.#filesCheckedSet.add(pathToFile);

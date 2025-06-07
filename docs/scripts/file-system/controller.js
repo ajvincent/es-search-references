@@ -26,6 +26,12 @@ export class FileSystemController {
         }
         this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
     }
+    dispose() {
+        this.displayElement.remove();
+        this.#fileToRowMap.clear();
+        this.#fileSystemView.clearRowMap();
+        this.editorMapView.dispose();
+    }
     #fileCheckToggled(pathToFile, isChecked) {
         if (isChecked)
             this.#filesCheckedSet.add(pathToFile);

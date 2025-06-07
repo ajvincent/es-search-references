@@ -66,6 +66,11 @@ export class SVGGraphView implements BaseView, SVGGraphViewIfc {
     promise.then(() => this.#createRenderGraph());
   }
 
+  dispose(): void {
+    this.displayElement.remove();
+    this.#nodeIdToViewMap.clear();
+  }
+
   get svgSelector() {
     return `#${this.displayElement.id} > svg`;
   }
