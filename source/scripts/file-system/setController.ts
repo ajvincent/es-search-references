@@ -1,16 +1,23 @@
+import type {
+  FlateCallback,
+  UnzipCallback,
+  UnzipFileFilter,
+} from "fflate";
+
 import {
   FileSystemSetView,
   ValidFileOperations
 } from "./views/fs-set.js";
 
 import {
-  unzip
+  unzip,
+  zip
 } from "../../lib/packages/fflate.js";
 
 import type {
-  UnzipCallback,
-  UnzipFileFilter,
-} from "fflate";
+  ExportedFileSystem,
+  FileSystemMap
+} from "../storage/FileSystemMap.js";
 
 export {
   ValidFileOperations
@@ -58,6 +65,23 @@ export class FileSystemSetController {
     return Object.entries(fileRecords).map(
       ([pathToFile, contentsArray]) => [prefix + pathToFile, FileSystemSetController.#decoder.decode(contentsArray)]
     );
+  }
+
+  async getExportedFilesZip(fsMap: FileSystemMap): Promise<File> {
+    const exportedFiles: ExportedFileSystem = fsMap.exportAsJSON();
+
+    const deferred = Promise.withResolvers<Uint8Array<ArrayBufferLike>>();
+    const resultFn: FlateCallback = (err, zipped) => {
+      if (err)
+        deferred.reject(err);
+      else
+        deferred.resolve(zipped);
+    }
+
+    zip(exportedFiles, resultFn);
+
+    const zipUint8: Uint8Array<ArrayBufferLike> = await deferred.promise;
+    return new File([zipUint8], "exported-files.zip", { type: "application/zip" });
   }
 
   reset(): void {

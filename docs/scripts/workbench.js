@@ -115,6 +115,9 @@ class Workbench_Base {
                 await this.#doFileSystemDelete(true);
                 break;
             }
+            case ValidFileOperations.export:
+                await this.#doFileSystemExport();
+                break;
             case ValidFileOperations.delete: {
                 await this.#doFileSystemDelete(false);
                 break;
@@ -159,6 +162,42 @@ class Workbench_Base {
         }
         this.#fsSelector.value = targetFileSystem;
     }
+    async #doFileSystemDelete(isRename) {
+        const systemKey = this.#fileSystemSetController.getSourceFileSystem();
+        if (!isRename) {
+            const ok = window.confirm(`Are you sure you want to delete the "${systemKey} file system?  This operation is irreversible!`);
+            if (!ok)
+                return;
+        }
+        const fsController = this.#fileSystemToControllerMap.get(systemKey);
+        fsController.fileMap.clear();
+        fsController.dispose();
+        this.#fileSystemToControllerMap.delete(systemKey);
+        const option = this.#fsSelector.querySelector(`option[value="${systemKey}"]`);
+        option.remove();
+        this.#codeMirrorPanels.removePanel(systemKey);
+        this.#fileSystemPanels.removePanel("fss:" + systemKey);
+        if (!isRename) {
+            this.#fsSelector.selectedIndex = -1;
+        }
+    }
+    async #doFileSystemExport() {
+        const systemKey = this.#fileSystemSetController.getSourceFileSystem();
+        const fsController = this.#fileSystemToControllerMap.get(systemKey);
+        const blob = await this.#fileSystemSetController.getExportedFilesZip(fsController.fileMap);
+        const url = URL.createObjectURL(blob);
+        const { promise, resolve } = Promise.withResolvers();
+        const form = document.getElementById("exportFileForm");
+        form.onsubmit = event => resolve();
+        const downloadLink = document.getElementById("downloadZipLink");
+        downloadLink.href = url;
+        const dialog = document.getElementById("exportFileDialog");
+        dialog.showModal();
+        await promise;
+        URL.revokeObjectURL(url);
+        form.onsubmit = null;
+        downloadLink.href = "#";
+    }
     async #addFileSystemOption(systemKey, fileSystem, isReadOnly) {
         const option = document.createElement("option");
         option.value = systemKey;
@@ -182,25 +221,6 @@ class Workbench_Base {
             }
         }
         this.#fsSelector.options.add(option, referenceOption);
-    }
-    async #doFileSystemDelete(isRename) {
-        const systemKey = this.#fileSystemSetController.getSourceFileSystem();
-        if (!isRename) {
-            const ok = window.confirm(`Are you sure you want to delete the "${systemKey} file system?  This operation is irreversible!`);
-            if (!ok)
-                return;
-        }
-        const fsController = this.#fileSystemToControllerMap.get(systemKey);
-        fsController.fileMap.clear();
-        fsController.dispose();
-        this.#fileSystemToControllerMap.delete(systemKey);
-        const option = this.#fsSelector.querySelector(`option[value="${systemKey}"]`);
-        option.remove();
-        this.#codeMirrorPanels.removePanel(systemKey);
-        this.#fileSystemPanels.removePanel("fss:" + systemKey);
-        if (!isRename) {
-            this.#fsSelector.selectedIndex = -1;
-        }
     }
     #handleClassClick(event) {
         const { classSpecifier, classLineNumber } = event.detail;

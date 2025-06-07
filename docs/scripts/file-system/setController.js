@@ -1,5 +1,5 @@
 import { FileSystemSetView, ValidFileOperations } from "./views/fs-set.js";
-import { unzip } from "../../lib/packages/fflate.js";
+import { unzip, zip } from "../../lib/packages/fflate.js";
 export { ValidFileOperations };
 export class FileSystemSetController {
     static #decoder = new TextDecoder;
@@ -33,6 +33,19 @@ export class FileSystemSetController {
         const fileRecords = await deferred.promise;
         const prefix = this.view.uploadRoot.value;
         return Object.entries(fileRecords).map(([pathToFile, contentsArray]) => [prefix + pathToFile, FileSystemSetController.#decoder.decode(contentsArray)]);
+    }
+    async getExportedFilesZip(fsMap) {
+        const exportedFiles = fsMap.exportAsJSON();
+        const deferred = Promise.withResolvers();
+        const resultFn = (err, zipped) => {
+            if (err)
+                deferred.reject(err);
+            else
+                deferred.resolve(zipped);
+        };
+        zip(exportedFiles, resultFn);
+        const zipUint8 = await deferred.promise;
+        return new File([zipUint8], "exported-files.zip", { type: "application/zip" });
     }
     reset() {
         this.view.updateExistingSystemSelector();

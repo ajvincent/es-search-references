@@ -29,6 +29,7 @@ import type {
 } from "./search/Results.js";
 
 import {
+  type ExportedFileSystem,
   FileSystemMap
 } from "./storage/FileSystemMap.js";
 
@@ -204,7 +205,9 @@ class Workbench_Base {
         await this.#doFileSystemDelete(true);
         break;
       }
-
+      case ValidFileOperations.export:
+        await this.#doFileSystemExport();
+        break;
       case ValidFileOperations.delete: {
         await this.#doFileSystemDelete(false);
         break;
@@ -261,6 +264,53 @@ class Workbench_Base {
     this.#fsSelector.value = targetFileSystem;
   }
 
+  async #doFileSystemDelete(isRename: boolean): Promise<void> {
+    const systemKey = this.#fileSystemSetController!.getSourceFileSystem();
+    if (!isRename) {
+      const ok = window.confirm(`Are you sure you want to delete the "${systemKey} file system?  This operation is irreversible!`);
+      if (!ok)
+        return;
+    }
+
+    const fsController: FileSystemController = this.#fileSystemToControllerMap.get(systemKey)!;
+    fsController.fileMap.clear();
+
+    fsController.dispose();
+    this.#fileSystemToControllerMap.delete(systemKey);
+
+    const option = this.#fsSelector.querySelector(`option[value="${systemKey}"]`)!;
+    option.remove();
+
+    this.#codeMirrorPanels!.removePanel(systemKey);
+    this.#fileSystemPanels!.removePanel("fss:" + systemKey);
+
+    if (!isRename) {
+      this.#fsSelector.selectedIndex = -1;
+    }
+  }
+
+  async #doFileSystemExport(): Promise<void> {
+    const systemKey = this.#fileSystemSetController!.getSourceFileSystem();
+    const fsController: FileSystemController = this.#fileSystemToControllerMap.get(systemKey)!;
+    const blob: Blob = await this.#fileSystemSetController!.getExportedFilesZip(fsController.fileMap);
+    const url: string = URL.createObjectURL(blob);
+
+    const { promise, resolve } = Promise.withResolvers<void>();
+    const form = document.getElementById("exportFileForm") as HTMLFormElement;
+    form.onsubmit = event => resolve();
+
+    const downloadLink = document.getElementById("downloadZipLink") as HTMLAnchorElement;
+    downloadLink.href = url;
+
+    const dialog = document.getElementById("exportFileDialog") as HTMLDialogElement;
+    dialog.showModal();
+    await promise;
+
+    URL.revokeObjectURL(url);
+    form.onsubmit = null;
+    downloadLink.href = "#";
+  }
+
   async #addFileSystemOption(
     systemKey: string,
     fileSystem: FileSystemMap,
@@ -295,31 +345,6 @@ class Workbench_Base {
     }
 
     this.#fsSelector.options.add(option, referenceOption);
-  }
-
-  async #doFileSystemDelete(isRename: boolean): Promise<void> {
-    const systemKey = this.#fileSystemSetController!.getSourceFileSystem();
-    if (!isRename) {
-      const ok = window.confirm(`Are you sure you want to delete the "${systemKey} file system?  This operation is irreversible!`);
-      if (!ok)
-        return;
-    }
-
-    const fsController: FileSystemController = this.#fileSystemToControllerMap.get(systemKey)!;
-    fsController.fileMap.clear();
-
-    fsController.dispose();
-    this.#fileSystemToControllerMap.delete(systemKey);
-
-    const option = this.#fsSelector.querySelector(`option[value="${systemKey}"]`)!;
-    option.remove();
-
-    this.#codeMirrorPanels!.removePanel(systemKey);
-    this.#fileSystemPanels!.removePanel("fss:" + systemKey);
-
-    if (!isRename) {
-      this.#fsSelector.selectedIndex = -1;
-    }
   }
 
   #handleClassClick(event: CustomEvent): void {

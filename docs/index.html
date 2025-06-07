@@ -80,9 +80,7 @@
             <option value="clone">Clone</option>
             <option value="upload">Upload</option>
             <option value="rename">Rename</option>
-            <!--
             <option value="export">Export</option>
-            -->
             <option value="delete">Delete</option>
           </select>
 
@@ -106,11 +104,21 @@
             <option value="virtual://">virtual://</option>
             <option value="virtual://home/">virtual://home/</option>
           </datalist>
-
         </div>
       </form>
     </tab-panels>
   </div>
+
+  <dialog id="exportFileDialog">
+    <form method="dialog" id="exportFileForm">
+      <p>
+        <a href="#" id="downloadZipLink">Click here</a> to download your exported files!
+      </p>
+      <div>
+        <button type="submit">Close</button>
+      </div>
+    </form>
+  </dialog>
 
   <template id="shadow-filesystem-base">
     <link type="text/css" href="./css/file-tree.css" rel="stylesheet">

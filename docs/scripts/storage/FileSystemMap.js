@@ -17,6 +17,42 @@ export class FileSystemMap extends OrderedKeyMap {
     static allKeys() {
         return _a.#storage.allKeys();
     }
+    static #encoder = new TextEncoder();
+    static #getParentAndLeaf(key) {
+        let lastSlash = key.lastIndexOf("/");
+        if (lastSlash === -1) {
+            return ["", key];
+        }
+        const parent = key.substring(0, lastSlash);
+        const leaf = key.substring(lastSlash + 1);
+        return [parent, leaf];
+    }
+    static #defineFile(topObject, map, pathToFile, contents) {
+        const [parent, leaf] = _a.#getParentAndLeaf(pathToFile);
+        const byteArray = _a.#encoder.encode(contents);
+        if (parent) {
+            const dir = _a.#requireDirectory(topObject, map, parent);
+            dir[leaf] = byteArray;
+        }
+        else {
+            topObject[leaf] = byteArray;
+        }
+    }
+    static #requireDirectory(topObject, map, pathToDirectory) {
+        if (map.has(pathToDirectory))
+            return map.get(pathToDirectory);
+        const dir = {};
+        map.set(pathToDirectory, dir);
+        const [parent, leaf] = _a.#getParentAndLeaf(pathToDirectory);
+        if (parent) {
+            const dictionary = _a.#requireDirectory(topObject, map, parent);
+            dictionary[leaf] = dir;
+        }
+        else {
+            topObject[leaf] = dir;
+        }
+        return dir;
+    }
     systemKey;
     #isBatchUpdate = false;
     constructor(systemKey, entries) {
@@ -66,6 +102,33 @@ export class FileSystemMap extends OrderedKeyMap {
         if (!this.#isBatchUpdate)
             this.#refreshStorage();
         return this;
+    }
+    exportAsJSON() {
+        const result = {
+            packages: {},
+            urls: {}
+        };
+        const packagesMap = new Map;
+        const urlsMap = new Map;
+        for (const [pathToFile, contents] of this.entries()) {
+            let topObject;
+            let map;
+            let remainingPath;
+            const url = URL.parse(pathToFile);
+            if (url) {
+                const head = url.protocol.substring(0, url.protocol.length - 1);
+                topObject = result.urls;
+                map = urlsMap;
+                remainingPath = head + "/" + url.pathname.substring(1);
+            }
+            else {
+                topObject = result.packages;
+                map = packagesMap;
+                remainingPath = pathToFile;
+            }
+            _a.#defineFile(topObject, map, remainingPath, contents);
+        }
+        return result;
     }
 }
 _a = FileSystemMap;

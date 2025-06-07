@@ -103,3 +103,7 @@ file-system {
 .hidden {
   display: none;
 }
+
+#exportFileDialog {
+  text-align: center;
+}
