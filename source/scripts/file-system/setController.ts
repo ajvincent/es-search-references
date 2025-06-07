@@ -29,8 +29,12 @@ export class FileSystemSetController {
     return this.view.selectedOperation;
   }
 
-  getSelectedFileSystem(): string {
+  getSourceFileSystem(): string {
     return this.view.sourceSelector.value;
+  }
+
+  getTargetFileSystem(): string {
+    return this.view.targetInput.value;
   }
 
   async getFileEntries(): Promise<[string, string][]> {

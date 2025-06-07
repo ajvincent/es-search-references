@@ -1,3 +1,4 @@
+import { FileSystemMap } from "../../storage/FileSystemMap.js";
 export var ValidFileOperations;
 (function (ValidFileOperations) {
     ValidFileOperations["clone"] = "clone";
@@ -9,6 +10,13 @@ export var ValidFileOperations;
 })(ValidFileOperations || (ValidFileOperations = {}));
 ;
 export class FileSystemSetView {
+    static #createOption(value) {
+        const option = document.createElement("option");
+        option.value = value;
+        option.append(value);
+        return option;
+    }
+    static #referenceFileOption = FileSystemSetView.#createOption("reference-spec-filesystem");
     displayElement;
     operationSelect;
     fileUploadPicker;
@@ -32,11 +40,22 @@ export class FileSystemSetView {
         this.targetInput = this.#getElement("file-system-target");
         this.submitButton = this.#getElement("filesystem-submit");
         this.operationSelect.onchange = this.#updateElementsVisible.bind(this);
-        this.displayElement.reset();
+        this.targetInput.onchange = this.#customValidateTarget.bind(this);
+    }
+    handleActivated() {
+        this.updateExistingSystemSelector();
+    }
+    ;
+    updateExistingSystemSelector() {
+        const currentSystems = FileSystemMap.allKeys();
+        const options = currentSystems.map(FileSystemSetView.#createOption);
+        this.sourceSelector.replaceChildren(FileSystemSetView.#referenceFileOption, ...options);
     }
     #getElement(id) {
         const elem = this.displayElement.elements.namedItem(id);
-        if (elem instanceof HTMLInputElement) {
+        if (elem instanceof HTMLButtonElement)
+            return elem;
+        if (elem.dataset.supported) {
             const supportedOps = new Set((elem.dataset.supported?.split(",") ?? [ValidFileOperations["*"]]));
             for (const [op, innerMap] of this.#opToElementsMap.entries()) {
                 innerMap.set(elem, supportedOps.has(op) || supportedOps.has(ValidFileOperations["*"]));
@@ -52,6 +71,7 @@ export class FileSystemSetView {
             const array = [
                 this.fileUploadPicker,
                 this.uploadRoot,
+                this.sourceSelector,
                 this.targetInput,
             ];
             for (const elem of array) {
@@ -78,11 +98,26 @@ export class FileSystemSetView {
             elem.disabled = true;
             elem.required = false;
         }
+        if (elem instanceof HTMLInputElement) {
+            elem.value = "";
+        }
+        else {
+            elem.selectedIndex = -1;
+        }
     }
     get selectedOperation() {
         const value = this.operationSelect.value;
         if (value === "")
             return undefined;
         return value;
+    }
+    #customValidateTarget(event) {
+        const { value } = this.targetInput;
+        if (value === "reference-spec-filesystem" || value === "File system controls") {
+            this.targetInput.setCustomValidity("This file system name is reserved.");
+        }
+        else {
+            this.targetInput.setCustomValidity("");
+        }
     }
 }

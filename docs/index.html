@@ -75,11 +75,9 @@
         <h2>Virtual File System Commands</h2>
         <form id="filesystem-controls-form" class="file-system-controls-grid">
           <label for="filesystem-operation">Operation</label>
-          <select id="filesystem-operation" data-supported="*" required>
+          <select id="filesystem-operation" required>
             <option value="" selected></option>
-            <!--
             <option value="clone">Clone</option>
-            -->
             <option value="upload">Upload</option>
             <!--
             <option value="rename">Rename</option>
@@ -88,17 +86,17 @@
             -->
           </select>
 
-          <label for="file-system-source-selector">File system key:</label>
-          <input id="file-system-source-selector" list="file-system-list" data-supported="*" required disabled>
+          <label for="file-system-source-selector" class="hidden">Current system key:</label>
+          <select id="file-system-source-selector" data-supported="clone,rename,export" class="hidden"></select>
 
-          <label for="file-upload-root" class="hidden" data-supported="upload">Specify upload root</label>
-          <input id="file-upload-root" list="file-upload-root-list" class="hidden" data-supported="upload" data-required="true">
+          <label for="file-upload-root" class="hidden">Specify upload root</label>
+          <input id="file-upload-root" list="file-upload-root-list" class="hidden" data-supported="upload">
 
-          <label for="file-upload-picker" class="hidden" data-supported="upload">Select ZIP:</label>
-          <input id="file-upload-picker" type="file" accept=".zip" data-required="true" class="hidden" data-supported="upload">
+          <label for="file-upload-picker" class="hidden">Select ZIP:</label>
+          <input id="file-upload-picker" type="file" accept=".zip" class="hidden" data-supported="upload">
 
-          <label for="file-system-target" class="hidden" data-supported="clone,rename">New system key:</label>
-          <input id="file-system-target" size="20" data-required="true" class="hidden" data-supported="clone,rename">
+          <label for="file-system-target" class="hidden">New system key:</label>
+          <input id="file-system-target" size="20" class="hidden" data-supported="clone,rename,upload">
 
           <span><!-- empty on purpose --></span>
           <button id="filesystem-submit" type="submit" disabled>Execute</button>

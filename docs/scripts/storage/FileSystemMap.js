@@ -14,6 +14,9 @@ export class FileSystemMap extends OrderedKeyMap {
         }
         return new OrderedKeyMap(entries);
     }
+    static allKeys() {
+        return _a.#storage.allKeys();
+    }
     systemKey;
     #isBatchUpdate = false;
     constructor(systemKey, entries) {
@@ -21,6 +24,10 @@ export class FileSystemMap extends OrderedKeyMap {
         this.systemKey = systemKey;
         this.#refreshStorage();
         this.set = this.#set.bind(this);
+    }
+    clone(newSystemKey) {
+        const entries = Array.from(this.entries());
+        return new _a(newSystemKey, entries);
     }
     #refreshStorage() {
         if (this.systemKey === "reference-spec-filesystem")

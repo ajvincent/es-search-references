@@ -10,8 +10,11 @@ export class FileSystemSetController {
     get selectedOperation() {
         return this.view.selectedOperation;
     }
-    getSelectedFileSystem() {
+    getSourceFileSystem() {
         return this.view.sourceSelector.value;
+    }
+    getTargetFileSystem() {
+        return this.view.targetInput.value;
     }
     async getFileEntries() {
         const buffer = await this.view.fileUploadPicker.files[0].arrayBuffer();

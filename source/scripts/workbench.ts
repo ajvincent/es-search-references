@@ -134,6 +134,8 @@ class Workbench_Base {
       return;
     }
 
+    fsController.updateFileMap();
+
     const driver = new SearchDriver(fsController!.fileMap);
     const fileSet = fsController!.filesCheckedSet;
     const resultsMap: ReadonlyMap<string, ReadonlyMap<string, SearchResults>> = await driver.run(Array.from(fileSet));
@@ -171,6 +173,11 @@ class Workbench_Base {
     event?.stopPropagation();
     event?.preventDefault();
 
+    const fsController: FileSystemController | undefined = this.#getCurrentFSController();
+    if (fsController) {
+      fsController.updateFileMap();
+    }
+
     const { value } = this.#fsSelector;
     this.#fileSystemPanels!.activeViewKey = "fss:" + value;
     this.#codeMirrorPanels!.activeViewKey = value;
@@ -184,19 +191,31 @@ class Workbench_Base {
     event.stopPropagation();
 
     switch (this.#fileSystemSetController!.selectedOperation) {
+      case ValidFileOperations.clone:
+        return this.#doFileSystemClone();
       case ValidFileOperations.upload:
-        return this.#doFileUpload();
+        return this.#doFileSystemUpload();
     }
 
     return Promise.reject(new Error("unsupported operation"));
   }
 
-  async #doFileUpload(): Promise<void> {
-    const targetFileSystem: string = this.#fileSystemSetController!.getSelectedFileSystem().trim();
-    if (targetFileSystem === "reference-spec-filesystem" || targetFileSystem === "File system controls") {
-      alert(`The "${targetFileSystem}" name is reserved.`);
-      return;
-    }
+  async #doFileSystemClone(): Promise<void> {
+    const sourceFileSystem: string = this.#fileSystemSetController!.getSourceFileSystem().trim();
+    const targetFileSystem: string = this.#fileSystemSetController!.getTargetFileSystem().trim();
+
+    const sourceFS: FileSystemMap = this.#fileSystemToControllerMap.get(sourceFileSystem)!.fileMap;
+    const targetFS: FileSystemMap = sourceFS.clone(targetFileSystem);
+
+    const option = await this.#addFileSystemOption(targetFileSystem, targetFS, true, false);
+    this.#insertFileSystemOption(option);
+
+    this.#fsSelector.value = targetFileSystem;
+  }
+
+  async #doFileSystemUpload(): Promise<void> {
+    const targetFileSystem: string = this.#fileSystemSetController!.getTargetFileSystem().trim();
+
     const newFileEntries: [string, string][] = await this.#fileSystemSetController!.getFileEntries();
     this.#fileSystemSetController!.form.reset();
 
@@ -219,18 +238,23 @@ class Workbench_Base {
       const fs = new FileSystemMap(targetFileSystem, newFileEntries);
 
       const option: HTMLOptionElement = await this.#addFileSystemOption(targetFileSystem, fs, true, false);
-      let referenceOption: HTMLOptionElement | null = null;
-      for (const currentOption of Array.from(this.#fsSelector.options).slice(2)) {
-        if (targetFileSystem.localeCompare(currentOption.text) < 0) {
-          referenceOption = currentOption;
-          break;
-        }
-      }
-
-      this.#fsSelector.options.add(option, referenceOption);
+      this.#insertFileSystemOption(option);
     }
 
     this.#fsSelector.value = targetFileSystem;
+  }
+
+  #insertFileSystemOption(option: HTMLOptionElement) {
+    const targetFileSystem = option.value;
+    let referenceOption: HTMLOptionElement | null = null;
+    for (const currentOption of Array.from(this.#fsSelector.options).slice(2)) {
+      if (targetFileSystem.localeCompare(currentOption.text) < 0) {
+        referenceOption = currentOption;
+        break;
+      }
+    }
+
+    this.#fsSelector.options.add(option, referenceOption);
   }
 
   async #addFileSystemOption(
@@ -241,20 +265,19 @@ class Workbench_Base {
   ): Promise<HTMLOptionElement>
   {
     const option: HTMLOptionElement = document.createElement("option");
-    const key = useFSPrefix ? "filesystem:" + systemKey : systemKey;
-    option.value = key;
+    option.value = systemKey;
     option.append(systemKey);
 
     const fsDisplayElement = new FileSystemElement();
-    fsDisplayElement.id = "fss:" + key;
+    fsDisplayElement.id = "fss:" + systemKey;
     this.#fileSystemPanels!.rootElement.append(fsDisplayElement);
     const fsController = new FileSystemController(
-      key, isReadOnly, fileSystem, this.#codeMirrorPanels!.rootElement
+      systemKey, isReadOnly, fileSystem, this.#codeMirrorPanels!.rootElement
     );
     this.#fileSystemPanels!.addPanel(fsDisplayElement.id, fsController);
-    this.#codeMirrorPanels!.addPanel(key, fsController.editorMapView);
+    this.#codeMirrorPanels!.addPanel(systemKey, fsController.editorMapView);
 
-    this.#fileSystemToControllerMap.set(key, fsController);
+    this.#fileSystemToControllerMap.set(systemKey, fsController);
     return option;
   }
 

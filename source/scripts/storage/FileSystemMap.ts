@@ -21,6 +21,10 @@ export class FileSystemMap extends OrderedKeyMap<string> {
     return new OrderedKeyMap(entries);
   }
 
+  static allKeys(): readonly string[] {
+    return FileSystemMap.#storage.allKeys();
+  }
+
   readonly systemKey: string;
   #isBatchUpdate = false;
 
@@ -29,6 +33,11 @@ export class FileSystemMap extends OrderedKeyMap<string> {
     this.systemKey = systemKey;
     this.#refreshStorage();
     this.set = this.#set.bind(this);
+  }
+
+  clone(newSystemKey: string): FileSystemMap {
+    const entries: [string, string][] = Array.from(this.entries());
+    return new FileSystemMap(newSystemKey, entries);
   }
 
   #refreshStorage(): void {

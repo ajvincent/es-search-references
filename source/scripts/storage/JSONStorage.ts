@@ -51,7 +51,7 @@ export class JSONStorage {
     this.#storage.setItem(this.#rootStorageKey, JSON.stringify(Array.from(this.#internalMap)));
   }
 
-  allKeys(): string[] {
+  allKeys(): readonly string[] {
     return Array.from(this.#internalMap.keys());
   }
 }
