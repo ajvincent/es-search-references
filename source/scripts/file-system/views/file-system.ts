@@ -15,7 +15,7 @@ import type {
 } from "./base-file-row.js";
 
 type DirectoryArguments = [
-  depth: number, primaryLabel: string
+  depth: number, primaryLabel: string, fullPath: string
 ];
 type FileArguments = [
   depth: number, isCollapsible: boolean, label: string, fullPath: string
@@ -91,7 +91,7 @@ export class FileSystemView<
       depth = this.#fileToRowMap.get(parent)!.depth + 1
     }
 
-    const view = new this.#DirectoryViewClass(depth, leaf);
+    const view = new this.#DirectoryViewClass(depth, leaf, key);
     this.#fileToRowMap.set(key, view);
 
     if (depth > 0) {

@@ -4,7 +4,8 @@ export class BaseFileRowView extends TreeRowView {
     constructor(depth, isCollapsible, label, fullPath) {
         super(depth, isCollapsible, label);
         this.fullPath = fullPath;
-        this.initialize();
+        this.rowElement.dataset.fullpath = fullPath;
+        this.addCells();
     }
     getCellElements() {
         return [

@@ -2,7 +2,7 @@ import { TreeRowView } from "../../tree/views/tree-row.js";
 export class SearchKeyRowView extends TreeRowView {
     constructor(depth, searchKey) {
         super(depth, false, searchKey);
-        this.initialize();
+        this.addCells();
         this.rowElement.classList.add("searchkey");
     }
     getCellElements() {

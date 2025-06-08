@@ -3,11 +3,6 @@ import {
 } from "./base-file-row.js";
 
 export class FileRowView extends BaseFileRowView {
-
-  constructor(depth: number, isCollapsible: boolean, label: string, fullPath: string) {
-    super(depth, isCollapsible, label, fullPath);
-  }
-
   protected getCellElements(): HTMLElement[] {
     return [
       this.buildCheckbox(),

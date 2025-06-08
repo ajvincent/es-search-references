@@ -9,20 +9,21 @@ export class TreeRowView {
         this.depth = depth;
         this.isCollapsible = isCollapsible;
         this.primaryLabel = primaryLabel;
+        this.rowElement = new TreeRowElement(this.depth, this.isCollapsible);
     }
-    initialize() {
-        this.rowElement = new TreeRowElement(this.depth, this.isCollapsible, this.getCellElements());
+    addCells() {
+        this.rowElement.addCells(this.getCellElements());
     }
     removeAndDispose() {
-        this.rowElement?.remove();
+        this.rowElement.remove();
         return this.#disposeAllViews();
     }
     #disposeAllViews() {
-        this.rowElement = undefined;
-        const collectedViews = [this];
+        this.rowElement.remove();
         for (const view of this.childRowViews) {
             view.#disposeAllViews();
         }
+        this.childRowViews.splice(0, this.childRowViews.length);
     }
     buildPrimaryLabelElement() {
         const label = document.createElement("label");

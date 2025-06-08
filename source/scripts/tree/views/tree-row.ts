@@ -3,7 +3,7 @@ import {
 } from "../elements/tree-row.js";
 
 export abstract class TreeRowView {
-  public rowElement?: TreeRowElement;
+  public rowElement: TreeRowElement;
 
   public readonly depth: number;
   public readonly isCollapsible: boolean;
@@ -14,23 +14,24 @@ export abstract class TreeRowView {
     this.depth = depth;
     this.isCollapsible = isCollapsible;
     this.primaryLabel = primaryLabel;
+    this.rowElement = new TreeRowElement(this.depth, this.isCollapsible);
   }
 
-  public initialize() {
-    this.rowElement = new TreeRowElement(this.depth, this.isCollapsible, this.getCellElements());
+  protected addCells() {
+    this.rowElement.addCells(this.getCellElements());
   }
 
   public removeAndDispose(): void {
-    this.rowElement?.remove();
+    this.rowElement.remove();
     return this.#disposeAllViews();
   }
 
   #disposeAllViews(): void {
-    this.rowElement = undefined;
-    const collectedViews: TreeRowView[] = [this];
+    this.rowElement.remove();
     for (const view of this.childRowViews) {
       view.#disposeAllViews();
     }
+    this.childRowViews.splice(0, this.childRowViews.length);
   }
 
   protected buildPrimaryLabelElement(): HTMLLabelElement {

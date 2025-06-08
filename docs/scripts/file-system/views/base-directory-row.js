@@ -1,8 +1,9 @@
 import { TreeRowView } from "../../tree/views/tree-row.js";
 export class BaseDirectoryRowView extends TreeRowView {
-    constructor(depth, primaryLabel) {
+    constructor(depth, primaryLabel, fullPath) {
         super(depth, depth > 0, primaryLabel);
-        this.initialize();
+        this.rowElement.dataset.fullpath = fullPath;
+        this.addCells();
     }
     getCellElements() {
         return [

@@ -1,8 +1,5 @@
 import { BaseFileRowView } from "./base-file-row.js";
 export class FileRowView extends BaseFileRowView {
-    constructor(depth, isCollapsible, label, fullPath) {
-        super(depth, isCollapsible, label, fullPath);
-    }
     getCellElements() {
         return [
             this.buildCheckbox(),

@@ -3,9 +3,11 @@ import {
 } from "../../tree/views/tree-row.js";
 
 export class BaseDirectoryRowView extends TreeRowView {
-  constructor(depth: number, primaryLabel: string) {
+  constructor(depth: number, primaryLabel: string, fullPath: string) {
     super(depth, depth > 0, primaryLabel);
-    this.initialize();
+    this.rowElement.dataset.fullpath = fullPath;
+
+    this.addCells();
   }
 
   protected getCellElements(): HTMLElement[] {

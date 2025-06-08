@@ -51,7 +51,7 @@ export class FileSystemView {
         else {
             depth = this.#fileToRowMap.get(parent).depth + 1;
         }
-        const view = new this.#DirectoryViewClass(depth, leaf);
+        const view = new this.#DirectoryViewClass(depth, leaf, key);
         this.#fileToRowMap.set(key, view);
         if (depth > 0) {
             view.registerCollapseClick();

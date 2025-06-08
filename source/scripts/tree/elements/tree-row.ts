@@ -1,5 +1,5 @@
 export class TreeRowElement extends HTMLElement {
-  constructor(depth: number, isCollapsible: boolean, cells: HTMLElement[]) {
+  constructor(depth: number, isCollapsible: boolean) {
     super();
     if (depth % 2 === 1) {
       this.classList.add("depth-odd");
@@ -10,11 +10,10 @@ export class TreeRowElement extends HTMLElement {
     if (isCollapsible) {
       this.classList.add("is-collapsible");
     }
-
-    this.append(...cells);
   }
 
-  connectedCallback() {
+  public addCells(cells: HTMLElement[]): void {
+    this.prepend(...cells);
   }
 
   public addRow(row: TreeRowElement): void {

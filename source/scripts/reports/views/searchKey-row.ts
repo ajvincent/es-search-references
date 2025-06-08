@@ -5,7 +5,7 @@ import {
 export class SearchKeyRowView extends TreeRowView {
   constructor(depth: number, searchKey: string) {
     super(depth, false, searchKey);
-    this.initialize();
+    this.addCells();
     this.rowElement!.classList.add("searchkey");
   }
 
