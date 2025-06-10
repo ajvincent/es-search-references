@@ -3,6 +3,8 @@
 <head>
   <title>Search for Object References in engine262</title>
   <link type="text/css" href="css/index.css" rel="stylesheet">
+  <link type="text/css" href="./css/file-tree.css" rel="stylesheet">
+  <link type="text/css" href="./css/reports-tree.css" rel="stylesheet">
 </head>
 <body>
   <h1>Search for Object References in engine262</h1>
@@ -121,7 +123,6 @@
   </dialog>
 
   <template id="shadow-filesystem-base">
-    <link type="text/css" href="./css/file-tree.css" rel="stylesheet">
     <tree-grid id="tree-root" class="filesystem">
       <span>Search</span>
       <span>&nbsp;&nbsp;File</span>
@@ -131,9 +132,8 @@
   </template>
 
   <template id="shadow-reports-base">
-    <link type="text/css" href="./css/reports-tree.css" rel="stylesheet">
     <tree-grid id="tree-root" class="reports">
-      <tree-rows id="tree-rows"></tree-rows>
+      <tree-rows class="tree-rows"></tree-rows>
     </tree-grid>
   </template>
 

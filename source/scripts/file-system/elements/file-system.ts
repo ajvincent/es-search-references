@@ -1,6 +1,5 @@
 export class FileSystemElement extends HTMLElement {
   static readonly #template: DocumentFragment = (document.getElementById("shadow-filesystem-base") as HTMLTemplateElement).content;
-  #shadowRoot?: ShadowRoot;
 
   public treeRows: HTMLElement | null = null;
 
@@ -10,9 +9,8 @@ export class FileSystemElement extends HTMLElement {
   constructor() {
     super();
 
-    this.#shadowRoot = this.attachShadow({ mode: "closed" });
-    this.#shadowRoot.append(FileSystemElement.#template.cloneNode(true));
-    this.treeRows = this.#shadowRoot.getElementById("tree-rows")!;
+    this.append(FileSystemElement.#template.cloneNode(true));
+    this.treeRows = this.getElementsByTagName("tree-rows")[0] as HTMLElement;
 
     const { promise, resolve } = Promise.withResolvers<void>()
     this.#connectedResolve = resolve;

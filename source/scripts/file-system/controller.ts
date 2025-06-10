@@ -1,3 +1,12 @@
+//#region preamble
+import "../../lib/packages/ctxmenu.js";
+
+import type {
+  CTXConfig,
+  CTXMenu,
+  CTXMHeading,
+} from "../../lib/packages/ctxmenu.js";
+
 import {
   FileEditorMapView
 } from "../codemirror/views/FileEditorMapView.js";
@@ -29,6 +38,7 @@ import {
 import {
   FileSystemElement
 } from "./elements/file-system.js";
+//#endregion preamble
 
 void(FileSystemElement); // force the custom element upgrade
 
@@ -66,6 +76,8 @@ export class FileSystemController implements BaseView {
     }
 
     this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
+
+    this.#createContextMenu();
   }
 
   dispose(): void {
@@ -109,5 +121,31 @@ export class FileSystemController implements BaseView {
 
   updateFileMap(): void {
     this.editorMapView.updateFileMap();
+  }
+
+  #createContextMenu(): void {
+    const selector: string = `[id="${this.displayElement.id}"] > tree-grid > tree-rows `;
+    const menuDefinition: CTXMenu = [
+      { text: "Hello World" },
+      /*
+      { text: "Copy", action(ev) {
+        void(ev);
+      }},
+      */
+    ];
+    const config: CTXConfig = {
+      onBeforeShow: (menu, event): CTXMenu => {
+        let target = event!.target as HTMLElement;
+        while (!target.dataset.fullpath) {
+          target = target.parentElement!;
+        }
+        const fullPath = target.dataset.fullpath;
+        /*
+        (menu[0] as CTXMHeading).text = fullPath;
+        */
+        return menu;
+      },
+    }
+    window.ctxmenu.attach(selector, menuDefinition, config);
   }
 }
