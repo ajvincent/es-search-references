@@ -23,7 +23,10 @@ class Workbench_Base {
     constructor() {
         this.#displayElement = document.getElementById("workbench");
         this.#fsSelector = document.getElementById("workspace-selector");
-        window.onload = () => this.#initialize();
+        if (document.readyState === "complete")
+            Promise.resolve().then(() => this.#initialize());
+        else
+            window.onload = () => this.#initialize();
     }
     async #initialize() {
         this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");

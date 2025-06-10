@@ -75,7 +75,10 @@ class Workbench_Base {
   constructor() {
     this.#displayElement = document.getElementById("workbench") as HTMLDivElement;
     this.#fsSelector = document.getElementById("workspace-selector") as HTMLSelectElement;
-    window.onload = () => this.#initialize();
+    if (document.readyState === "complete")
+      Promise.resolve().then(() => this.#initialize());
+    else
+      window.onload = () => this.#initialize();
   }
 
   async #initialize(): Promise<void> {
