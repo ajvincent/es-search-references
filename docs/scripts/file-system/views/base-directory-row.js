@@ -3,6 +3,7 @@ export class BaseDirectoryRowView extends TreeRowView {
     constructor(depth, primaryLabel, fullPath) {
         super(depth, depth > 0, primaryLabel);
         this.rowElement.dataset.fullpath = fullPath;
+        this.rowElement.dataset.isdirectory = "true";
         this.addCells();
     }
     getCellElements() {

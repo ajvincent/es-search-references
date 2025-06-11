@@ -15,6 +15,14 @@ import type {
 } from "../tree/views/tree-row.js";
 
 import {
+  FileSystemContextMenu
+} from "./contextMenu.js";
+
+import {
+  FileSystemElement
+} from "./elements/file-system.js";
+
+import {
   FileRowView
 } from "./views/file-row.js";
 
@@ -26,13 +34,15 @@ import {
   FileSystemView
 } from "./views/file-system.js";
 
-import {
-  FileSystemElement
-} from "./elements/file-system.js";
-
 void(FileSystemElement); // force the custom element upgrade
 
-export class FileSystemController implements BaseView {
+export interface FileSystemControllerIfc {
+  getTreeRowsElement(): HTMLElement;
+  readonly isReadOnly: boolean;
+  readonly clipBoardHasCopy: boolean;
+}
+
+export class FileSystemController implements BaseView, FileSystemControllerIfc {
   readonly isReadOnly: boolean;
   readonly displayElement: FileSystemElement;
 
@@ -44,17 +54,17 @@ export class FileSystemController implements BaseView {
   readonly #fileSystemView: FileSystemView<DirectoryRowView, FileRowView>;
 
   readonly editorMapView: FileEditorMapView;
+  readonly #fsContextMenu: FileSystemContextMenu;
 
   constructor(
     rootId: string,
     isReadonly: boolean,
+    fileSystemElement: FileSystemElement,
     fileMap: FileSystemMap,
     codeMirrorPanelsElement: HTMLElement,
   )
   {
-    this.displayElement = document.getElementById("fss:" + rootId) as FileSystemElement;
-    if (!this.displayElement)
-      throw new Error("no element for root id: " + rootId);
+    this.displayElement = fileSystemElement;
     this.isReadOnly = isReadonly;
     this.fileMap = fileMap;
 
@@ -66,6 +76,7 @@ export class FileSystemController implements BaseView {
     }
 
     this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
+    this.#fsContextMenu = new FileSystemContextMenu(this);
   }
 
   dispose(): void {
@@ -109,5 +120,15 @@ export class FileSystemController implements BaseView {
 
   updateFileMap(): void {
     this.editorMapView.updateFileMap();
+  }
+
+  // FileSystemControllerIfc
+  getTreeRowsElement(): HTMLElement {
+    return this.displayElement.treeRows!;
+  }
+
+  // FileSystemControllerIfc
+  get clipBoardHasCopy(): boolean {
+    return false;
   }
 }

@@ -1,8 +1,9 @@
 import { FileEditorMapView } from "../codemirror/views/FileEditorMapView.js";
+import { FileSystemContextMenu } from "./contextMenu.js";
+import { FileSystemElement } from "./elements/file-system.js";
 import { FileRowView } from "./views/file-row.js";
 import { DirectoryRowView } from "./views/directory-row.js";
 import { FileSystemView } from "./views/file-system.js";
-import { FileSystemElement } from "./elements/file-system.js";
 void (FileSystemElement); // force the custom element upgrade
 export class FileSystemController {
     isReadOnly;
@@ -13,10 +14,9 @@ export class FileSystemController {
     #fileToRowMap = new Map;
     #fileSystemView;
     editorMapView;
-    constructor(rootId, isReadonly, fileMap, codeMirrorPanelsElement) {
-        this.displayElement = document.getElementById("fss:" + rootId);
-        if (!this.displayElement)
-            throw new Error("no element for root id: " + rootId);
+    #fsContextMenu;
+    constructor(rootId, isReadonly, fileSystemElement, fileMap, codeMirrorPanelsElement) {
+        this.displayElement = fileSystemElement;
         this.isReadOnly = isReadonly;
         this.fileMap = fileMap;
         this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows);
@@ -25,6 +25,7 @@ export class FileSystemController {
             this.#addFileKey(key, directoriesSet);
         }
         this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
+        this.#fsContextMenu = new FileSystemContextMenu(this);
     }
     dispose() {
         this.displayElement.remove();
@@ -57,5 +58,13 @@ export class FileSystemController {
     }
     updateFileMap() {
         this.editorMapView.updateFileMap();
+    }
+    // FileSystemControllerIfc
+    getTreeRowsElement() {
+        return this.displayElement.treeRows;
+    }
+    // FileSystemControllerIfc
+    get clipBoardHasCopy() {
+        return false;
     }
 }

@@ -328,7 +328,7 @@ class Workbench_Base {
     fsDisplayElement.id = "fss:" + systemKey;
     this.#fileSystemPanels!.rootElement.append(fsDisplayElement);
     const fsController = new FileSystemController(
-      systemKey, isReadOnly, fileSystem, this.#codeMirrorPanels!.rootElement
+      systemKey, isReadOnly, fsDisplayElement, fileSystem, this.#codeMirrorPanels!.rootElement
     );
     this.#fileSystemPanels!.addPanel(fsDisplayElement.id, fsController);
     this.#codeMirrorPanels!.addPanel(systemKey, fsController.editorMapView);
