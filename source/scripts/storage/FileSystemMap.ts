@@ -82,6 +82,12 @@ export class FileSystemMap extends OrderedKeyMap<string> {
     return dir;
   }
 
+  static #afterKeyComparator(a: string, b: string): number {
+    if (a.startsWith(b))
+      return -1;
+    return a.localeCompare(b);
+  }
+
   readonly systemKey: string;
   #isBatchUpdate = false;
 
@@ -89,7 +95,6 @@ export class FileSystemMap extends OrderedKeyMap<string> {
     super(entries);
     this.systemKey = systemKey;
     this.#refreshStorage();
-    this.set = this.#set.bind(this);
   }
 
   clone(newSystemKey: string): FileSystemMap {
@@ -132,7 +137,7 @@ export class FileSystemMap extends OrderedKeyMap<string> {
     return rv;
   }
 
-  #set(key: string, value: string): this {
+  set(key: string, value: string): this {
     super.set(key, value);
     if (!this.#isBatchUpdate)
       this.#refreshStorage();
@@ -170,5 +175,91 @@ export class FileSystemMap extends OrderedKeyMap<string> {
     }
 
     return result;
+  }
+
+  hasPath(parentPath: string): boolean {
+    const index = this.getInsertionIndex(parentPath);
+    return (index < this.keysArray.length && this.keysArray[index].startsWith(parentPath))
+  }
+
+  /*
+  batchPaste(
+    fromParentPath: string,
+    toParentPath: string,
+    entries: [string, string][]
+  ): void
+  {
+    if (!fromParentPath.endsWith("/"))
+      throw new Error("fromParentPath must end with a slash");
+    if (!toParentPath.endsWith("/"))
+      throw new Error("toParentPath must end with a slash");
+    throw new Error("not yet implemented");
+  }
+  */
+
+  batchRename(
+    fromParentPath: string,
+    toParentPath: string
+  ): void
+  {
+    if (!fromParentPath.endsWith("/"))
+      throw new Error("fromParentPath must end with a slash");
+    if (!toParentPath.endsWith("/"))
+      throw new Error("toParentPath must end with a slash");
+    this.batchUpdate(() => this.#batchRename(fromParentPath, toParentPath));
+  }
+
+  batchDelete(
+    parentPath: string
+  ): void
+  {
+    if (!parentPath.endsWith("/"))
+      throw new Error("parentPath must end with a slash");
+    this.batchUpdate(() => this.#batchDelete(parentPath));
+  }
+
+  #batchRename(
+    fromParentPath: string,
+    toParentPath: string
+  ): void
+  {
+    const startIndex = this.getInsertionIndex(fromParentPath);
+    const endIndex = this.#getAfterKeyIndex(fromParentPath);
+
+    const keysToDelete = this.keysArray.slice(startIndex, endIndex);
+    const collectedEntries: [string, string][] = [];
+    for (const key of keysToDelete) {
+      collectedEntries.push([key.replace(fromParentPath, toParentPath), this.get(key)!]);
+    }
+
+    this.deleteByIndices(startIndex, endIndex)
+
+    for (const [newPath, contents] of collectedEntries) {
+      this.set(newPath, contents);
+    }
+  }
+
+  #batchDelete(
+    parentPath: string
+  ): void
+  {
+    const startIndex = this.getInsertionIndex(parentPath);
+    const endIndex = this.#getAfterKeyIndex(parentPath);
+    this.deleteByIndices(startIndex, endIndex);
+  }
+
+  #getAfterKeyIndex(key: string): number {
+    let min = 0, max = this.keysArray.length;
+    while (min < max) {
+      const mid = (min + max) >> 1;
+      const currentKey = this.keysArray[mid];
+      if (FileSystemMap.#afterKeyComparator(currentKey, key) < 0) {
+        min = mid + 1;
+      } else {
+        max = mid;
+      }
+    }
+
+    return min;
   }
 }

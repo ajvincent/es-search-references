@@ -53,13 +53,17 @@ export class FileSystemMap extends OrderedKeyMap {
         }
         return dir;
     }
+    static #afterKeyComparator(a, b) {
+        if (a.startsWith(b))
+            return -1;
+        return a.localeCompare(b);
+    }
     systemKey;
     #isBatchUpdate = false;
     constructor(systemKey, entries) {
         super(entries);
         this.systemKey = systemKey;
         this.#refreshStorage();
-        this.set = this.#set.bind(this);
     }
     clone(newSystemKey) {
         const entries = Array.from(this.entries());
@@ -97,7 +101,7 @@ export class FileSystemMap extends OrderedKeyMap {
         }
         return rv;
     }
-    #set(key, value) {
+    set(key, value) {
         super.set(key, value);
         if (!this.#isBatchUpdate)
             this.#refreshStorage();
@@ -129,6 +133,68 @@ export class FileSystemMap extends OrderedKeyMap {
             _a.#defineFile(topObject, map, remainingPath, contents);
         }
         return result;
+    }
+    hasPath(parentPath) {
+        const index = this.getInsertionIndex(parentPath);
+        return (index < this.keysArray.length && this.keysArray[index].startsWith(parentPath));
+    }
+    /*
+    batchPaste(
+      fromParentPath: string,
+      toParentPath: string,
+      entries: [string, string][]
+    ): void
+    {
+      if (!fromParentPath.endsWith("/"))
+        throw new Error("fromParentPath must end with a slash");
+      if (!toParentPath.endsWith("/"))
+        throw new Error("toParentPath must end with a slash");
+      throw new Error("not yet implemented");
+    }
+    */
+    batchRename(fromParentPath, toParentPath) {
+        if (!fromParentPath.endsWith("/"))
+            throw new Error("fromParentPath must end with a slash");
+        if (!toParentPath.endsWith("/"))
+            throw new Error("toParentPath must end with a slash");
+        this.batchUpdate(() => this.#batchRename(fromParentPath, toParentPath));
+    }
+    batchDelete(parentPath) {
+        if (!parentPath.endsWith("/"))
+            throw new Error("parentPath must end with a slash");
+        this.batchUpdate(() => this.#batchDelete(parentPath));
+    }
+    #batchRename(fromParentPath, toParentPath) {
+        const startIndex = this.getInsertionIndex(fromParentPath);
+        const endIndex = this.#getAfterKeyIndex(fromParentPath);
+        const keysToDelete = this.keysArray.slice(startIndex, endIndex);
+        const collectedEntries = [];
+        for (const key of keysToDelete) {
+            collectedEntries.push([key.replace(fromParentPath, toParentPath), this.get(key)]);
+        }
+        this.deleteByIndices(startIndex, endIndex);
+        for (const [newPath, contents] of collectedEntries) {
+            this.set(newPath, contents);
+        }
+    }
+    #batchDelete(parentPath) {
+        const startIndex = this.getInsertionIndex(parentPath);
+        const endIndex = this.#getAfterKeyIndex(parentPath);
+        this.deleteByIndices(startIndex, endIndex);
+    }
+    #getAfterKeyIndex(key) {
+        let min = 0, max = this.keysArray.length;
+        while (min < max) {
+            const mid = (min + max) >> 1;
+            const currentKey = this.keysArray[mid];
+            if (_a.#afterKeyComparator(currentKey, key) < 0) {
+                min = mid + 1;
+            }
+            else {
+                max = mid;
+            }
+        }
+        return min;
     }
 }
 _a = FileSystemMap;
