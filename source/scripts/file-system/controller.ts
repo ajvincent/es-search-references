@@ -1,3 +1,4 @@
+//#region preamble
 import {
   FileEditorMapView
 } from "../codemirror/views/FileEditorMapView.js";
@@ -37,6 +38,7 @@ import {
 import {
   FileSystemView
 } from "./views/file-system.js";
+//#endregion preamble
 
 void(FileSystemElement); // force the custom element upgrade
 
@@ -79,7 +81,7 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
     this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows!);
 
     for (const key of this.fileMap.keys()) {
-      this.#addFileKey(key, this.#directoriesSet);
+      this.#addFileKey(key);
     }
 
     this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
@@ -102,8 +104,8 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
       this.#filesCheckedSet.delete(pathToFile);
   }
 
-  #addFileKey(key: string, directoriesSet: Set<string>): void {
-    const view: FileRowView = this.#fileSystemView.addFileKey(key, directoriesSet);
+  #addFileKey(key: string): void {
+    const view: FileRowView = this.#fileSystemView.addFileKey(key, this.#directoriesSet);
     this.#fileToRowMap.set(key, view);
 
     view.checkboxElement!.onclick = (ev: MouseEvent): void => {
@@ -148,15 +150,60 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
       throw new Error("row type must be a directory: " + pathToDirectory);
     }
     const newRowView = new EditableFileRowView(parentRowView.depth + 1, false, "");
-    parentRowView.insertRowSorted(newRowView);
+    parentRowView.prependRow(newRowView);
 
-    newRowView.rowElement.onkeyup = event => this.#handleNewFileKeyUp(parentRowView, newRowView, event);
+    newRowView.rowElement.onkeyup = event => this.#handleNewFileNameKeyUp(
+      parentRowView, newRowView, event
+    );
+    newRowView.inputElement.onblur = event => parentRowView.removeRow(newRowView);
     newRowView.inputElement.focus();
   }
 
-  #handleNewFileKeyUp(parentRowView: DirectoryRowView, newRowView: EditableFileRowView, event: KeyboardEvent): void {
-    if (event.key === "Escape") {
-      parentRowView.removeRow(newRowView);
+  #handleNewFileNameKeyUp(
+    parentRowView: DirectoryRowView,
+    newRowView: EditableFileRowView,
+    event: KeyboardEvent
+  ): void
+  {
+    const { key } = event;
+    if (key !== "Escape" && key !== "Enter")
+      return;
+
+    const localPath = newRowView.inputElement.value;
+    parentRowView.removeRow(newRowView);
+    if (key === "Escape") {
+      return;
     }
+
+    if (!this.#isValidNewFileName(parentRowView.fullPath, localPath, true))
+      return;
+
+    const fullPath = parentRowView.fullPath + "/" + localPath;
+
+    this.fileMap.set(fullPath, "");
+    this.#addFileKey(fullPath);
+    this.editorMapView.addEditorForPath(fullPath);
+
+    this.#fileSystemView.showFile(fullPath);
+  }
+
+  #isValidNewFileName(
+    parentPath: string,
+    localPath: string,
+    isNewFile: boolean,
+  ): boolean
+  {
+    if (localPath === "" || localPath.startsWith("./") || localPath.startsWith("../")) {
+      return false;
+    }
+
+    if (!isNewFile && localPath.includes("/"))
+      return false;
+
+    const fullPath = parentPath + "/" + localPath;
+    if (this.#fileSystemView.hasRowView(fullPath))
+      return false;
+
+    return true;
   }
 }

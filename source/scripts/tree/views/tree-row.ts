@@ -57,6 +57,14 @@ export abstract class TreeRowView {
     let referenceRow: TreeRowView | undefined;
     const newLabel: string = rowView.primaryLabel;
     let index = 0;
+
+    let lastChildRow = this.#childRowViews.at(-1);
+    if (!lastChildRow || lastChildRow.primaryLabel.localeCompare(newLabel) < 0) {
+      this.addRow(rowView);
+      return;
+    }
+
+    // binary search would probably not be faster in this case: not enough rows to justify it
     for (const existingRow of this.#childRowViews) {
       if (existingRow.primaryLabel.localeCompare(newLabel) <= 0) {
         index++;

@@ -15,20 +15,23 @@ export class FileEditorMapView {
         parentElement.append(this.displayElement);
         this.#panelsView = new TabPanelsView(panelSetId);
         for (const filePath of this.#fileMap.keys()) {
-            const contents = this.#fileMap.get(filePath);
-            this.addEditorForPath(filePath, contents);
+            this.addEditorForPath(filePath);
         }
     }
     dispose() {
         this.displayElement.remove();
         this.#panelsView.dispose();
     }
-    addEditorForPath(filePath, contents) {
+    addEditorForPath(filePath) {
         if (!this.displayElement) {
             throw new Error("no parent element for editor, call this.createEditors() first!");
         }
         if (this.#panelsView.hasPanel(filePath)) {
             throw new Error("we already have an editor for " + filePath);
+        }
+        const contents = this.#fileMap.get(filePath);
+        if (contents === undefined) {
+            throw new Error("unknown file path: " + filePath);
         }
         const editorPanelView = new EditorPanelView(filePath, contents, this.#isReadonly);
         this.displayElement.append(editorPanelView.displayElement);

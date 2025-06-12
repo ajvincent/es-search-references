@@ -59,6 +59,10 @@ export class FileSystemView<
     this.#treeRowsElement = treeRowsElement;
   }
 
+  hasRowView(key: string): boolean {
+    return this.#fileToRowMap.has(key);
+  }
+
   getRowView(key: string): DirectoryView | FileView {
     const view = this.#fileToRowMap.get(key);
     if (!view)
@@ -80,7 +84,7 @@ export class FileSystemView<
     const parentRowView = this.#fileToRowMap.get(parent)!;
     const view: FileView = new this.#FileViewClass(parentRowView.depth +1, this.#isFileCollapsible, leaf, key);
     this.#fileToRowMap.set(key, view);
-    parentRowView.addRow(view);
+    parentRowView.insertRowSorted(view);
 
     return view;
   }
@@ -103,7 +107,7 @@ export class FileSystemView<
 
     if (depth > 0) {
       view.registerCollapseClick();
-      this.#fileToRowMap.get(parent)!.addRow(view);
+      this.#fileToRowMap.get(parent)!.insertRowSorted(view);
     } else {
       this.#treeRowsElement.append(view.rowElement!);
     }
