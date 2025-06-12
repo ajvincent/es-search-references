@@ -59,6 +59,13 @@ export class FileSystemView<
     this.#treeRowsElement = treeRowsElement;
   }
 
+  getRowView(key: string): DirectoryView | FileView {
+    const view = this.#fileToRowMap.get(key);
+    if (!view)
+      throw new Error("no view found with that key!");
+    return view;
+  }
+
   clearRowMap(): void {
     for (const row of this.#fileToRowMap.values())
       row.removeAndDispose();

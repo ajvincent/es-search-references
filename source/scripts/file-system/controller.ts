@@ -23,6 +23,10 @@ import {
 } from "./elements/file-system.js";
 
 import {
+  EditableFileRowView
+} from "./views/editable-file-row.js";
+
+import {
   FileRowView
 } from "./views/file-row.js";
 
@@ -40,6 +44,8 @@ export interface FileSystemControllerIfc {
   getTreeRowsElement(): HTMLElement;
   readonly isReadOnly: boolean;
   readonly clipBoardHasCopy: boolean;
+
+  startAddFile(pathToDirectory: string): void;
 }
 
 export class FileSystemController implements BaseView, FileSystemControllerIfc {
@@ -56,6 +62,8 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
   readonly editorMapView: FileEditorMapView;
   readonly #fsContextMenu: FileSystemContextMenu;
 
+  readonly #directoriesSet = new Set<string>;
+
   constructor(
     rootId: string,
     isReadonly: boolean,
@@ -70,13 +78,14 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
 
     this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows!);
 
-    const directoriesSet = new Set<string>;
     for (const key of this.fileMap.keys()) {
-      this.#addFileKey(key, directoriesSet);
+      this.#addFileKey(key, this.#directoriesSet);
     }
 
     this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
+
     this.#fsContextMenu = new FileSystemContextMenu(this);
+    void this.#fsContextMenu;
   }
 
   dispose(): void {
@@ -130,5 +139,24 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
   // FileSystemControllerIfc
   get clipBoardHasCopy(): boolean {
     return false;
+  }
+
+  // FileSystemControllerIfc
+  startAddFile(pathToDirectory: string): void {
+    const parentRowView = this.#fileSystemView.getRowView(pathToDirectory);
+    if (parentRowView.rowType !== "directory") {
+      throw new Error("row type must be a directory: " + pathToDirectory);
+    }
+    const newRowView = new EditableFileRowView(parentRowView.depth + 1, false, "");
+    parentRowView.insertRowSorted(newRowView);
+
+    newRowView.rowElement.onkeyup = event => this.#handleNewFileKeyUp(parentRowView, newRowView, event);
+    newRowView.inputElement.focus();
+  }
+
+  #handleNewFileKeyUp(parentRowView: DirectoryRowView, newRowView: EditableFileRowView, event: KeyboardEvent): void {
+    if (event.key === "Escape") {
+      parentRowView.removeRow(newRowView);
+    }
   }
 }

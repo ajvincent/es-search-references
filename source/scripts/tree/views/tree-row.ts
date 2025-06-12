@@ -3,12 +3,17 @@ import {
 } from "../elements/tree-row.js";
 
 export abstract class TreeRowView {
+  protected static buildEmptySpan(): HTMLSpanElement {
+    return document.createElement("span");
+  }
+
   public rowElement: TreeRowElement;
 
   public readonly depth: number;
   public readonly isCollapsible: boolean;
   public readonly primaryLabel: string;
-  public readonly childRowViews: TreeRowView[] = [];
+  public readonly abstract rowType: string;
+  readonly #childRowViews: TreeRowView[] = [];
 
   constructor(depth: number, isCollapsible: boolean, primaryLabel: string) {
     this.depth = depth;
@@ -28,10 +33,10 @@ export abstract class TreeRowView {
 
   #disposeAllViews(): void {
     this.rowElement.remove();
-    for (const view of this.childRowViews) {
+    for (const view of this.#childRowViews) {
       view.#disposeAllViews();
     }
-    this.childRowViews.splice(0, this.childRowViews.length);
+    this.#childRowViews.splice(0, this.#childRowViews.length);
   }
 
   protected buildPrimaryLabelElement(): HTMLLabelElement {
@@ -43,9 +48,39 @@ export abstract class TreeRowView {
 
   protected abstract getCellElements(): HTMLElement[];
 
-  public addRow(rowView: TreeRowView) {
+  public prependRow(rowView: TreeRowView): void {
+    this.rowElement!.insertRow(rowView.rowElement!, this.#childRowViews[0]?.rowElement);
+    this.#childRowViews.unshift(rowView);
+  }
+
+  public insertRowSorted(rowView: TreeRowView): void {
+    let referenceRow: TreeRowView | undefined;
+    const newLabel: string = rowView.primaryLabel;
+    let index = 0;
+    for (const existingRow of this.#childRowViews) {
+      if (existingRow.primaryLabel.localeCompare(newLabel) <= 0) {
+        index++;
+        continue;
+      }
+      referenceRow = existingRow;
+      break;
+    }
+
+    this.#childRowViews.splice(index, 0, rowView);
+    this.rowElement!.insertRow(rowView.rowElement!, referenceRow?.rowElement);
+  }
+
+  public removeRow(rowView: TreeRowView): void {
+    const index = this.#childRowViews.indexOf(rowView);
+    if (index === -1)
+      throw new Error("row not found");
+    this.#childRowViews.splice(index, 1);
+    rowView.removeAndDispose();
+  }
+
+  public addRow(rowView: TreeRowView): void {
     this.rowElement!.addRow(rowView.rowElement!);
-    this.childRowViews.push(rowView);
+    this.#childRowViews.push(rowView);
   }
 
   public get isCollapsed(): boolean {

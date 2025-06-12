@@ -3,6 +3,8 @@ import {
 } from "../../tree/views/tree-row.js";
 
 export class BaseDirectoryRowView extends TreeRowView {
+  readonly rowType = "directory";
+
   constructor(depth: number, primaryLabel: string, fullPath: string) {
     super(depth, depth > 0, primaryLabel);
     this.rowElement.dataset.fullpath = fullPath;

@@ -1,6 +1,7 @@
 import "../../lib/packages/ctxmenu.js";
 
 import type {
+  CTXConfig,
   CTXMAction,
   CTXMDivider,
   CTXMenu,
@@ -22,18 +23,17 @@ export class FileSystemContextMenu {
   };
 
   readonly #controller: FileSystemControllerIfc;
-  #fullPath?: string;
+  #fullPath = "";
   readonly #menuDefinition: CTXMenu;
 
   constructor(controller: FileSystemControllerIfc) {
     this.#controller = controller;
-    this.#fullPath = undefined;
+    this.#fullPath = "";
 
     this.#menuDefinition = [
       this.#headerItem,
       FileSystemContextMenu.#dividerItem,
       this.#addFileItem,
-      this.#addDirectoryItem,
       FileSystemContextMenu.#dividerItem,
       this.#cutItem,
       this.#copyItem,
@@ -56,22 +56,15 @@ export class FileSystemContextMenu {
   }
 
   readonly #headerItem: CTXMHeading = {
-    text: "Hello World",
+    text: "",
   };
 
   readonly #addFileItem: CTXMAction = {
     text: "Add File",
     disabled: true,
-    action(ev) {
-      void(ev);
-    },
-  }
-
-  readonly #addDirectoryItem: CTXMAction = {
-    text: "Add Directory",
-    disabled: true,
-    action(ev) {
-      void(ev);
+    action: (ev) => {
+      this.#controller.startAddFile(this.#fullPath!);
+      this.#fullPath = "";
     },
   }
 
@@ -114,6 +107,10 @@ export class FileSystemContextMenu {
     },
   }
 
+  #contextMenuConfig: CTXConfig = {
+    onHide: () => this.#hideContextMenus(),
+  }
+
   #showContextMenu(event: MouseEvent): void {
     event.stopPropagation();
 
@@ -129,18 +126,20 @@ export class FileSystemContextMenu {
 
     const { isReadOnly, clipBoardHasCopy } = this.#controller;
     const isDirectory = Boolean(target.dataset.isdirectory);
-    this.#addDirectoryItem.disabled = isReadOnly || !isDirectory;
     this.#addFileItem.disabled = isReadOnly || !isDirectory;
     this.#cutItem.disabled = isReadOnly;
     this.#pasteItem.disabled = isReadOnly || !clipBoardHasCopy;
     this.#deleteItem.disabled = isReadOnly;
     this.#renameItem.disabled = isReadOnly;
 
-    window.ctxmenu.show(this.#menuDefinition, event);
+    window.ctxmenu.show(
+      this.#menuDefinition,
+      event,
+      this.#contextMenuConfig
+    );
   }
 
-  #hideContextMenus(event: MouseEvent): void {
-    window.ctxmenu.hide();
-    this.#fullPath = undefined;
+  #hideContextMenus(event?: MouseEvent): void {
+    this.#fullPath = "";
   }
 }

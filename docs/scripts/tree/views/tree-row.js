@@ -1,10 +1,13 @@
 import { TreeRowElement } from "../elements/tree-row.js";
 export class TreeRowView {
+    static buildEmptySpan() {
+        return document.createElement("span");
+    }
     rowElement;
     depth;
     isCollapsible;
     primaryLabel;
-    childRowViews = [];
+    #childRowViews = [];
     constructor(depth, isCollapsible, primaryLabel) {
         this.depth = depth;
         this.isCollapsible = isCollapsible;
@@ -20,10 +23,10 @@ export class TreeRowView {
     }
     #disposeAllViews() {
         this.rowElement.remove();
-        for (const view of this.childRowViews) {
+        for (const view of this.#childRowViews) {
             view.#disposeAllViews();
         }
-        this.childRowViews.splice(0, this.childRowViews.length);
+        this.#childRowViews.splice(0, this.#childRowViews.length);
     }
     buildPrimaryLabelElement() {
         const label = document.createElement("label");
@@ -31,9 +34,35 @@ export class TreeRowView {
         label.append(this.primaryLabel);
         return label;
     }
+    prependRow(rowView) {
+        this.rowElement.insertRow(rowView.rowElement, this.#childRowViews[0]?.rowElement);
+        this.#childRowViews.unshift(rowView);
+    }
+    insertRowSorted(rowView) {
+        let referenceRow;
+        const newLabel = rowView.primaryLabel;
+        let index = 0;
+        for (const existingRow of this.#childRowViews) {
+            if (existingRow.primaryLabel.localeCompare(newLabel) <= 0) {
+                index++;
+                continue;
+            }
+            referenceRow = existingRow;
+            break;
+        }
+        this.#childRowViews.splice(index, 0, rowView);
+        this.rowElement.insertRow(rowView.rowElement, referenceRow?.rowElement);
+    }
+    removeRow(rowView) {
+        const index = this.#childRowViews.indexOf(rowView);
+        if (index === -1)
+            throw new Error("row not found");
+        this.#childRowViews.splice(index, 1);
+        rowView.removeAndDispose();
+    }
     addRow(rowView) {
         this.rowElement.addRow(rowView.rowElement);
-        this.childRowViews.push(rowView);
+        this.#childRowViews.push(rowView);
     }
     get isCollapsed() {
         return this.rowElement.isCollapsed;

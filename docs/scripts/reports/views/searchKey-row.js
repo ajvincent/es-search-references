@@ -1,5 +1,6 @@
 import { TreeRowView } from "../../tree/views/tree-row.js";
 export class SearchKeyRowView extends TreeRowView {
+    rowType = "searchKey";
     constructor(depth, searchKey) {
         super(depth, false, searchKey);
         this.addCells();

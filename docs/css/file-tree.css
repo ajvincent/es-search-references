@@ -16,3 +16,7 @@ tree-grid.filesystem {
 tree-grid.filesystem tree-row > :first-child {
   grid-column-start: file-select;
 }
+
+tree-grid.filesystem input {
+  color: #ffffff;
+}

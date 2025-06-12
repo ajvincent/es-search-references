@@ -3,6 +3,7 @@ import {
 } from "../../tree/views/tree-row.js";
 
 export class SearchKeyRowView extends TreeRowView {
+  readonly rowType = "searchKey";
   constructor(depth: number, searchKey: string) {
     super(depth, false, searchKey);
     this.addCells();

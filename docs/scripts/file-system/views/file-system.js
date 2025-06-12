@@ -23,6 +23,12 @@ export class FileSystemView {
         this.#isFileCollapsible = isFileCollapsible;
         this.#treeRowsElement = treeRowsElement;
     }
+    getRowView(key) {
+        const view = this.#fileToRowMap.get(key);
+        if (!view)
+            throw new Error("no view found with that key!");
+        return view;
+    }
     clearRowMap() {
         for (const row of this.#fileToRowMap.values())
             row.removeAndDispose();

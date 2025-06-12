@@ -8,16 +8,15 @@ export class FileSystemContextMenu {
         isDivider: true
     };
     #controller;
-    #fullPath;
+    #fullPath = "";
     #menuDefinition;
     constructor(controller) {
         this.#controller = controller;
-        this.#fullPath = undefined;
+        this.#fullPath = "";
         this.#menuDefinition = [
             this.#headerItem,
             FileSystemContextMenu.#dividerItem,
             this.#addFileItem,
-            this.#addDirectoryItem,
             FileSystemContextMenu.#dividerItem,
             this.#cutItem,
             this.#copyItem,
@@ -31,20 +30,14 @@ export class FileSystemContextMenu {
         treeRows.addEventListener("click", event => this.#hideContextMenus(event), FileSystemContextMenu.#CAPTURE_PASSIVE);
     }
     #headerItem = {
-        text: "Hello World",
+        text: "",
     };
     #addFileItem = {
         text: "Add File",
         disabled: true,
-        action(ev) {
-            void (ev);
-        },
-    };
-    #addDirectoryItem = {
-        text: "Add Directory",
-        disabled: true,
-        action(ev) {
-            void (ev);
+        action: (ev) => {
+            this.#controller.startAddFile(this.#fullPath);
+            this.#fullPath = "";
         },
     };
     #cutItem = {
@@ -81,6 +74,9 @@ export class FileSystemContextMenu {
             void (ev);
         },
     };
+    #contextMenuConfig = {
+        onHide: () => this.#hideContextMenus(),
+    };
     #showContextMenu(event) {
         event.stopPropagation();
         let target = event.target;
@@ -94,16 +90,14 @@ export class FileSystemContextMenu {
             this.#headerItem.text = this.#fullPath.replace(/^.*\//g, "");
         const { isReadOnly, clipBoardHasCopy } = this.#controller;
         const isDirectory = Boolean(target.dataset.isdirectory);
-        this.#addDirectoryItem.disabled = isReadOnly || !isDirectory;
         this.#addFileItem.disabled = isReadOnly || !isDirectory;
         this.#cutItem.disabled = isReadOnly;
         this.#pasteItem.disabled = isReadOnly || !clipBoardHasCopy;
         this.#deleteItem.disabled = isReadOnly;
         this.#renameItem.disabled = isReadOnly;
-        window.ctxmenu.show(this.#menuDefinition, event);
+        window.ctxmenu.show(this.#menuDefinition, event, this.#contextMenuConfig);
     }
     #hideContextMenus(event) {
-        window.ctxmenu.hide();
-        this.#fullPath = undefined;
+        this.#fullPath = "";
     }
 }

@@ -14,6 +14,12 @@ export class TreeRowElement extends HTMLElement {
     addCells(cells) {
         this.prepend(...cells);
     }
+    insertRow(newRow, referenceRow) {
+        if (referenceRow)
+            referenceRow.before(newRow);
+        else
+            this.append(newRow);
+    }
     addRow(row) {
         this.append(row);
     }

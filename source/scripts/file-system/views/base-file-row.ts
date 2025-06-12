@@ -4,6 +4,7 @@ import {
 
 export class BaseFileRowView extends TreeRowView {
   protected readonly fullPath: string;
+  readonly rowType = "file";
 
   constructor(depth: number, isCollapsible: boolean, label: string, fullPath: string) {
     super(depth, isCollapsible, label);
