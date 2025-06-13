@@ -6,6 +6,10 @@ import {
   OrderedKeyMap
 } from "../utilities/OrderedKeyMap.js";
 
+import {
+  getParentAndLeaf
+} from "../utilities/getParentAndLeaf.js";
+
 export type ExportedFileSystem = Record<"packages" | "urls", ExportedDirectories>;
 
 export type ExportedFileEntry = Uint8Array | ExportedDirectories;
@@ -32,16 +36,6 @@ export class FileSystemMap extends OrderedKeyMap<string> {
 
   static readonly #encoder = new TextEncoder();
 
-  static #getParentAndLeaf(key: string): [string, string] {
-    let lastSlash = key.lastIndexOf("/");
-    if (lastSlash === -1) {
-      return ["", key];
-    }
-    const parent = key.substring(0, lastSlash);
-    const leaf = key.substring(lastSlash + 1);
-    return [parent, leaf];
-  }
-
   static #defineFile(
     topObject: ExportedDirectories,
     map: Map<string, ExportedDirectories>,
@@ -49,7 +43,7 @@ export class FileSystemMap extends OrderedKeyMap<string> {
     contents: string
   ): void
   {
-    const [parent, leaf] = FileSystemMap.#getParentAndLeaf(pathToFile);
+    const [parent, leaf] = getParentAndLeaf(pathToFile);
     const byteArray = FileSystemMap.#encoder.encode(contents);
     if (parent) {
       const dir: ExportedDirectories = FileSystemMap.#requireDirectory(topObject, map, parent);
@@ -71,7 +65,7 @@ export class FileSystemMap extends OrderedKeyMap<string> {
     const dir: ExportedDirectories = {};
     map.set(pathToDirectory, dir);
 
-    const [parent, leaf] = FileSystemMap.#getParentAndLeaf(pathToDirectory);
+    const [parent, leaf] = getParentAndLeaf(pathToDirectory);
     if (parent) {
       const dictionary = FileSystemMap.#requireDirectory(topObject, map, parent);
       dictionary[leaf] = dir;

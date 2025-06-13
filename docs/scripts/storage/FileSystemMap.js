@@ -1,6 +1,7 @@
 var _a;
 import { JSONStorage } from "./JSONStorage.js";
 import { OrderedKeyMap } from "../utilities/OrderedKeyMap.js";
+import { getParentAndLeaf } from "../utilities/getParentAndLeaf.js";
 export class FileSystemMap extends OrderedKeyMap {
     static #storage = new JSONStorage(window.localStorage, "es-search-references/files");
     static getAll() {
@@ -18,17 +19,8 @@ export class FileSystemMap extends OrderedKeyMap {
         return _a.#storage.allKeys();
     }
     static #encoder = new TextEncoder();
-    static #getParentAndLeaf(key) {
-        let lastSlash = key.lastIndexOf("/");
-        if (lastSlash === -1) {
-            return ["", key];
-        }
-        const parent = key.substring(0, lastSlash);
-        const leaf = key.substring(lastSlash + 1);
-        return [parent, leaf];
-    }
     static #defineFile(topObject, map, pathToFile, contents) {
-        const [parent, leaf] = _a.#getParentAndLeaf(pathToFile);
+        const [parent, leaf] = getParentAndLeaf(pathToFile);
         const byteArray = _a.#encoder.encode(contents);
         if (parent) {
             const dir = _a.#requireDirectory(topObject, map, parent);
@@ -43,7 +35,7 @@ export class FileSystemMap extends OrderedKeyMap {
             return map.get(pathToDirectory);
         const dir = {};
         map.set(pathToDirectory, dir);
-        const [parent, leaf] = _a.#getParentAndLeaf(pathToDirectory);
+        const [parent, leaf] = getParentAndLeaf(pathToDirectory);
         if (parent) {
             const dictionary = _a.#requireDirectory(topObject, map, parent);
             dictionary[leaf] = dir;

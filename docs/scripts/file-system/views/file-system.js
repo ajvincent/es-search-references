@@ -1,17 +1,5 @@
-var _a;
+import { getParentAndLeaf } from "../../utilities/getParentAndLeaf.js";
 export class FileSystemView {
-    static #getParentAndLeaf(key) {
-        if (key === "virtual:/") {
-            return ["", "virtual://"];
-        }
-        let lastSlash = key.lastIndexOf("/");
-        if (lastSlash === -1) {
-            return ["", key];
-        }
-        const parent = key.substring(0, lastSlash);
-        const leaf = key.substring(lastSlash + 1);
-        return [parent, leaf];
-    }
     #isFileCollapsible;
     #fileToRowMap = new Map;
     #treeRowsElement;
@@ -38,7 +26,7 @@ export class FileSystemView {
         this.#fileToRowMap.clear();
     }
     addFileKey(key, directoriesSet) {
-        const [parent, leaf] = _a.#getParentAndLeaf(key);
+        const [parent, leaf] = getParentAndLeaf(key);
         if (parent && directoriesSet.has(parent) === false) {
             this.#addDirectoryKey(parent, directoriesSet);
         }
@@ -49,7 +37,7 @@ export class FileSystemView {
         return view;
     }
     #addDirectoryKey(key, directoriesSet) {
-        let [parent, leaf] = _a.#getParentAndLeaf(key);
+        let [parent, leaf] = getParentAndLeaf(key);
         if (parent && directoriesSet.has(parent) === false) {
             this.#addDirectoryKey(parent, directoriesSet);
         }
@@ -75,4 +63,3 @@ export class FileSystemView {
         this.#fileToRowMap.get(key).selectFile(key);
     }
 }
-_a = FileSystemView;

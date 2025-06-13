@@ -14,6 +14,10 @@ import type {
   BaseFileRowView,
 } from "./base-file-row.js";
 
+import {
+  getParentAndLeaf
+} from "../../utilities/getParentAndLeaf.js";
+
 type DirectoryArguments = [
   depth: number, primaryLabel: string, fullPath: string
 ];
@@ -26,19 +30,6 @@ export class FileSystemView<
   FileView extends BaseFileRowView
 >
 {
-  static #getParentAndLeaf(key: string): [string, string] {
-    if (key === "virtual:/") {
-      return ["", "virtual://"];
-    }
-    let lastSlash = key.lastIndexOf("/");
-    if (lastSlash === -1) {
-      return ["", key];
-    }
-    const parent = key.substring(0, lastSlash);
-    const leaf = key.substring(lastSlash + 1);
-    return [parent, leaf];
-  }
-
   readonly #isFileCollapsible: boolean;
   readonly #fileToRowMap = new Map<string, FileView | DirectoryView>;
   readonly #treeRowsElement: HTMLElement;
@@ -77,7 +68,7 @@ export class FileSystemView<
   }
 
   addFileKey(key: string, directoriesSet: Set<string>): FileView {
-    const [parent, leaf] = FileSystemView.#getParentAndLeaf(key);
+    const [parent, leaf] = getParentAndLeaf(key);
     if (parent && directoriesSet.has(parent) === false) {
       this.#addDirectoryKey(parent, directoriesSet);
     }
@@ -90,7 +81,7 @@ export class FileSystemView<
   }
 
   #addDirectoryKey(key: string, directoriesSet: Set<string>): void {
-    let [parent, leaf] = FileSystemView.#getParentAndLeaf(key);
+    let [parent, leaf] = getParentAndLeaf(key);
     if (parent && directoriesSet.has(parent) === false) {
       this.#addDirectoryKey(parent, directoriesSet);
     }
