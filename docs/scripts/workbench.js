@@ -168,7 +168,7 @@ class Workbench_Base {
     async #doFileSystemDelete(isRename) {
         const systemKey = this.#fileSystemSetController.getSourceFileSystem();
         if (!isRename) {
-            const ok = window.confirm(`Are you sure you want to delete the "${systemKey} file system?  This operation is irreversible!`);
+            const ok = window.confirm(`Are you sure you want to delete the "${systemKey}" file system?  This operation is irreversible!`);
             if (!ok)
                 return;
         }
