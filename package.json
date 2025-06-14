@@ -11,7 +11,8 @@
     "doc": "docs"
   },
   "scripts": {
-    "clean": "rm -rf dist Gulpfile.js",
+    "clean": "rm -rf dist Gulpfile.js docs/tests",
+    "jasmine": "npm run build && npx jasmine-browser-runner runSpecs",
     "tsc-buildsystem": "echo $PWD && tsc --project ./tsconfig-gulp.json",
     "build": "npm run clean && npm run tsc-buildsystem && node --no-experimental-require-module node_modules/gulp/bin/gulp.js",
     "debug": "npm run clean && npm run tsc-buildsystem && node --inspect-brk --no-experimental-require-module node_modules/gulp/bin/gulp.js",
@@ -46,10 +47,13 @@
     "@types/dagre-d3": "^0.6.6",
     "@types/express": "^5.0.1",
     "@types/gulp": "^4.0.17",
+    "@types/jasmine": "^5.1.8",
     "@types/node": "^22.14.1",
     "express": "^5.1.0",
     "gulp": "^5.0.0",
     "gulp-replace": "^1.1.4",
+    "jasmine-browser-runner": "^3.0.0",
+    "jasmine-core": "^5.8.0",
     "rollup": "^4.40.0",
     "rollup-plugin-dts": "^6.2.1",
     "tslib": "^2.8.1",

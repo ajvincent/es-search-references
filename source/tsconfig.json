@@ -15,6 +15,7 @@
 
   "include": [
     "scripts/**/*.ts",
+    "tests/**/*.ts"
   ],
 
   "extends": "@tsconfig/node22/tsconfig.json"

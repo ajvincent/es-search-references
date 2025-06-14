@@ -2,6 +2,7 @@ Gulpfile.js
 dist/*
 docs/playground.html
 docs/scripts/playground
+docs/tests
 node_modules
 source/scripts/playground
 virtual-files
