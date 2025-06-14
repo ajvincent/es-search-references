@@ -12,7 +12,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist Gulpfile.js docs/tests",
-    "jasmine": "npm run build && npx jasmine-browser-runner runSpecs",
+    "jasmine": "npx jasmine-browser-runner runSpecs",
     "tsc-buildsystem": "echo $PWD && tsc --project ./tsconfig-gulp.json",
     "build": "npm run clean && npm run tsc-buildsystem && node --no-experimental-require-module node_modules/gulp/bin/gulp.js",
     "debug": "npm run clean && npm run tsc-buildsystem && node --inspect-brk --no-experimental-require-module node_modules/gulp/bin/gulp.js",
