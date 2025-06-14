@@ -4,15 +4,19 @@ export class TreeRowView {
         return document.createElement("span");
     }
     rowElement;
+    #primaryLabel;
+    #primaryLabelElement;
     depth;
     isCollapsible;
-    primaryLabel;
     #childRowViews = [];
     constructor(depth, isCollapsible, primaryLabel) {
         this.depth = depth;
         this.isCollapsible = isCollapsible;
-        this.primaryLabel = primaryLabel;
+        this.#primaryLabel = primaryLabel;
         this.rowElement = new TreeRowElement(this.depth, this.isCollapsible);
+    }
+    get primaryLabel() {
+        return this.#primaryLabel;
     }
     addCells() {
         this.rowElement.addCells(this.getCellElements());
@@ -31,8 +35,47 @@ export class TreeRowView {
     buildPrimaryLabelElement() {
         const label = document.createElement("label");
         label.classList.add("indent");
-        label.append(this.primaryLabel);
+        label.append(this.#primaryLabel);
+        this.#primaryLabelElement = label;
         return label;
+    }
+    /**
+     * Make the primary label editable.
+     *
+     * @param newLabelPromise - the new label to apply, or null to revert.
+     * @returns the entered text, or null if the user canceled.
+     */
+    editLabel(newLabelPromise) {
+        if (!this.#primaryLabelElement) {
+            throw new Error("no label element");
+        }
+        newLabelPromise.then((label) => {
+            if (typeof label === "string") {
+                this.#primaryLabel = this.#primaryLabelElement.innerText = label;
+            }
+            else {
+                this.#primaryLabelElement.innerText = this.#primaryLabel;
+            }
+        });
+        let { promise, resolve } = Promise.withResolvers();
+        promise = promise.finally(() => {
+            this.#primaryLabelElement.contentEditable = "false";
+            this.#primaryLabelElement.onkeyup = null;
+            this.#primaryLabelElement.onblur = null;
+        });
+        this.#primaryLabelElement.onkeyup = event => this.#handleLabelKey(resolve, event.key);
+        this.#primaryLabelElement.onblur = event => this.#handleLabelKey(resolve, "Escape");
+        this.#primaryLabelElement.contentEditable = "plaintext-only";
+        this.#primaryLabelElement.focus();
+        return promise;
+    }
+    #handleLabelKey(resolve, key) {
+        if (key === "Escape") {
+            resolve(null);
+        }
+        else if (key === "Enter") {
+            resolve(this.#primaryLabelElement.innerText);
+        }
     }
     prependRow(rowView) {
         this.rowElement.insertRow(rowView.rowElement, this.#childRowViews[0]?.rowElement);

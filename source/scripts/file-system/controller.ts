@@ -24,10 +24,6 @@ import {
 } from "./elements/file-system.js";
 
 import {
-  EditableFileRowView
-} from "./views/editable-file-row.js";
-
-import {
   FileRowView
 } from "./views/file-row.js";
 
@@ -144,39 +140,28 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
   }
 
   // FileSystemControllerIfc
-  startAddFile(pathToDirectory: string): void {
+  async startAddFile(pathToDirectory: string): Promise<void> {
     const parentRowView = this.#fileSystemView.getRowView(pathToDirectory);
     if (parentRowView.rowType !== "directory") {
       throw new Error("row type must be a directory: " + pathToDirectory);
     }
-    const newRowView = new EditableFileRowView(parentRowView.depth + 1, false, "");
+
+    const newRowView = new FileRowView(parentRowView.depth + 1, false, "", parentRowView + "/");
     parentRowView.prependRow(newRowView);
 
-    newRowView.rowElement.onkeyup = event => this.#handleNewFileNameKeyUp(
-      parentRowView, newRowView, event
-    );
-    newRowView.inputElement.onblur = event => parentRowView.removeRow(newRowView);
-    newRowView.inputElement.focus();
-  }
+    let { promise, resolve } = Promise.withResolvers<string | null>();
+    promise = promise.finally(() => parentRowView.removeRow(newRowView));
+    const localPath: string | null = await newRowView.editLabel(promise);
 
-  #handleNewFileNameKeyUp(
-    parentRowView: DirectoryRowView,
-    newRowView: EditableFileRowView,
-    event: KeyboardEvent
-  ): void
-  {
-    const { key } = event;
-    if (key !== "Escape" && key !== "Enter")
-      return;
-
-    const localPath = newRowView.inputElement.value;
-    parentRowView.removeRow(newRowView);
-    if (key === "Escape") {
+    if (!localPath) {
+      resolve(null);
       return;
     }
 
-    if (!this.#isValidNewFileName(parentRowView.fullPath, localPath, true))
+    if (!this.#isValidNewFileName(parentRowView.fullPath, localPath, true)) {
+      resolve(null);
       return;
+    }
 
     const fullPath = parentRowView.fullPath + "/" + localPath;
 
@@ -185,6 +170,7 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
     this.editorMapView.addEditorForPath(fullPath);
 
     this.#fileSystemView.showFile(fullPath);
+    resolve(null);
   }
 
   #isValidNewFileName(

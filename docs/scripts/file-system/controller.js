@@ -2,7 +2,6 @@
 import { FileEditorMapView } from "../codemirror/views/FileEditorMapView.js";
 import { FileSystemContextMenu } from "./contextMenu.js";
 import { FileSystemElement } from "./elements/file-system.js";
-import { EditableFileRowView } from "./views/editable-file-row.js";
 import { FileRowView } from "./views/file-row.js";
 import { DirectoryRowView } from "./views/directory-row.js";
 import { FileSystemView } from "./views/file-system.js";
@@ -72,33 +71,30 @@ export class FileSystemController {
         return false;
     }
     // FileSystemControllerIfc
-    startAddFile(pathToDirectory) {
+    async startAddFile(pathToDirectory) {
         const parentRowView = this.#fileSystemView.getRowView(pathToDirectory);
         if (parentRowView.rowType !== "directory") {
             throw new Error("row type must be a directory: " + pathToDirectory);
         }
-        const newRowView = new EditableFileRowView(parentRowView.depth + 1, false, "");
+        const newRowView = new FileRowView(parentRowView.depth + 1, false, "", parentRowView + "/");
         parentRowView.prependRow(newRowView);
-        newRowView.rowElement.onkeyup = event => this.#handleNewFileNameKeyUp(parentRowView, newRowView, event);
-        newRowView.inputElement.onblur = event => parentRowView.removeRow(newRowView);
-        newRowView.inputElement.focus();
-    }
-    #handleNewFileNameKeyUp(parentRowView, newRowView, event) {
-        const { key } = event;
-        if (key !== "Escape" && key !== "Enter")
-            return;
-        const localPath = newRowView.inputElement.value;
-        parentRowView.removeRow(newRowView);
-        if (key === "Escape") {
+        let { promise, resolve } = Promise.withResolvers();
+        promise = promise.finally(() => parentRowView.removeRow(newRowView));
+        const localPath = await newRowView.editLabel(promise);
+        if (!localPath) {
+            resolve(null);
             return;
         }
-        if (!this.#isValidNewFileName(parentRowView.fullPath, localPath, true))
+        if (!this.#isValidNewFileName(parentRowView.fullPath, localPath, true)) {
+            resolve(null);
             return;
+        }
         const fullPath = parentRowView.fullPath + "/" + localPath;
         this.fileMap.set(fullPath, "");
         this.#addFileKey(fullPath);
         this.editorMapView.addEditorForPath(fullPath);
         this.#fileSystemView.showFile(fullPath);
+        resolve(null);
     }
     #isValidNewFileName(parentPath, localPath, isNewFile) {
         if (localPath === "" || localPath.startsWith("./") || localPath.startsWith("../")) {
