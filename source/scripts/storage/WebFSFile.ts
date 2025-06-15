@@ -12,11 +12,13 @@ import type {
   WebFSRootIfc,
 } from "./types/WebFileSystem.js";
 
-export class WebFileFS implements WebFSFileIfc {
+export class WebFSFile implements WebFSFileIfc {
   #contents: string;
   #localName: string;
   #initialParentPath: string;
   #parentFile: WebFSParentNodeAlias | undefined;
+
+  /** This may initially be undefined for the restore-from-storage case. */
   #root: WebFSRootIfc | undefined;
 
   // WebFSNodeBaseIfc
@@ -49,7 +51,9 @@ export class WebFileFS implements WebFSFileIfc {
 
   // WebFSNodeBaseIfc
   get fullPath(): string {
-    const parentPath = this.#parentFile?.fullPath ?? this.#initialParentPath;
+    let parentPath = this.#initialParentPath;
+    if (this.#parentFile?.fileType === WebFSFileType.DIR)
+      parentPath = this.#parentFile.fullPath;
     if (parentPath.endsWith("/"))
       return parentPath + this.localName;
     return parentPath + "/" + this.localName;
@@ -66,13 +70,17 @@ export class WebFileFS implements WebFSFileIfc {
   }
 
   // WebFSChildNodeIfc
-  get parentFile(): WebFSParentNodeAlias | undefined {
+  get parentFileEntry(): WebFSParentNodeAlias | undefined {
     return this.#parentFile;
   }
 
-  set parentFile(newParent: WebFSParentNodeAlias) {
+  set parentFileEntry(newParent: WebFSParentNodeAlias) {
+    const hadParent = Boolean(this.#parentFile);
     this.#parentFile = newParent;
     this.#initialParentPath = "";
+
+    if (hadParent)
+      this.#root?.markDirty(true, this);
   }
 
   // WebFSFileIfc

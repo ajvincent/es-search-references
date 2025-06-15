@@ -1,10 +1,11 @@
 import { getParentAndLeaf } from "../utilities/getParentAndLeaf.js";
 import { WebFSFileType } from "./constants.js";
-export class WebFileFS {
+export class WebFSFile {
     #contents;
     #localName;
     #initialParentPath;
     #parentFile;
+    /** This may initially be undefined for the restore-from-storage case. */
     #root;
     // WebFSNodeBaseIfc
     fileType = WebFSFileType.FILE;
@@ -26,7 +27,9 @@ export class WebFileFS {
     }
     // WebFSNodeBaseIfc
     get fullPath() {
-        const parentPath = this.#parentFile?.fullPath ?? this.#initialParentPath;
+        let parentPath = this.#initialParentPath;
+        if (this.#parentFile?.fileType === WebFSFileType.DIR)
+            parentPath = this.#parentFile.fullPath;
         if (parentPath.endsWith("/"))
             return parentPath + this.localName;
         return parentPath + "/" + this.localName;
@@ -40,12 +43,15 @@ export class WebFileFS {
         this.#root?.markDirty(false, this);
     }
     // WebFSChildNodeIfc
-    get parentFile() {
+    get parentFileEntry() {
         return this.#parentFile;
     }
-    set parentFile(newParent) {
+    set parentFileEntry(newParent) {
+        const hadParent = Boolean(this.#parentFile);
         this.#parentFile = newParent;
         this.#initialParentPath = "";
+        if (hadParent)
+            this.#root?.markDirty(true, this);
     }
     // WebFSFileIfc
     set root(newRoot) {

@@ -1,5 +1,5 @@
 import { DelayPromise } from "../utilities/PromiseTypes.js";
-import { WebFileFS } from "./WebFSFile.js";
+import { WebFSFile } from "./WebFSFile.js";
 export class CompactWebFileSet extends Set {
     #storage;
     #systemKey;
@@ -9,7 +9,7 @@ export class CompactWebFileSet extends Set {
     constructor(storage, systemKey, directEntries) {
         super();
         directEntries.forEach(([fullPath, contents]) => {
-            const webFile = new WebFileFS(fullPath, contents, undefined);
+            const webFile = new WebFSFile(fullPath, contents, undefined);
             super.add(webFile);
             this.#addFile(webFile);
         });

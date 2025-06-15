@@ -11,28 +11,29 @@ import type {
 } from "../../../scripts/storage/types/JSONStorageIfc.js";
 
 import {
-  WebFileFS
+  WebFSFile
 } from "../../../scripts/storage/WebFSFile.js";
+
+import type {
+  WebFSFileIfc
+} from "../../../scripts/storage/types/WebFileSystem.js";
+
+type FileEntries = readonly (readonly [string, string])[];
 
 describe("CompactWebFileSet", () => {
   class StorageStub implements JSONStorageIfc {
-    spy = jasmine.createSpy();
-    removeItem(key: string): void {
-      this.spy("removeItem", key);
-    }
-    setItem(key: string, value: Jsonifiable): void {
-      this.spy("setItem", key, value);
-    }
+    removeItem: jasmine.Spy<(key: string) => void> = jasmine.createSpy();
+    setItem: jasmine.Spy<(key: string, value: Jsonifiable) => void> = jasmine.createSpy();
   }
 
-  const initialFiles: readonly (readonly [string, string])[] = [
+  const initialFiles: FileEntries = [
     ["virtual://foo/bar/foo/bar.js", "//hello world\n"],
     ["virtual://foo/bar/wop/bar.js", "//goodbye\n"],
   ];
 
   let storage: StorageStub;
   let fileSet: CompactWebFileSet;
-  let cachedFiles: WebFileFS[];
+  let cachedFiles: WebFSFileIfc[];
 
   beforeEach(() => {
     storage = new StorageStub;
@@ -47,18 +48,19 @@ describe("CompactWebFileSet", () => {
     if (cachedFiles.length > 0) {
       expect(cachedFiles[0].fullPath).toBe(initialFiles[0][0]);
       expect(cachedFiles[0].contents).toBe(initialFiles[0][1]);
-      expect(cachedFiles[0].parentFile).toBeUndefined();
+      expect(cachedFiles[0].parentFileEntry).toBeUndefined();
     }
 
     if (cachedFiles.length > 1) {
       expect(cachedFiles[1].fullPath).toBe(initialFiles[1][0]);
       expect(cachedFiles[1].contents).toBe(initialFiles[1][1]);
-      expect(cachedFiles[1].parentFile).toBeUndefined();
+      expect(cachedFiles[1].parentFileEntry).toBeUndefined();
     }
 
     expect(fileSet.contentEntries).toEqual(initialFiles);
     expect(fileSet.delayPromise).toBeUndefined();
-    expect(storage.spy).toHaveBeenCalledTimes(0);
+    expect(storage.removeItem).toHaveBeenCalledTimes(0);
+    expect(storage.setItem).toHaveBeenCalledTimes(0);
   });
 
   describe("updates the storage for a", () => {
@@ -74,20 +76,21 @@ describe("CompactWebFileSet", () => {
       fileSet.add(cachedFiles[1]);
       expect(fileSet.delayPromise).toBe(currentPromise);
 
-      expect(storage.spy).toHaveBeenCalledTimes(0);
+      expect(storage.setItem).toHaveBeenCalledTimes(0);
 
       currentPromise ??= Promise.resolve();
       await currentPromise;
 
-      expect(storage.spy).toHaveBeenCalledTimes(1);
-      expect(storage.spy.calls.argsFor(0)).toEqual([
-        "setItem",
+      expect(storage.setItem).toHaveBeenCalledTimes(1);
+      expect(storage.setItem.calls.argsFor(0) as [string, FileEntries]).toEqual([
         "green",
         [
           ["virtual://foo/bar/foo/other.js", "//hello world\n"],
           ["virtual://foo/bar/wop/other.js", "//goodbye\n"],
         ]
       ]);
+
+      expect(storage.removeItem).toHaveBeenCalledTimes(0);
     });
 
     it("contents change when when the file is re-added", async () => {
@@ -102,20 +105,21 @@ describe("CompactWebFileSet", () => {
       fileSet.add(cachedFiles[1]);
       expect(fileSet.delayPromise).toBe(currentPromise);
 
-      expect(storage.spy).toHaveBeenCalledTimes(0);
+      expect(storage.setItem).toHaveBeenCalledTimes(0);
 
       currentPromise ??= Promise.resolve();
       await currentPromise;
 
-      expect(storage.spy).toHaveBeenCalledTimes(1);
-      expect(storage.spy.calls.argsFor(0)).toEqual([
-        "setItem",
+      expect(storage.setItem).toHaveBeenCalledTimes(1);
+      expect(storage.setItem.calls.argsFor(0) as [string, FileEntries]).toEqual([
         "green",
         [
           ["virtual://foo/bar/foo/bar.js", "//empty\n"],
           ["virtual://foo/bar/wop/bar.js", "//nothing\n"],
         ]
       ]);
+
+      expect(storage.removeItem).toHaveBeenCalledTimes(0);
     });
 
     it("file deletion", async () => {
@@ -123,35 +127,35 @@ describe("CompactWebFileSet", () => {
 
       let currentPromise = fileSet.delayPromise;
       expect(currentPromise).toBeDefined();
-      expect(storage.spy).toHaveBeenCalledTimes(0);
+      expect(storage.setItem).toHaveBeenCalledTimes(0);
 
       currentPromise ??= Promise.resolve();
       await currentPromise;
 
-      expect(storage.spy).toHaveBeenCalledTimes(1);
-      expect(storage.spy.calls.argsFor(0)).toEqual([
-        "setItem",
+      expect(storage.setItem).toHaveBeenCalledTimes(1);
+      expect(storage.setItem.calls.argsFor(0) as [string, FileEntries]).toEqual([
         "green",
         [
           ["virtual://foo/bar/wop/bar.js", "//goodbye\n"],
         ]
       ]);
+
+      expect(storage.removeItem).toHaveBeenCalledTimes(0);
     });
 
     it("file creation", async () => {
-      const webFile = new WebFileFS("virtual://root.js", "//root\n", undefined);
+      const webFile = new WebFSFile("virtual://root.js", "//root\n", undefined);
       expect(fileSet.add(webFile)).toBe(fileSet);
 
       let currentPromise = fileSet.delayPromise;
       expect(currentPromise).toBeDefined();
-      expect(storage.spy).toHaveBeenCalledTimes(0);
+      expect(storage.setItem).toHaveBeenCalledTimes(0);
 
       currentPromise ??= Promise.resolve();
       await currentPromise;
 
-      expect(storage.spy).toHaveBeenCalledTimes(1);
-      expect(storage.spy.calls.argsFor(0)).toEqual([
-        "setItem",
+      expect(storage.setItem).toHaveBeenCalledTimes(1);
+      expect(storage.setItem.calls.argsFor(0) as [string, FileEntries]).toEqual([
         "green",
         [
           ["virtual://foo/bar/foo/bar.js", "//hello world\n"],
@@ -159,6 +163,8 @@ describe("CompactWebFileSet", () => {
           ["virtual://root.js", "//root\n"],
         ]
       ]);
+
+      expect(storage.removeItem).toHaveBeenCalledTimes(0);
     });
 
     it("clearing the fileSet", async () => {
@@ -166,16 +172,17 @@ describe("CompactWebFileSet", () => {
 
       let currentPromise = fileSet.delayPromise;
       expect(currentPromise).toBeDefined();
-      expect(storage.spy).toHaveBeenCalledTimes(0);
+      expect(storage.removeItem).toHaveBeenCalledTimes(0);
 
       currentPromise ??= Promise.resolve();
       await currentPromise;
 
-      expect(storage.spy).toHaveBeenCalledTimes(1);
-      expect(storage.spy.calls.argsFor(0)).toEqual([
-        "removeItem",
+      expect(storage.removeItem).toHaveBeenCalledTimes(1);
+      expect(storage.removeItem.calls.argsFor(0)).toEqual([
         "green"
       ]);
+
+      expect(storage.setItem).toHaveBeenCalledTimes(0);
     });
   });
 });

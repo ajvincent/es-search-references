@@ -6,18 +6,22 @@ import type {
   JSONStorageIfc
 } from "./types/JSONStorageIfc.js";
 
+import type {
+  WebFSFileIfc
+} from "./types/WebFileSystem.js";
+
 import {
-  WebFileFS
+  WebFSFile
 } from "./WebFSFile.js";
 
-export class CompactWebFileSet extends Set<WebFileFS> {
+export class CompactWebFileSet extends Set<WebFSFileIfc> {
   readonly #storage: JSONStorageIfc;
   readonly #systemKey: string;
 
   #delayPromise: Promise<void> | undefined;
 
   #contentsEntries: [string, string][] = [];
-  #fileToEntry = new WeakMap<WebFileFS, [string, string]>;
+  #fileToEntry = new WeakMap<WebFSFileIfc, [string, string]>;
 
   constructor(
     storage: JSONStorageIfc,
@@ -27,7 +31,7 @@ export class CompactWebFileSet extends Set<WebFileFS> {
   {
     super();
     directEntries.forEach(([fullPath, contents]) => {
-      const webFile = new WebFileFS(fullPath, contents, undefined);
+      const webFile = new WebFSFile(fullPath, contents, undefined);
       super.add(webFile);
       this.#addFile(webFile);
     });
@@ -40,13 +44,13 @@ export class CompactWebFileSet extends Set<WebFileFS> {
     return this.#contentsEntries;
   }
 
-  #addFile(webFile: WebFileFS): void {
+  #addFile(webFile: WebFSFileIfc): void {
     const contentEntry: [string, string] = [webFile.fullPath, webFile.contents];
     this.#fileToEntry.set(webFile, contentEntry);
     this.#contentsEntries.push(contentEntry);
   }
 
-  add(webFile: WebFileFS): this {
+  add(webFile: WebFSFileIfc): this {
     const hadFile = super.has(webFile);
     super.add(webFile);
 
@@ -69,7 +73,7 @@ export class CompactWebFileSet extends Set<WebFileFS> {
     this.#scheduleUpdate();
   }
 
-  delete(webFile: WebFileFS): boolean {
+  delete(webFile: WebFSFileIfc): boolean {
     const deleted = super.delete(webFile);
     if (deleted) {
       const fileEntry = this.#fileToEntry.get(webFile)!;
