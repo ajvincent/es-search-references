@@ -50,6 +50,8 @@ export class WebFileFS implements WebFSFileIfc {
   // WebFSNodeBaseIfc
   get fullPath(): string {
     const parentPath = this.#parentFile?.fullPath ?? this.#initialParentPath;
+    if (parentPath.endsWith("/"))
+      return parentPath + this.localName;
     return parentPath + "/" + this.localName;
   }
 
