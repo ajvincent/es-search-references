@@ -2,6 +2,10 @@ import {
   WebFSFile
 } from "../../../scripts/storage/WebFSFile.js";
 
+import type {
+  WebFSParentNodeAlias,
+} from "../../../scripts/storage/types/WebFileSystem.js"
+
 import {
   StubWebFsDir
 } from "../helpers/StubWebFSDir.js";
@@ -11,16 +15,17 @@ import {
 } from "../helpers/StubWebFSRoot.js";
 
 describe("WebFileFS", () => {
-  const fullPath = "virtual://foo/bar/foo/bar.js";
   const contents = "//hello world\n";
   const leaf = "bar.js";
 
   let webFile: WebFSFile;
 
   describe("without an initial parent file", () => {
+    const fullPath = "virtual://foo/bar/foo/bar.js";
+
     beforeEach(() => webFile = new WebFSFile(fullPath, contents, undefined));
 
-    it("instances reflect the constructor, without a parentFile", () => {
+    it("instances reflect the constructor", () => {
       expect(webFile.localName).toBe(leaf);
       expect(webFile.fullPath).toBe(fullPath);
       expect(webFile.contents).toBe(contents);
@@ -36,7 +41,7 @@ describe("WebFileFS", () => {
 
       expect(
         () => webFile.root = fs1
-      ).toThrowError("we already have a root, what are you doing?");
+      ).not.toThrow();
 
       // getter is not defined
       expect(webFile.root).toBeUndefined();
@@ -70,7 +75,7 @@ describe("WebFileFS", () => {
       webFile.root = fs1;
 
       webFile.localName = "wop.js";
-      expect(fs1.markDirty).toHaveBeenCalledOnceWith(false, webFile);
+      expect(fs1.markDirty).toHaveBeenCalledOnceWith(webFile);
     });
 
     it("notifies the root when the contents change", () => {
@@ -78,27 +83,53 @@ describe("WebFileFS", () => {
       webFile.root = fs1;
 
       webFile.contents = "//goodbye\n";
-      expect(fs1.markDirty).toHaveBeenCalledOnceWith(false, webFile);
+      expect(fs1.markDirty).toHaveBeenCalledOnceWith(webFile);
       expect(webFile.contents).toBe("//goodbye\n");
     });
 
-    it("notifies the root when the parent file changes after being initially set", () => {
+    it("does not notify the root when the parent file changes", () => {
       const fs1 = new StubWebFSRoot;
       webFile.root = fs1;
 
       const dir1 = new StubWebFsDir("bar");
       webFile.parentFileEntry = dir1;
+
+      // changes to the parent come from the parent, not from here
       expect(fs1.markDirty).toHaveBeenCalledTimes(0);
 
       const dir2 = new StubWebFsDir("wop");
       webFile.parentFileEntry = dir2;
-      expect(fs1.markDirty).toHaveBeenCalledOnceWith(true, webFile);
+      expect(fs1.markDirty).toHaveBeenCalledTimes(0);
     });
   });
 
   describe("with an initial parent file", () => {
-    xit("no tests yet", () => {
-      expect(true).toBeFalse();
+    let parentEntry: WebFSParentNodeAlias;
+    const fullPath = "virtual://foo/bar/dir/bar.js";
+
+    beforeEach(() => {
+      parentEntry = new StubWebFsDir("dir");
+      webFile = new WebFSFile(fullPath, contents, parentEntry);
+    });
+
+    it("instances reflect the constructor", () => {
+      expect(webFile.localName).toBe(leaf);
+      expect(webFile.fullPath).toBe(fullPath);
+      expect(webFile.contents).toBe(contents);
+      expect(webFile.parentFileEntry).toBe(parentEntry);
+
+      expect(parentEntry.children.size).toBe(0);
+    });
+
+    it("can set the parent file later", () => {
+      const dir2 = new StubWebFsDir("wop");
+
+      webFile.parentFileEntry = dir2;
+      expect(webFile.localName).toBe("bar.js");
+      expect(webFile.fullPath).toBe("virtual://foo/bar/wop/bar.js");
+      expect(webFile.parentFileEntry).toBe(dir2);
+
+      expect(parentEntry.children.size).toBe(0);
     });
   });
 });

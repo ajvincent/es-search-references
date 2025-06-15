@@ -15,6 +15,10 @@ export interface WebFSChildNodeIfc<FileType extends WebFSFileType> extends WebFS
 
 export interface WebFSParentNodeIfc {
   readonly children: ReadonlyMap<string, WebFSDirectoryIfc | WebFSFileIfc>;
+
+  insertChild(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void;
+  removeChild(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void;
+  renameChild(childEntry: WebFSDirectoryIfc | WebFSFileIfc, newName: string): void;
 }
 
 export interface WebFSPackageIfc extends WebFSNodeBaseIfc<WebFSFileType.PACKAGE>, WebFSParentNodeIfc {
@@ -40,7 +44,10 @@ export interface WebFSRootIfc {
   readonly packages: WebFSPackageIfc;
   readonly urls: WebFSURLIfc;
 
-  markDirty(fileStructureChanged: boolean, fileNode: WebFSDirectoryIfc | WebFSNodeIfc): void;
+  markDirty(fileNode: WebFSDirectoryIfc | WebFSNodeIfc): void;
+  childInserted(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void;
+  childRemoved(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void;
+  childRenamed(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void;
 }
 
 export type WebFSNodeIfc = WebFSPackageIfc | WebFSURLIfc | WebFSDirectoryIfc | WebFSFileIfc;

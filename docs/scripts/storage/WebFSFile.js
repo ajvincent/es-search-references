@@ -23,7 +23,7 @@ export class WebFSFile {
     }
     set localName(newName) {
         this.#localName = newName;
-        this.#root?.markDirty(false, this);
+        this.#root?.markDirty(this);
     }
     // WebFSNodeBaseIfc
     get fullPath() {
@@ -40,21 +40,20 @@ export class WebFSFile {
     }
     set contents(newValue) {
         this.#contents = newValue;
-        this.#root?.markDirty(false, this);
+        this.#root?.markDirty(this);
     }
     // WebFSChildNodeIfc
     get parentFileEntry() {
         return this.#parentFile;
     }
     set parentFileEntry(newParent) {
-        const hadParent = Boolean(this.#parentFile);
         this.#parentFile = newParent;
         this.#initialParentPath = "";
-        if (hadParent)
-            this.#root?.markDirty(true, this);
     }
     // WebFSFileIfc
     set root(newRoot) {
+        if (this.#root === newRoot)
+            return;
         if (this.#root) {
             throw new Error("we already have a root, what are you doing?");
         }

@@ -27,8 +27,8 @@ import type {
 
 export class WebFSRoot implements WebFSRootIfc {
   readonly isReadonly: boolean;
-  readonly packages = new WebFSSubRoot(WebFSFileType.PACKAGE);
-  readonly urls = new WebFSSubRoot(WebFSFileType.URL);
+  readonly packages: WebFSSubRoot<WebFSFileType.PACKAGE>;
+  readonly urls: WebFSSubRoot<WebFSFileType.URL>;
 
   #webFileSet: CompactWebFileSet;
 
@@ -39,6 +39,8 @@ export class WebFSRoot implements WebFSRootIfc {
   {
     this.isReadonly = isReadonly;
     this.#webFileSet = webFileSet;
+    this.packages = new WebFSSubRoot(WebFSFileType.PACKAGE, this);
+    this.urls = new WebFSSubRoot(WebFSFileType.URL, this);
 
     for (const webFile of webFileSet) {
       this.#addFile(webFile);
@@ -53,10 +55,21 @@ export class WebFSRoot implements WebFSRootIfc {
   }
 
   markDirty(
-    fileStructureChanged: boolean,
     fileNode: WebFSDirectoryIfc | WebFSNodeIfc
   ): void
   {
+    throw new Error("Method not implemented.");
+  }
+
+  childInserted(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void {
+    throw new Error("Method not implemented.");
+  }
+
+  childRemoved(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void {
+    throw new Error("Method not implemented.");
+  }
+
+  childRenamed(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void {
     throw new Error("Method not implemented.");
   }
 }

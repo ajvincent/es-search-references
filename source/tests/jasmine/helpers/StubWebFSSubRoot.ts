@@ -24,4 +24,15 @@ implements WebFSNodeBaseIfc<FileType>, WebFSParentNodeIfc
   constructor(fileType: FileType) {
     this.fileType = fileType;
   }
+
+  insertChild: jasmine.Spy<(
+    childEntry: WebFSDirectoryIfc | WebFSFileIfc
+  ) => void> = jasmine.createSpy();
+  removeChild: jasmine.Spy<(
+    childEntry: WebFSDirectoryIfc | WebFSFileIfc
+  ) => void> = jasmine.createSpy();
+  renameChild: jasmine.Spy<(
+    childEntry: WebFSDirectoryIfc | WebFSFileIfc,
+    newName: string
+  ) => void> = jasmine.createSpy();
 }

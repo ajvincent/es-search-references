@@ -5,6 +5,7 @@ import {
 import type {
   WebFSDirectoryIfc,
   WebFSFileIfc,
+  WebFSParentNodeAlias,
 } from "../../../scripts/storage/types/WebFileSystem.js";
 
 import {
@@ -12,14 +13,18 @@ import {
 } from "../../../scripts/utilities/OrderedStringMap.js";
 
 export class StubWebFsDir implements WebFSDirectoryIfc {
-  parentFileEntry = undefined;
+  parentFileEntry: WebFSParentNodeAlias | undefined = undefined;
   localName: string;
   fullPath: string;
   readonly fileType = WebFSFileType.DIR;
-  children = new OrderedStringMap<WebFSDirectoryIfc | WebFSFileIfc>;
+  readonly children = new OrderedStringMap<WebFSDirectoryIfc | WebFSFileIfc>;
 
   constructor(localName: string) {
     this.localName = localName;
     this.fullPath = "virtual://foo/bar/" + localName;
   }
+
+  insertChild: jasmine.Spy<(childEntry: WebFSDirectoryIfc | WebFSFileIfc) => void> = jasmine.createSpy();
+  removeChild: jasmine.Spy<(childEntry: WebFSDirectoryIfc | WebFSFileIfc) => void> = jasmine.createSpy();
+  renameChild: jasmine.Spy<(childEntry: WebFSDirectoryIfc | WebFSFileIfc, newName: string) => void> = jasmine.createSpy();
 }

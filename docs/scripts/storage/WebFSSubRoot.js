@@ -1,9 +1,11 @@
-import { OrderedStringMap } from "../utilities/OrderedStringMap.js";
-export class WebFSSubRoot {
+import { WebFSParentNode } from "./WebFSParentNode.js";
+export class WebFSSubRoot extends WebFSParentNode {
+    // WebFSNodeBaseIfc
     fileType;
-    #children = new OrderedStringMap;
-    children = this.#children;
-    constructor(fileType) {
+    root;
+    constructor(fileType, root) {
+        super();
         this.fileType = fileType;
+        this.root = root;
     }
 }

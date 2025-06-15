@@ -1,16 +1,17 @@
-import { OrderedStringMap } from "../utilities/OrderedStringMap.js";
 import { getParentAndLeaf } from "../utilities/getParentAndLeaf.js";
+import { WebFSParentNode } from "./WebFSParentNode.js";
 import { WebFSFileType } from "./constants.js";
-export class WebFSDirectory {
+export class WebFSDirectory extends WebFSParentNode {
     #localName;
-    #parentFile;
-    #root;
+    root;
+    // WebFSNodeBaseIfc
     fileType = WebFSFileType.DIR;
-    #children = new OrderedStringMap;
-    children = this.#children;
+    // WebFSChildNodeIfc
+    parentFileEntry;
     constructor(fullPath, parentFile, root) {
-        this.#parentFile = parentFile;
-        this.#root = root;
+        super();
+        this.parentFileEntry = parentFile;
+        this.root = root;
         const [parent, leaf] = getParentAndLeaf(fullPath);
         this.#localName = leaf;
     }
@@ -19,23 +20,16 @@ export class WebFSDirectory {
         return this.#localName;
     }
     set localName(newName) {
+        const oldName = this.#localName;
         this.#localName = newName;
-        this.#root.markDirty(false, this);
+        this.root.markDirty(this);
     }
     get fullPath() {
-        if (this.#parentFile?.fileType !== WebFSFileType.DIR)
+        if (this.parentFileEntry?.fileType !== WebFSFileType.DIR)
             return this.localName;
-        const parentPath = this.#parentFile.fullPath;
+        const parentPath = this.parentFileEntry.fullPath;
         if (parentPath.endsWith("/"))
             return parentPath + this.localName;
         return parentPath + "/" + this.localName;
-    }
-    // WebFSChildNodeIfc
-    get parentFileEntry() {
-        return this.#parentFile;
-    }
-    set parentFileEntry(newParent) {
-        this.#parentFile = newParent;
-        this.#root.markDirty(true, this);
     }
 }

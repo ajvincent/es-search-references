@@ -1,10 +1,10 @@
 import {
-  OrderedStringMap
-} from "../utilities/OrderedStringMap.js";
-
-import {
   getParentAndLeaf
 } from "../utilities/getParentAndLeaf.js";
+
+import {
+  WebFSParentNode
+} from "./WebFSParentNode.js";
 
 import {
   WebFSFileType
@@ -17,14 +17,15 @@ import type {
   WebFSRootIfc,
 } from "./types/WebFileSystem.js";
 
-export class WebFSDirectory implements WebFSDirectoryIfc {
+export class WebFSDirectory extends WebFSParentNode implements WebFSDirectoryIfc {
   #localName: string;
-  #parentFile: WebFSParentNodeAlias;
-  #root: WebFSRootIfc;
+  protected readonly root: WebFSRootIfc;
 
+  // WebFSNodeBaseIfc
   readonly fileType = WebFSFileType.DIR;
-  readonly #children = new OrderedStringMap<WebFSDirectoryIfc | WebFSFileIfc>;
-  readonly children: ReadonlyMap<string, WebFSDirectoryIfc | WebFSFileIfc> = this.#children;
+
+  // WebFSChildNodeIfc
+  parentFileEntry: WebFSParentNodeAlias;
 
   constructor(
     fullPath: string,
@@ -32,8 +33,9 @@ export class WebFSDirectory implements WebFSDirectoryIfc {
     root: WebFSRootIfc
   )
   {
-    this.#parentFile = parentFile;
-    this.#root = root;
+    super();
+    this.parentFileEntry = parentFile;
+    this.root = root;
 
     const [parent, leaf] = getParentAndLeaf(fullPath);
     this.#localName = leaf;
@@ -45,28 +47,19 @@ export class WebFSDirectory implements WebFSDirectoryIfc {
   }
 
   set localName(newName: string) {
+    const oldName = this.#localName;
     this.#localName = newName;
-    this.#root.markDirty(false, this);
+    this.root.markDirty(this);
   }
 
   get fullPath(): string {
-    if (this.#parentFile?.fileType !== WebFSFileType.DIR)
+    if (this.parentFileEntry?.fileType !== WebFSFileType.DIR)
       return this.localName;
 
-    const parentPath = this.#parentFile.fullPath;
+    const parentPath = this.parentFileEntry.fullPath;
     if (parentPath.endsWith("/"))
       return parentPath + this.localName;
 
     return parentPath + "/" + this.localName;
-  }
-
-  // WebFSChildNodeIfc
-  get parentFileEntry(): WebFSParentNodeAlias | undefined {
-    return this.#parentFile;
-  }
-
-  set parentFileEntry(newParent: WebFSParentNodeAlias) {
-    this.#parentFile = newParent;
-    this.#root.markDirty(true, this);
   }
 }

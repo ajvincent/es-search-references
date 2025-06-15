@@ -46,7 +46,7 @@ export class WebFSFile implements WebFSFileIfc {
 
   set localName(newName: string) {
     this.#localName = newName;
-    this.#root?.markDirty(false, this);
+    this.#root?.markDirty(this);
   }
 
   // WebFSNodeBaseIfc
@@ -66,7 +66,7 @@ export class WebFSFile implements WebFSFileIfc {
 
   set contents(newValue: string) {
     this.#contents = newValue;
-    this.#root?.markDirty(false, this);
+    this.#root?.markDirty(this);
   }
 
   // WebFSChildNodeIfc
@@ -74,17 +74,16 @@ export class WebFSFile implements WebFSFileIfc {
     return this.#parentFile;
   }
 
-  set parentFileEntry(newParent: WebFSParentNodeAlias) {
-    const hadParent = Boolean(this.#parentFile);
+  set parentFileEntry(newParent: WebFSParentNodeAlias | undefined) {
     this.#parentFile = newParent;
     this.#initialParentPath = "";
-
-    if (hadParent)
-      this.#root?.markDirty(true, this);
   }
 
   // WebFSFileIfc
   set root(newRoot: WebFSRootIfc) {
+    if (this.#root === newRoot)
+      return;
+
     if (this.#root) {
       throw new Error("we already have a root, what are you doing?");
     }
