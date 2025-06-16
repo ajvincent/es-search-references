@@ -1,3 +1,8 @@
+/**
+ * FIXME: Symbol.iterator is incorrect, as it allows modifying in the middle.
+ * This could be more efficient as a Set whose elements we sort on iteration,
+ * and only when it is "dirty".
+ */
 export class OrderedStringSet {
     #elements;
     constructor(elements = []) {
