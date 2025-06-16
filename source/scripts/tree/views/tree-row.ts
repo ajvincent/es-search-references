@@ -96,7 +96,7 @@ export abstract class TreeRowView {
       resolve(null);
     }
     else if (key === "Enter") {
-      resolve(this.#primaryLabelElement!.innerText);
+      resolve(this.#primaryLabelElement!.innerText.trim());
     }
   }
 
