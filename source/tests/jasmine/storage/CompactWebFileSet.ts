@@ -41,7 +41,7 @@ describe("CompactWebFileSet", () => {
     cachedFiles = Array.from(fileSet);
   });
 
-  it("initializes and does not update storage", () => {
+  it("initializes and does not update storage", async () => {
     expect(fileSet.size).toBe(2);
 
     expect(cachedFiles.length).toBe(2);
@@ -57,7 +57,7 @@ describe("CompactWebFileSet", () => {
       expect(cachedFiles[1].parentFileEntry).toBeUndefined();
     }
 
-    expect(fileSet.contentEntries).toEqual(initialFiles);
+    expect(await fileSet.contentEntries()).toEqual(initialFiles);
     expect(fileSet.delayPromise).toBeUndefined();
     expect(storage.removeItem).toHaveBeenCalledTimes(0);
     expect(storage.setItem).toHaveBeenCalledTimes(0);

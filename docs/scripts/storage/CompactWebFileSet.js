@@ -16,7 +16,9 @@ export class CompactWebFileSet extends Set {
         this.#storage = storage;
         this.#systemKey = systemKey;
     }
-    get contentEntries() {
+    async contentEntries() {
+        if (this.#delayPromise)
+            await this.#delayPromise;
         return this.#contentsEntries;
     }
     #addFile(webFile) {

@@ -40,7 +40,9 @@ export class CompactWebFileSet extends Set<WebFSFileIfc> {
     this.#systemKey = systemKey;
   }
 
-  get contentEntries(): readonly (readonly [string, string])[] {
+  async contentEntries(): Promise<readonly (readonly [string, string])[]> {
+    if (this.#delayPromise)
+      await this.#delayPromise;
     return this.#contentsEntries;
   }
 
