@@ -1,6 +1,14 @@
 {
   "compilerOptions": {
-    "lib": ["ES2024", "DOM"],
+    "lib": [
+      "ES2024",
+      "ESNext.Collection",
+      /*
+      "ESNext.Object",
+      "ESNext.Promise",
+      */
+      "DOM"
+    ],
     "module": "NodeNext",
     "target": "ES2024",
     "moduleResolution": "NodeNext",
