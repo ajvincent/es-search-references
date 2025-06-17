@@ -1,29 +1,15 @@
 import { OrderedStringIterator } from "./OrderedStringIterator.js";
 import { WeakRefSet } from "./WeakRefSet.js";
 export class OrderedStringSet {
-    #elements;
     #iterators = new WeakRefSet;
+    #set;
     constructor(elements = []) {
-        this.#elements = elements.toSorted();
-    }
-    #insertionIndex(value) {
-        let min = 0, max = this.#elements.length;
-        while (min < max) {
-            const mid = (min + max) >> 1;
-            const currentValue = this.#elements[mid];
-            if (currentValue.localeCompare(value) < 0) {
-                min = mid + 1;
-            }
-            else {
-                max = mid;
-            }
-        }
-        return min;
+        this.#set = new Set(elements);
     }
     add(value) {
-        const index = this.#insertionIndex(value);
-        if (this.#elements[index] !== value) {
-            this.#elements.splice(index, 0, value);
+        const hadValue = this.#set.has(value);
+        this.#set.add(value);
+        if (hadValue === false) {
             for (const iterator of this.#iterators.liveElements()) {
                 iterator.itemAdded(value);
             }
@@ -31,31 +17,30 @@ export class OrderedStringSet {
         return this;
     }
     clear() {
-        this.#elements = [];
+        this.#set.clear();
+        for (const iterator of this.#iterators.liveElements()) {
+            iterator.setCleared();
+        }
     }
     delete(value) {
-        const index = this.#insertionIndex(value);
-        if (this.#elements[index] !== value) {
-            return false;
+        const wasDeleted = this.#set.delete(value);
+        if (wasDeleted) {
+            for (const iterator of this.#iterators.liveElements()) {
+                iterator.itemDeleted(value);
+            }
         }
-        this.#elements.splice(index, 1);
-        for (const iterator of this.#iterators.liveElements()) {
-            iterator.itemDeleted(value);
-        }
-        return true;
+        return wasDeleted;
     }
     has(value) {
-        const index = this.#insertionIndex(value);
-        return this.#elements[index] === value;
+        return this.#set.has(value);
     }
     get size() {
-        return this.#elements.length;
+        return this.#set.size;
     }
     *[Symbol.iterator]() {
-        if (this.#elements.length === 0) {
-            return;
-        }
-        const iterator = new OrderedStringIterator(this.#elements);
+        const values = Array.from(this.#set);
+        values.sort();
+        const iterator = new OrderedStringIterator(values);
         this.#iterators.addReference(iterator);
         for (const value of iterator) {
             yield value;
