@@ -1,10 +1,14 @@
-/**
- * FIXME: Symbol.iterator is incorrect, as it allows modifying in the middle.
- * This could be more efficient as a Set whose elements we sort on iteration,
- * and only when it is "dirty".
- */
+import {
+  OrderedStringIterator
+} from "./OrderedStringIterator.js";
+
+import {
+  WeakRefSet
+} from "./WeakRefSet.js";
+
 export class OrderedStringSet {
   #elements: string[];
+  readonly #iterators = new WeakRefSet<OrderedStringIterator>;
 
   constructor(elements: string[] = []) {
     this.#elements = elements.toSorted();
@@ -29,6 +33,9 @@ export class OrderedStringSet {
     const index = this.#insertionIndex(value);
     if (this.#elements[index] !== value) {
       this.#elements.splice(index, 0, value);
+      for (const iterator of this.#iterators.liveElements()) {
+        iterator.itemAdded(value);
+      }
     }
     return this;
   }
@@ -44,6 +51,9 @@ export class OrderedStringSet {
     }
 
     this.#elements.splice(index, 1);
+    for (const iterator of this.#iterators.liveElements()) {
+      iterator.itemDeleted(value);
+    }
     return true;
   }
 
@@ -56,7 +66,18 @@ export class OrderedStringSet {
     return this.#elements.length;
   }
 
-  [Symbol.iterator](): ArrayIterator<string> {
-    return this.#elements.values();
+  * [Symbol.iterator](): ArrayIterator<string> {
+    if (this.#elements.length === 0) {
+      return;
+    }
+
+    const iterator = new OrderedStringIterator(this.#elements);
+    this.#iterators.addReference(iterator);
+
+    for (const value of iterator) {
+      yield value;
+    }
+
+    this.#iterators.deleteReference(iterator);
   }
 }

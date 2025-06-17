@@ -2,10 +2,6 @@ import {
   OrderedStringSet
 } from "./OrderedStringSet.js";
 
-/**
- * FIXME: break the Map superclass dependency.  Modifications while iterating will mean the
- * iteration is no longer correct!
- */
 export class OrderedStringMap<V> extends Map<string, V> {
   readonly #keys: OrderedStringSet;
 
