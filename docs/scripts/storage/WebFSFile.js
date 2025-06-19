@@ -23,4 +23,4 @@ export class WebFSFile {
 }
 /*
 WebFSFile satisfies WebFSFileStaticIfc;
-*/ 
+*/

@@ -42,9 +42,7 @@ export class OrderedStringSet {
         values.sort();
         const iterator = new OrderedStringIterator(values);
         this.#iterators.addReference(iterator);
-        for (const value of iterator) {
-            yield value;
-        }
+        yield* iterator;
         this.#iterators.deleteReference(iterator);
     }
 }

@@ -91,8 +91,8 @@ export class WebFSParentNode {
         }
         return child.getFileDeep(pathSequence, pathIndex + 1);
     }
-    *getWebFileEntriesDeep(thisName) {
-        for (const [localName, fileEntry] of this.#getWebFileEntriesDeep()) {
+    *getWebFileContentsDeep(thisName) {
+        for (const [localName, fileEntry] of this.#getWebFileContentsDeep()) {
             if (thisName) {
                 yield [thisName + "/" + localName, fileEntry];
             }
@@ -101,13 +101,13 @@ export class WebFSParentNode {
             }
         }
     }
-    *#getWebFileEntriesDeep() {
+    *#getWebFileContentsDeep() {
         for (const [localName, fileEntry] of this.#children.entries()) {
             if (fileEntry.fileType === WebFSFileType.FILE) {
-                yield [localName, fileEntry];
+                yield [localName, fileEntry.contents];
             }
             else {
-                yield* fileEntry.getWebFileEntriesDeep(localName);
+                yield* fileEntry.getWebFileContentsDeep(localName);
             }
         }
     }

@@ -34,7 +34,7 @@ export interface WebFSParentNodeIfc {
 
   getFileDeep(pathSequence: readonly string[], pathIndex: number): WebFSFileIfc | WebFSDirectoryIfc;
 
-  getWebFileEntriesDeep(thisName: string): Iterable<[string, WebFSFileIfc]>;
+  getWebFileContentsDeep(thisName: string): Iterable<[string, string]>;
 
   /*
   toJSON(): Record<string, WebFSFileEntryIfc>;

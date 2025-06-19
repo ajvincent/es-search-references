@@ -133,8 +133,8 @@ export abstract class WebFSParentNode implements WebFSParentNodeIfc {
     return child.getFileDeep(pathSequence, pathIndex + 1);
   }
 
-  * getWebFileEntriesDeep(thisName: string): Iterable<[string, WebFSFileIfc]> {
-    for (const [localName, fileEntry] of this.#getWebFileEntriesDeep()) {
+  * getWebFileContentsDeep(thisName: string): Iterable<[string, string]> {
+    for (const [localName, fileEntry] of this.#getWebFileContentsDeep()) {
       if (thisName) {
         yield [thisName + "/" + localName, fileEntry];
       }
@@ -144,12 +144,12 @@ export abstract class WebFSParentNode implements WebFSParentNodeIfc {
     }
   }
 
-  * #getWebFileEntriesDeep(): Iterable<[string, WebFSFileIfc]> {
+  * #getWebFileContentsDeep(): Iterable<[string, string]> {
     for (const [localName, fileEntry] of this.#children.entries()) {
       if (fileEntry.fileType === WebFSFileType.FILE) {
-        yield [localName, fileEntry];
+        yield [localName, fileEntry.contents];
       } else {
-        yield* fileEntry.getWebFileEntriesDeep(localName);
+        yield* fileEntry.getWebFileContentsDeep(localName);
       }
     }
   }
