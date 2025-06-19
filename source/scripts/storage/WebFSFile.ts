@@ -1,92 +1,55 @@
 import {
-  getParentAndLeaf
-} from "../utilities/getParentAndLeaf.js";
-
-import {
   WebFSFileType
 } from "./constants.js";
 
 import type {
   WebFSFileIfc,
-  WebFSParentNodeAlias,
-  WebFSRootIfc,
+  /*
+  WebFSFileStaticIfc,
+  */
 } from "./types/WebFileSystem.js";
 
 export class WebFSFile implements WebFSFileIfc {
-  #contents: string;
-  #localName: string;
-  #initialParentPath: string;
-  #parentFile: WebFSParentNodeAlias | undefined;
+  /*
+  static readonly #encoder = new TextEncoder();
+  static readonly #decoder = new TextDecoder;
+  */
 
-  /** This may initially be undefined for the restore-from-storage case. */
-  #root: WebFSRootIfc | undefined;
+  /*
+  static fromJSON(contents: string): WebFSFileIfc {
+    return new WebFSFile(contents);
+  }
+
+  static fromZippable(array: Uint8Array): WebFSFileIfc {
+    return new WebFSFile(WebFSFile.#decoder.decode(array));
+  }
+  */
+
+  constructor(
+    contents: string,
+  )
+  {
+    this.contents = contents;
+  }
 
   // WebFSNodeBaseIfc
   readonly fileType = WebFSFileType.FILE;
 
-  constructor(
-    fullPath: string,
-    contents: string,
-    parentFile: WebFSParentNodeAlias | undefined,
-  )
-  {
-    this.#contents = contents;
-    this.#parentFile = parentFile;
-    this.#root = undefined;
+  // WebFSFileIfc
+  contents: string;
 
-    const [parent, leaf] = getParentAndLeaf(fullPath);
-    this.#initialParentPath = parentFile ? "" : parent;
-    this.#localName = leaf;
-  }
-
-  // WebFSNodeBaseIfc
-  get localName(): string {
-    return this.#localName;
-  }
-
-  set localName(newName: string) {
-    this.#localName = newName;
-    this.#root?.markDirty(this);
-  }
-
-  // WebFSNodeBaseIfc
-  get fullPath(): string {
-    let parentPath = this.#initialParentPath;
-    if (this.#parentFile?.fileType === WebFSFileType.DIR)
-      parentPath = this.#parentFile.fullPath;
-    if (parentPath.endsWith("/"))
-      return parentPath + this.localName;
-    return parentPath + "/" + this.localName;
+  /*
+  // WebFSFileIfc
+  toJSON(): string {
+    return this.contents;
   }
 
   // WebFSFileIfc
-  get contents(): string {
-    return this.#contents;
+  toZippable(): Uint8Array {
+    return WebFSFile.#encoder.encode(this.contents);
   }
-
-  set contents(newValue: string) {
-    this.#contents = newValue;
-    this.#root?.markDirty(this);
-  }
-
-  // WebFSChildNodeIfc
-  get parentFileEntry(): WebFSParentNodeAlias | undefined {
-    return this.#parentFile;
-  }
-
-  set parentFileEntry(newParent: WebFSParentNodeAlias | undefined) {
-    this.#parentFile = newParent;
-    this.#initialParentPath = "";
-  }
-
-  // WebFSFileIfc
-  set root(newRoot: WebFSRootIfc) {
-    if (this.#root === newRoot)
-      return;
-
-    if (this.#root) {
-      throw new Error("we already have a root, what are you doing?");
-    }
-    this.#root = newRoot;
-  }
+  */
 }
+/*
+WebFSFile satisfies WebFSFileStaticIfc;
+*/

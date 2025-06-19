@@ -1,75 +1,44 @@
 import {
-  OrderedStringMap
-} from "../utilities/OrderedStringMap.js";
+  WebFSPackages
+} from "./WebFSPackages.js";
 
 import {
-  getParentAndLeaf
-} from "../utilities/getParentAndLeaf.js";
-
-import {
-  CompactWebFileSet
-} from "./CompactWebFileSet.js";
-
-import {
-  WebFSSubRoot
-} from "./WebFSSubRoot.js";
-
-import {
-  WebFSFileType
-} from "./constants.js";
+  WebFSURLs
+} from "./WebFSURLs.js";
 
 import type {
-  WebFSDirectoryIfc,
-  WebFSFileIfc,
-  WebFSNodeIfc,
   WebFSRootIfc,
 } from "./types/WebFileSystem.js";
 
 export class WebFSRoot implements WebFSRootIfc {
+  static fromJSON(): never {
+    throw new Error("not yet implemented");
+  }
+
+  static fromZippable(): never {
+    throw new Error("not yet implemented");
+  }
+
+  static buildEmpty(): never {
+    throw new Error("not yet implemented");
+  }
+
   readonly isReadonly: boolean;
-  readonly packages: WebFSSubRoot<WebFSFileType.PACKAGE>;
-  readonly urls: WebFSSubRoot<WebFSFileType.URL>;
+  readonly #packages: WebFSPackages;
+  readonly #urls: WebFSURLs;
 
-  #webFileSet: CompactWebFileSet;
-
-  constructor(
+  private constructor(
     isReadonly: boolean,
-    webFileSet: CompactWebFileSet
+    packages: WebFSPackages,
+    urls: WebFSURLs
   )
   {
     this.isReadonly = isReadonly;
-    this.#webFileSet = webFileSet;
-    this.packages = new WebFSSubRoot(WebFSFileType.PACKAGE, this);
-    this.urls = new WebFSSubRoot(WebFSFileType.URL, this);
-
-    for (const webFile of webFileSet) {
-      this.#addFile(webFile);
-    }
+    this.#packages = packages;
+    this.#urls = urls;
   }
 
-  #addFile(webFile: WebFSFileIfc): void {
-    if (webFile.parentFileEntry)
-      throw new Error("webFile shouldn't have a parentFileEntry: " + webFile.fullPath);
-
-    const subrootMap = URL.canParse(webFile.fullPath) ? this.urls : this.packages;
-  }
-
-  markDirty(
-    fileNode: WebFSDirectoryIfc | WebFSNodeIfc
-  ): void
-  {
-    throw new Error("Method not implemented.");
-  }
-
-  childInserted(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void {
-    throw new Error("Method not implemented.");
-  }
-
-  childRemoved(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void {
-    throw new Error("Method not implemented.");
-  }
-
-  childRenamed(childEntry: WebFSDirectoryIfc | WebFSFileIfc): void {
+  getWebFilesMap(): ReadonlyMap<string, string> {
     throw new Error("Method not implemented.");
   }
 }
