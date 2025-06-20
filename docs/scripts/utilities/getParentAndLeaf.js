@@ -1,3 +1,4 @@
+/** @deprecated */
 export function getParentAndLeaf(key) {
     if (key.endsWith(":/")) {
         return ["", key + "/"];

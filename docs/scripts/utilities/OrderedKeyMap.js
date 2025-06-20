@@ -1,3 +1,4 @@
+/** @deprecated */
 export class OrderedKeyMap extends Map {
     static keyComparator(a, b) {
         return a.localeCompare(b);

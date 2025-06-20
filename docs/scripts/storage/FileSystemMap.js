@@ -2,6 +2,7 @@ var _a;
 import { JSONStorage } from "./JSONStorage.js";
 import { OrderedKeyMap } from "../utilities/OrderedKeyMap.js";
 import { getParentAndLeaf } from "../utilities/getParentAndLeaf.js";
+/** @deprecated */
 export class FileSystemMap extends OrderedKeyMap {
     static #storage = new JSONStorage(window.localStorage, "es-search-references/files");
     static getAll() {

@@ -15,6 +15,7 @@ export type ExportedFileSystem = Record<"packages" | "urls", ExportedDirectories
 export type ExportedFileEntry = Uint8Array | ExportedDirectories;
 export type ExportedDirectories = {[Key in string]: ExportedFileEntry};
 
+/** @deprecated */
 export class FileSystemMap extends OrderedKeyMap<string> {
   static readonly #storage = new JSONStorage(window.localStorage, "es-search-references/files");
   static getAll(): OrderedKeyMap<FileSystemMap> {
