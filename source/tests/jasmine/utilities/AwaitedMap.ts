@@ -1,4 +1,5 @@
-import AwaitedMap, {
+import {
+  AwaitedMap,
   AwaitedMapError,
 } from "../../../scripts/utilities/AwaitedMap.js";
 

@@ -3,7 +3,7 @@
  *
  * @see {@link https://github.com/tc39/proposal-await-dictionary}
  */
-export default class AwaitedMap extends Map {
+export class AwaitedMap extends Map {
     async #settlePromises() {
         const promisedEntries = Array.from(this.entries());
         const names = promisedEntries.map(e => e[0]), promises = promisedEntries.map(e => e[1]);

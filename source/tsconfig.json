@@ -1,6 +1,11 @@
 {
   "compilerOptions": {
-    "lib": ["ES2024", "DOM"],
+    "lib": [
+      "ES2024",
+      "DOM",
+      "DOM.AsyncIterable",
+      "ESNext.Array"
+    ],
     "module": "NodeNext",
     "target": "ES2024",
     "moduleResolution": "NodeNext",

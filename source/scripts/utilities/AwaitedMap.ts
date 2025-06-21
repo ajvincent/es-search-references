@@ -3,8 +3,7 @@
  *
  * @see {@link https://github.com/tc39/proposal-await-dictionary}
  */
-export default
-class AwaitedMap<K, V> extends Map<K, Promise<V>>
+export class AwaitedMap<K, V> extends Map<K, Promise<V>>
 {
   async #settlePromises(): Promise<[K, PromiseSettledResult<Awaited<V>>][]>
   {
