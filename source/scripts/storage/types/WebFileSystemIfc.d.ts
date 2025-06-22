@@ -5,6 +5,10 @@ export interface WebFileSystemIfc {
   setDescription(newDesc: string): Promise<void>;
 
   getWebFilesMap(): Promise<ReadonlyMap<string, string>>;
+  importFilesMap(
+    map: ReadonlyMap<`packages/${string}` | `urls/${string}`, string>
+  ): Promise<void>;
+  exportAsZip(): Promise<File>;
 
   async remove(): Promise<void>;
 }

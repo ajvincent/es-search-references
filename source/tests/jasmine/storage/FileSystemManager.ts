@@ -1,3 +1,11 @@
+import type {
+  FlateCallback,
+} from "fflate";
+
+import {
+  zip
+} from "../../../lib/packages/fflate.js";
+
 import {
   FileSystemManager
 } from "../../../scripts/storage/FileSystemManager.js";
@@ -22,7 +30,8 @@ describe("FileSystemManager", () => {
   });
 
   it("creates and caches WebFileManagerIfc instances", async () => {
-    const firstMgr: FileSystemManagerIfc = await FileSystemManager.build(tempDir);
+    const tempChildDir = await tempDir.getDirectoryHandle("create-and-cache", { create: true });
+    const firstMgr: FileSystemManagerIfc = await FileSystemManager.build(tempChildDir);
     expect(firstMgr.availableSystems.size).toBe(0);
 
     const webFS: WebFileSystemIfc = await firstMgr.buildEmpty("test system");
@@ -44,7 +53,7 @@ describe("FileSystemManager", () => {
 
     {
       // testing existing file systems on restore
-      const secondMgr: FileSystemManagerIfc = await FileSystemManager.build(tempDir);
+      const secondMgr: FileSystemManagerIfc = await FileSystemManager.build(tempChildDir);
       expect(secondMgr).not.toBe(firstMgr);
       expect(Array.from(secondMgr.availableSystems.entries())).toEqual(entries);
 
@@ -86,5 +95,44 @@ describe("FileSystemManager", () => {
         firstMgr.getExisting(secondKey)
       ).toBeRejectedWithError("unknown key: " + secondKey);
     }
+  });
+
+  it(".importFromZip() creates a new file system from a zip file", async () => {
+    const threeContents = "const three = 3;\nexport { three }\n";
+    const sixContents = "const six = 6;\nexport { six }\n";
+
+    let zipFile: File;
+    {
+      const encoder = new TextEncoder();
+
+      const rawFiles: [string, Uint8Array][] = [
+        ["packages/one/two/three.js", encoder.encode(threeContents)],
+        ["urls/four/five/six.js", encoder.encode(sixContents)]
+      ];
+
+      const deferred = Promise.withResolvers<Uint8Array<ArrayBufferLike>>();
+      const resultFn: FlateCallback = (err, zipped) => {
+        if (err)
+          deferred.reject(err);
+        else
+          deferred.resolve(zipped);
+      }
+
+      zip(Object.fromEntries(rawFiles), resultFn);
+      const zipUint8: Uint8Array<ArrayBufferLike> = await deferred.promise;
+      zipFile = new File([zipUint8], "imported-files.zip", { type: "application/zip"});
+    }
+
+    const tempChildDir = await tempDir.getDirectoryHandle("import-from-zip", { create: true });
+    const systemMgr: FileSystemManagerIfc = await FileSystemManager.build(tempChildDir);
+
+    // all of this to set up:
+    const webFS: WebFileSystemIfc = await systemMgr.importFromZip("import from zip", zipFile);
+
+    const filesMap = await webFS.getWebFilesMap();
+    expect(Array.from(filesMap.entries())).toEqual([
+      ["one/two/three.js", threeContents],
+      ["four://five/six.js", sixContents]
+    ]);
   });
 });

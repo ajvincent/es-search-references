@@ -1,3 +1,12 @@
+import type {
+  UnzipCallback,
+  UnzipFileFilter
+} from "fflate";
+
+import {
+  unzip,
+} from "../../lib/packages/fflate.js";
+
 import {
   AsyncJSONMap
 } from "./AsyncJSONMap.js";
@@ -27,6 +36,8 @@ implements FileSystemManagerIfc, FSManagerInternalIfc
     const indexMap: AsyncJSONMap<string> = await AsyncJSONMap.build(indexFile);
     return new FileSystemManager(systemsDir, indexMap);
   }
+
+  static readonly #decoder = new TextDecoder();
 
   readonly #systemsDir: FileSystemDirectoryHandle;
   readonly #indexMap: AsyncJSONMap<string>;
@@ -78,6 +89,49 @@ implements FileSystemManagerIfc, FSManagerInternalIfc
     const promise = this.#createManager(key, description, true);
     this.#cache.set(key, promise);
     return promise;
+  }
+
+  async importFromZip(
+    description: string,
+    zipFile: File
+  ): Promise<WebFileSystemIfc>
+  {
+    const webFS = await this.buildEmpty(description);
+    const map = await this.#extractFilesFromZip(zipFile);
+    await webFS.importFilesMap(map);
+    return webFS;
+  }
+
+  async #extractFilesFromZip(
+    zipFile: File
+  ): Promise<ReadonlyMap<`packages/${string}` | `urls/${string}`, string>>
+  {
+    const byteArray: Uint8Array = await zipFile.bytes();
+
+    const deferred = Promise.withResolvers<Record<string, Uint8Array>>();
+    const filter: UnzipFileFilter = file => {
+      return file.size > 0;
+    }
+    const resultFn: UnzipCallback = (err, unzipped) => {
+      if (err)
+        deferred.reject(err);
+      else
+        deferred.resolve(unzipped);
+    };
+    unzip(byteArray, { filter }, resultFn);
+    const fileRecords: Record<string, Uint8Array> = await deferred.promise;
+
+    const map = new Map<`packages/${string}` | `urls/${string}`, string>;
+    for (const [pathToFile, fileBytes] of Object.entries(fileRecords)) {
+      if (pathToFile.startsWith("packages/") === false && pathToFile.startsWith("urls/") === false)
+        continue;
+      map.set(
+        pathToFile as `packages/${string}` | `urls/${string}`,
+        FileSystemManager.#decoder.decode(fileBytes)
+      );
+    }
+
+    return map;
   }
 
   async #createManager(

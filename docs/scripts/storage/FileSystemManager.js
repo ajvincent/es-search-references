@@ -1,3 +1,5 @@
+var _a;
+import { unzip, } from "../../lib/packages/fflate.js";
 import { AsyncJSONMap } from "./AsyncJSONMap.js";
 import { WebFileSystem } from "./WebFileSystem.js";
 export class FileSystemManager {
@@ -5,8 +7,9 @@ export class FileSystemManager {
         const systemsDir = await topDir.getDirectoryHandle("filesystems", { create: true });
         const indexFile = await topDir.getFileHandle("index.json", { create: true });
         const indexMap = await AsyncJSONMap.build(indexFile);
-        return new FileSystemManager(systemsDir, indexMap);
+        return new _a(systemsDir, indexMap);
     }
+    static #decoder = new TextDecoder();
     #systemsDir;
     #indexMap;
     #descriptionsSet;
@@ -41,6 +44,34 @@ export class FileSystemManager {
         this.#cache.set(key, promise);
         return promise;
     }
+    async importFromZip(description, zipFile) {
+        const webFS = await this.buildEmpty(description);
+        const map = await this.#extractFilesFromZip(zipFile);
+        await webFS.importFilesMap(map);
+        return webFS;
+    }
+    async #extractFilesFromZip(zipFile) {
+        const byteArray = await zipFile.bytes();
+        const deferred = Promise.withResolvers();
+        const filter = file => {
+            return file.size > 0;
+        };
+        const resultFn = (err, unzipped) => {
+            if (err)
+                deferred.reject(err);
+            else
+                deferred.resolve(unzipped);
+        };
+        unzip(byteArray, { filter }, resultFn);
+        const fileRecords = await deferred.promise;
+        const map = new Map;
+        for (const [pathToFile, fileBytes] of Object.entries(fileRecords)) {
+            if (pathToFile.startsWith("packages/") === false && pathToFile.startsWith("urls/") === false)
+                continue;
+            map.set(pathToFile, _a.#decoder.decode(fileBytes));
+        }
+        return map;
+    }
     async #createManager(key, description, create) {
         const webFilesDir = await this.#systemsDir.getDirectoryHandle(key, { create });
         const packagesPromise = webFilesDir.getDirectoryHandle("packages", { create });
@@ -69,3 +100,4 @@ export class FileSystemManager {
         await this.#systemsDir.removeEntry(key, { recursive: true });
     }
 }
+_a = FileSystemManager;

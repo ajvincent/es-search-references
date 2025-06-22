@@ -1,3 +1,7 @@
+import type {
+  WebFileSystemIfc
+} from "./WebFileSystemIfc.js";
+
 export interface FileSystemManagerIfc {
   get availableSystems(): ReadonlyMap<string, string>;
 
@@ -7,6 +11,11 @@ export interface FileSystemManagerIfc {
 
   getExisting(
     key: string
+  ): Promise<WebFileSystemIfc>;
+
+  importFromZip(
+    description: string,
+    zipFile: File
   ): Promise<WebFileSystemIfc>;
 }
 
