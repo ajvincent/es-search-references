@@ -1,10 +1,10 @@
-export interface WebFileManagerIfc {
+export interface WebFileSystemIfc {
   readonly packagesDir: FileSystemDirectoryHandle;
-  readonly urlsDir: FileSystemDirectoryHandle;
+  readonly urlsDir: Omit<FileSystemDirectoryHandle, "getFileHandle">;
   get description(): string;
   setDescription(newDesc: string): Promise<void>;
 
   getWebFilesMap(): Promise<ReadonlyMap<string, string>>;
 
-  remove(): Promise<void>;
+  async remove(): Promise<void>;
 }

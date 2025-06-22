@@ -3,12 +3,18 @@ import type {
 } from "type-fest";
 
 export class AsyncJSONMap<V extends Jsonifiable> extends Map<string, V> {
-  static async build<V extends Jsonifiable>(fileHandle: FileSystemFileHandle): Promise<AsyncJSONMap<V>> {
+  static async build<V extends Jsonifiable>(
+    fileHandle: FileSystemFileHandle
+  ): Promise<AsyncJSONMap<V>>
+  {
     const entries = await this.#readMap<V>(fileHandle);
     return new AsyncJSONMap<V>(fileHandle, entries);
   }
 
-  static async #readMap<V extends Jsonifiable>(fileHandle: FileSystemFileHandle): Promise<[string, V][]> {
+  static async #readMap<V extends Jsonifiable>(
+    fileHandle: FileSystemFileHandle
+  ): Promise<[string, V][]>
+  {
     const file = await fileHandle.getFile();
     let text = await file.text();
     if (text[0] !== "{")

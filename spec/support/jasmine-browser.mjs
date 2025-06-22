@@ -15,7 +15,7 @@ export default {
   modulesWithSideEffectsInSrcFiles: false,
   // Allows the use of top-level await in src/spec/helper files. This is off by
   // default because it makes files load more slowly.
-  enableTopLevelAwait: false,
+  enableTopLevelAwait: true,
   env: {
     stopSpecOnExpectationFailure: false,
     stopOnSpecFailure: false,
