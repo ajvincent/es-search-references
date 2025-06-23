@@ -1,6 +1,6 @@
 export interface WebFileSystemIfc {
   readonly packagesDir: FileSystemDirectoryHandle;
-  readonly urlsDir: Omit<FileSystemDirectoryHandle, "getFileHandle">;
+  readonly urlsDir: FileSystemDirectoryHandle;
   get description(): string;
   setDescription(newDesc: string): Promise<void>;
 
