@@ -234,7 +234,7 @@ export class WebFileSystem implements WebFileSystemIfc {
   ): Promise<void>
   {
     const entries: [string, FileSystemHandle][] = await Array.fromAsync(currentDirectory.entries());
-    const promiseArray: Promise<unknown>[] = [];
+    const promiseSet = new Set<Promise<unknown>>;
 
     for (let [pathToFile, handle] of entries) {
       if (mustJoinDirs || (currentDirectory !== this.#urlsDir && currentDirectory !== this.#packagesDir)) {
@@ -245,16 +245,16 @@ export class WebFileSystem implements WebFileSystemIfc {
 
       if (handle instanceof FileSystemFileHandle) {
         const promise = handle.getFile().then(file => file.text());
-        promiseArray.push(promise);
+        promiseSet.add(promise);
         pendingFileMap.set(pathToFile, promise);
       } else if (handle instanceof FileSystemDirectoryHandle) {
-        promiseArray.push(this.#fillFileMap(pathToFile, pendingFileMap, handle, true));
+        promiseSet.add(this.#fillFileMap(pathToFile, pendingFileMap, handle, true));
       } else {
         throw new Error("path is neither a file nor a directory?  How?  " + pathToFile);
       }
     }
 
-    await Promise.all(promiseArray);
+    await Promise.all(promiseSet);
   }
 
   async importFilesMap(
