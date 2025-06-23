@@ -122,7 +122,8 @@ describe("WebFileSystem", () => {
           deferred.resolve(unzipped);
       };
 
-      const byteArray: Uint8Array = await zipFile.bytes();
+      const buffer: ArrayBuffer = await zipFile.arrayBuffer();
+      const byteArray: Uint8Array = new Uint8Array(buffer);
 
       unzip(byteArray, { filter }, resultFn);
       const fileRecords: Record<string, Uint8Array> = await deferred.promise;

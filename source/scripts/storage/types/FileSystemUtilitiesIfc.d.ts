@@ -1,10 +1,12 @@
 export interface FileSystemUtilitiesIfc {
   readContents(
-    fileHandle: FileSystemFileHandle
+    dirHandle: FileSystemDirectoryHandle,
+    fileName: string,
   ): Promise<string>;
 
   writeContents(
-    fileHandle: FileSystemFileHandle,
+    dirHandle: FileSystemDirectoryHandle,
+    fileName: string,
     contents: string
   ): Promise<void>;
 

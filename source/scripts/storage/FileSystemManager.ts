@@ -122,7 +122,8 @@ implements FileSystemManagerIfc, FSManagerInternalIfc
     zipFile: File
   ): Promise<ReadonlyMap<`packages/${string}` | `urls/${string}`, string>>
   {
-    const byteArray: Uint8Array = await zipFile.bytes();
+    const buffer: ArrayBuffer = await zipFile.arrayBuffer();
+    const byteArray: Uint8Array = new Uint8Array(buffer);
 
     const deferred = Promise.withResolvers<Record<string, Uint8Array>>();
     const filter: UnzipFileFilter = file => {

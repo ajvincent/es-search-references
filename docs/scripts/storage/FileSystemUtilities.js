@@ -1,9 +1,11 @@
 const FileSystemUtilities = {
-    readContents: async function (fileHandle) {
+    readContents: async function (dirHandle, fileName) {
+        const fileHandle = await dirHandle.getFileHandle(fileName);
         const file = await fileHandle.getFile();
         return file.text();
     },
-    writeContents: async function (fileHandle, contents) {
+    writeContents: async function (dirHandle, fileName, contents) {
+        const fileHandle = await dirHandle.getFileHandle(fileName, { create: true });
         const writable = await fileHandle.createWritable();
         await writable.write(contents);
         await writable.close();
@@ -13,7 +15,8 @@ const FileSystemUtilities = {
             sourceDirectory.getFileHandle(name).then(handle => handle.getFile()),
             targetDirectory.getFileHandle(name, { create: true }).then(handle => handle.createWritable())
         ]);
-        return targetWriter.write(sourceFile);
+        await targetWriter.write(sourceFile);
+        await targetWriter.close();
     },
     copyDirectoryRecursive: async function (sourceDirectory, name, targetDirectory) {
         [sourceDirectory, targetDirectory] = await Promise.all([

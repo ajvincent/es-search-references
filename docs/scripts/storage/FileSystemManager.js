@@ -56,7 +56,8 @@ export class FileSystemManager {
         return webFS;
     }
     async #extractFilesFromZip(zipFile) {
-        const byteArray = await zipFile.bytes();
+        const buffer = await zipFile.arrayBuffer();
+        const byteArray = new Uint8Array(buffer);
         const deferred = Promise.withResolvers();
         const filter = file => {
             return file.size > 0;

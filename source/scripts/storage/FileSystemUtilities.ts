@@ -4,18 +4,22 @@ import type {
 
 const FileSystemUtilities: FileSystemUtilitiesIfc = {
   readContents: async function (
-    fileHandle: FileSystemFileHandle
+    dirHandle: FileSystemDirectoryHandle,
+    fileName: string,
   ): Promise<string>
   {
+    const fileHandle = await dirHandle.getFileHandle(fileName);
     const file = await fileHandle.getFile();
     return file.text();
   },
 
   writeContents: async function (
-    fileHandle: FileSystemFileHandle,
+    dirHandle: FileSystemDirectoryHandle,
+    fileName: string,
     contents: string
   ): Promise<void>
   {
+    const fileHandle = await dirHandle.getFileHandle(fileName, { create: true});
     const writable = await fileHandle.createWritable();
     await writable.write(contents);
     await writable.close();
@@ -32,7 +36,8 @@ const FileSystemUtilities: FileSystemUtilitiesIfc = {
       targetDirectory.getFileHandle(name, { create: true }).then(handle => handle.createWritable())
     ]);
 
-    return targetWriter.write(sourceFile);
+    await targetWriter.write(sourceFile);
+    await targetWriter.close();
   },
 
   copyDirectoryRecursive: async function (
