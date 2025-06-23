@@ -11,6 +11,10 @@ import {
   FileSystemManager
 } from "../../../scripts/storage/FileSystemManager.js";
 
+import {
+  FileSystemUtilities
+} from "../../../scripts/storage/FileSystemUtilities.js";
+
 import type {
   FileSystemManagerIfc
 } from "../../../scripts/storage/types/FileSystemManagerIfc.js";
@@ -47,17 +51,11 @@ describe("WebFileSystem", () => {
       const options = { create: true };
       const oneDir = await webFS.getPackageDirectoryHandle("one", options);
       const twoDir = await oneDir.getDirectoryHandle("two", options);
-      const threeHandle = await twoDir.getFileHandle("three.js", options);
-      const threeWritable = await threeHandle.createWritable();
-      await threeWritable.write(threeContents);
-      await threeWritable.close();
+      await FileSystemUtilities.writeContents(twoDir, "three.js", threeContents);
 
       const fourDir = await webFS.getURLDirectoryHandle("four://", options);
       const fiveDir = await fourDir.getDirectoryHandle("five", options);
-      const sixHandle = await fiveDir.getFileHandle("six.js", options);
-      const sixWritable = await sixHandle.createWritable();
-      await sixWritable.write(sixContents);
-      await sixWritable.close();
+      await FileSystemUtilities.writeContents(fiveDir, "six.js", sixContents);
     }
 
     const populatedMap: ReadonlyMap<string, string> = await webFS.getWebFilesMap();

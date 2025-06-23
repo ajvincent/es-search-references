@@ -7,7 +7,11 @@ import {
   AwaitedMap
 } from "../utilities/AwaitedMap.js";
 
-import  type {
+import {
+  FileSystemUtilities
+} from "./FileSystemUtilities.js";
+
+import type {
   FileSystemClipboardIfc
 } from "./types/FileSystemClipboardIfc.js";
 
@@ -229,7 +233,7 @@ export class WebFileSystem implements WebFileSystemIfc {
   async #fillFileMap(
     prefix: string,
     pendingFileMap: Map<string, Promise<string>>,
-    currentDirectory: Omit<FileSystemDirectoryHandle, "getFileHandle">,
+    currentDirectory: FileSystemDirectoryHandle,
     mustJoinDirs: boolean,
   ): Promise<void>
   {
@@ -314,10 +318,7 @@ export class WebFileSystem implements WebFileSystemIfc {
   ): Promise<void>
   {
     const dirHandle: FileSystemDirectoryHandle = await pendingDirsMap.get(parentSequence)!;
-    const fileHandle: FileSystemFileHandle = await dirHandle.getFileHandle(name, { create: true });
-    const writable = await fileHandle.createWritable();
-    await writable.write(contents);
-    await writable.close();
+    return FileSystemUtilities.writeContents(dirHandle, name, contents);
   }
 
   // WebFileSystemIfc

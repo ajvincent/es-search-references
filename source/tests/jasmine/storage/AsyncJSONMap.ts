@@ -3,6 +3,10 @@ import {
 } from "../../../scripts/storage/AsyncJSONMap.js";
 
 import {
+  FileSystemUtilities
+} from "../../../scripts/storage/FileSystemUtilities.js";
+
+import {
   getTempDirAndCleanup
 } from "../helpers/TempDirectories.js";
 
@@ -32,14 +36,10 @@ describe("AsyncJSONMap", () => {
   });
 
   it("initializes to an existing map cleanly", async () => {
-    const existingFile = await tempDir.getFileHandle("existing.json", { create: true });
-    {
-      const contents = JSON.stringify({"bar": "beta"});
-      const writable = await existingFile.createWritable();
-      await writable.write(contents);
-      await writable.close();
-    }
+    const contents = JSON.stringify({"bar": "beta"});
+    await FileSystemUtilities.writeContents(tempDir, "existing.json", contents);
 
+    const existingFile = await tempDir.getFileHandle("existing.json");
     const map: AsyncJSONMap<string> = await AsyncJSONMap.build(existingFile);
     expect(map.size).toBe(1);
     expect(map.get("bar")).toBe("beta");

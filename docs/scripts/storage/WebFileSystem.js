@@ -1,5 +1,6 @@
 import { zip } from "../../lib/packages/fflate.js";
 import { AwaitedMap } from "../utilities/AwaitedMap.js";
+import { FileSystemUtilities } from "./FileSystemUtilities.js";
 /** @internal */
 export class WebFileSystem {
     static #fileComparator(a, b) {
@@ -180,10 +181,7 @@ export class WebFileSystem {
     }
     async #requireChildFilePromise(pendingDirsMap, parentSequence, name, contents) {
         const dirHandle = await pendingDirsMap.get(parentSequence);
-        const fileHandle = await dirHandle.getFileHandle(name, { create: true });
-        const writable = await fileHandle.createWritable();
-        await writable.write(contents);
-        await writable.close();
+        return FileSystemUtilities.writeContents(dirHandle, name, contents);
     }
     // WebFileSystemIfc
     async remove() {
