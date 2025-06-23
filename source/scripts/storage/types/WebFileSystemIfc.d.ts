@@ -1,3 +1,7 @@
+import type {
+  FileSystemClipboardIfc
+} from "./FileSystemClipboardIfc.js";
+
 export interface WebFileSystemIfc {
   readonly packagesDir: FileSystemDirectoryHandle;
   readonly urlsDir: FileSystemDirectoryHandle;
@@ -11,4 +15,6 @@ export interface WebFileSystemIfc {
   exportAsZip(): Promise<File>;
 
   async remove(): Promise<void>;
+
+  readonly clipboard: FileSystemClipboardIfc;
 }

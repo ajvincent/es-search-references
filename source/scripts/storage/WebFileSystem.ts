@@ -7,6 +7,10 @@ import {
   AwaitedMap
 } from "../utilities/AwaitedMap.js";
 
+import  type {
+  FileSystemClipboardIfc
+} from "./types/FileSystemClipboardIfc.js";
+
 import type {
   FSManagerInternalIfc
 } from "./types/FileSystemManagerIfc.js";
@@ -214,5 +218,10 @@ export class WebFileSystem implements WebFileSystemIfc {
   // WebFileSystemIfc
   async remove(): Promise<void> {
     return this.#fsManager.remove(this.#key);
+  }
+
+  // WebFileSystemIfc
+  get clipboard(): FileSystemClipboardIfc {
+    return this.#fsManager.clipboard;
   }
 }

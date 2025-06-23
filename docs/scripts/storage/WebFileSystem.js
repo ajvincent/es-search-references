@@ -135,4 +135,8 @@ export class WebFileSystem {
     async remove() {
         return this.#fsManager.remove(this.#key);
     }
+    // WebFileSystemIfc
+    get clipboard() {
+        return this.#fsManager.clipboard;
+    }
 }

@@ -1,23 +1,28 @@
 var _a;
 import { unzip, } from "../../lib/packages/fflate.js";
 import { AsyncJSONMap } from "./AsyncJSONMap.js";
+import { FileSystemClipboard } from "./FileSystemClipboard.js";
 import { WebFileSystem } from "./WebFileSystem.js";
 export class FileSystemManager {
     static async build(topDir) {
         const systemsDir = await topDir.getDirectoryHandle("filesystems", { create: true });
         const indexFile = await topDir.getFileHandle("index.json", { create: true });
         const indexMap = await AsyncJSONMap.build(indexFile);
-        return new _a(systemsDir, indexMap);
+        const clipboardDir = await topDir.getDirectoryHandle("clipboard", { create: true });
+        const clipboard = new FileSystemClipboard(clipboardDir);
+        return new _a(systemsDir, indexMap, clipboard);
     }
     static #decoder = new TextDecoder();
     #systemsDir;
     #indexMap;
     #descriptionsSet;
     #cache = new Map;
-    constructor(systemsDir, indexMap) {
+    clipboard;
+    constructor(systemsDir, indexMap, clipboard) {
         this.#systemsDir = systemsDir;
         this.#indexMap = indexMap;
         this.#descriptionsSet = new Set(indexMap.values());
+        this.clipboard = clipboard;
     }
     // FileSystemManagerIfc
     get availableSystems() {

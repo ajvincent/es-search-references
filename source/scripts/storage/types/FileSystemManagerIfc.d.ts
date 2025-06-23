@@ -1,4 +1,8 @@
 import type {
+  FileSystemClipboardIfc
+} from "./FileSystemClipboardIfc.js";
+
+import type {
   WebFileSystemIfc
 } from "./WebFileSystemIfc.js";
 
@@ -26,4 +30,6 @@ export interface FSManagerInternalIfc {
   ): Promise<void>;
 
   remove(key: string): Promise<void>;
+
+  readonly clipboard: FileSystemClipboardIfc;
 }

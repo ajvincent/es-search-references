@@ -11,6 +11,18 @@ import {
   AsyncJSONMap
 } from "./AsyncJSONMap.js";
 
+import {
+  FileSystemClipboard
+} from "./FileSystemClipboard.js";
+
+import {
+  WebFileSystem
+} from "./WebFileSystem.js";
+
+import type {
+  FileSystemClipboardIfc
+} from "./types/FileSystemClipboardIfc.js";
+
 import type {
   FileSystemManagerIfc,
   FSManagerInternalIfc,
@@ -19,10 +31,6 @@ import type {
 import type {
   WebFileSystemIfc
 } from "./types/WebFileSystemIfc.js";
-
-import {
-  WebFileSystem
-} from "./WebFileSystem.js";
 
 export class FileSystemManager
 implements FileSystemManagerIfc, FSManagerInternalIfc
@@ -34,7 +42,10 @@ implements FileSystemManagerIfc, FSManagerInternalIfc
     const systemsDir: FileSystemDirectoryHandle = await topDir.getDirectoryHandle("filesystems", { create: true });
     const indexFile: FileSystemFileHandle = await topDir.getFileHandle("index.json", { create: true });
     const indexMap: AsyncJSONMap<string> = await AsyncJSONMap.build(indexFile);
-    return new FileSystemManager(systemsDir, indexMap);
+    const clipboardDir: FileSystemDirectoryHandle = await topDir.getDirectoryHandle("clipboard", { create: true });
+    const clipboard = new FileSystemClipboard(clipboardDir);
+
+    return new FileSystemManager(systemsDir, indexMap, clipboard);
   }
 
   static readonly #decoder = new TextDecoder();
@@ -45,14 +56,19 @@ implements FileSystemManagerIfc, FSManagerInternalIfc
 
   readonly #cache = new Map<string, Promise<WebFileSystemIfc>>;
 
+  readonly clipboard: FileSystemClipboardIfc;
+
   private constructor(
     systemsDir: FileSystemDirectoryHandle,
     indexMap: AsyncJSONMap<string>,
+    clipboard: FileSystemClipboardIfc,
   )
   {
     this.#systemsDir = systemsDir;
     this.#indexMap = indexMap;
     this.#descriptionsSet = new Set(indexMap.values());
+
+    this.clipboard = clipboard;
   }
 
   // FileSystemManagerIfc
