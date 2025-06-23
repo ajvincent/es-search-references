@@ -1,4 +1,4 @@
-export interface FileSystemUtilities {
+export interface FileSystemUtilitiesIfc {
   readContents(
     fileHandle: FileSystemFileHandle
   ): Promise<string>;
@@ -8,7 +8,13 @@ export interface FileSystemUtilities {
     contents: string
   ): Promise<void>;
 
-  copyRecursive(
+  copyFile(
+    sourceDirectory: FileSystemDirectoryHandle,
+    name: string,
+    targetDirectory: FileSystemDirectoryHandle
+  ): Promise<void>;
+
+  copyDirectoryRecursive(
     sourceDirectory: FileSystemDirectoryHandle,
     name: string,
     targetDirectory: FileSystemDirectoryHandle
