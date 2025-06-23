@@ -38,22 +38,21 @@ describe("WebFileSystem", () => {
 
   it(".getWebFilesMap() exports the files only as a ReadonlyMap<string, string>", async () => {
     const webFS: WebFileSystemIfc = await manager.buildEmpty("getWebFiles-test");
-    await expectAsync(webFS.packagesDir.isSameEntry(webFS.urlsDir)).toBeResolvedTo(false);
 
     const emptyMap: ReadonlyMap<string, string> = await webFS.getWebFilesMap();
     expect(emptyMap.size).toBe(0);
 
-    // file writes wouldn't normally happen this way, but this is a simulation
+    // showing the manual API, which is what the GUI will use most of the time
     {
       const options = { create: true };
-      const oneDir = await webFS.packagesDir.getDirectoryHandle("one", options);
+      const oneDir = await webFS.getPackageDirectoryHandle("one", options);
       const twoDir = await oneDir.getDirectoryHandle("two", options);
       const threeHandle = await twoDir.getFileHandle("three.js", options);
       const threeWritable = await threeHandle.createWritable();
       await threeWritable.write(threeContents);
       await threeWritable.close();
 
-      const fourDir = await webFS.urlsDir.getDirectoryHandle("four", options);
+      const fourDir = await webFS.getURLDirectoryHandle("four://", options);
       const fiveDir = await fourDir.getDirectoryHandle("five", options);
       const sixHandle = await fiveDir.getFileHandle("six.js", options);
       const sixWritable = await sixHandle.createWritable();
@@ -66,6 +65,19 @@ describe("WebFileSystem", () => {
       ["one/two/three.js", threeContents],
       ["four://five/six.js", sixContents]
     ]);
+
+    {
+      // indirectly tests webFs.getDirectoryByResolvedPath as well
+      const threeFileHandle: FileSystemFileHandle = await webFS.getFileByResolvedPath("one/two/three.js");
+      const threeFile: File = await threeFileHandle.getFile();
+      await expectAsync(threeFile.text()).toBeResolvedTo(threeContents);
+    }
+
+    {
+      const sixFileHandle: FileSystemFileHandle = await webFS.getFileByResolvedPath("four://five/six.js");
+      const sixFile: File = await sixFileHandle.getFile();
+      await expectAsync(sixFile.text()).toBeResolvedTo(sixContents);
+    }
 
     // emptyMap is a snapshot, not a live mapping
     expect(emptyMap.size).toBe(0);

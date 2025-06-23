@@ -111,7 +111,7 @@ async function installReferenceSpecs(): Promise<void> {
   codeBlocks.push(
     `
 {
-    const referencesDir = await webFS.packagesDir.getDirectoryHandle("es-search-references", createOptions);
+    const referencesDir = await webFS.getPackageDirectoryHandle("es-search-references", createOptions);
     const guestHandle = await referencesDir.getFileHandle("guest", createOptions);
     const contents = \`
 /*
@@ -131,7 +131,7 @@ export {};
   }`,
 
     `const urlsMap = new AwaitedMap();`,
-    `urlsMap.set("virtual", webFS.urlsDir.getDirectoryHandle("virtual", createOptions));`,
+    `urlsMap.set("virtual", webFS.getURLDirectoryHandle("virtual://", createOptions));`,
     `addDirectory(urlsMap, "virtual", "home");`,
     `addDirectory(urlsMap, "virtual/home", "fixtures");`,
   );

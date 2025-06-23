@@ -59,12 +59,6 @@ describe("FileSystemManager", () => {
 
       const secondFS: WebFileSystemIfc = await secondMgr.getExisting(key);
       expect(secondFS).not.toBe(webFS);
-      await expectAsync(
-        secondFS.packagesDir.isSameEntry(webFS.packagesDir)
-      ).toBeResolvedTo(true);
-      await expectAsync(
-        secondFS.urlsDir.isSameEntry(webFS.urlsDir)
-      ).toBeResolvedTo(true);
       expect(secondFS.description).toBe(webFS.description);
     }
 
@@ -81,13 +75,6 @@ describe("FileSystemManager", () => {
       expect(newEntries[0]).toEqual(entries[0]);
       expect(newEntries[1][1]).toBe("test system");
       const secondKey = newEntries[1][0];
-
-      await expectAsync(
-        secondFS.packagesDir.isSameEntry(webFS.packagesDir)
-      ).toBeResolvedTo(false);
-      await expectAsync(
-        secondFS.urlsDir.isSameEntry(webFS.urlsDir)
-      ).toBeResolvedTo(false);
 
       await secondFS.remove();
       expect(Array.from(firstMgr.availableSystems.entries())).toEqual(entries);

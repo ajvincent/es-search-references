@@ -10,19 +10,16 @@ export class WebFileSystem {
         const [key, contents] = keyAndContents;
         return [key, WebFileSystem.#encoder.encode(contents)];
     }
-    static #pathHeadRE = /^([^\/]+)\//;
     #key;
     #description;
     #fsManager;
-    // WebFileSystemIfc
-    packagesDir;
-    // WebFileSystemIfc
-    urlsDir;
+    #packagesDir;
+    #urlsDir;
     constructor(key, description, packagesDir, urlsDir, fsManager) {
         this.#key = key;
         this.#description = description;
-        this.packagesDir = packagesDir;
-        this.urlsDir = urlsDir;
+        this.#packagesDir = packagesDir;
+        this.#urlsDir = urlsDir;
         this.#fsManager = fsManager;
     }
     // WebFileSystemIfc
@@ -35,12 +32,69 @@ export class WebFileSystem {
         this.#description = newDesc;
     }
     // WebFileSystemIfc
+    getPackageEntries() {
+        return this.#packagesDir.entries();
+    }
+    // WebFileSystemIfc
+    getPackageFileHandle(name, options) {
+        return this.#packagesDir.getFileHandle(name, options);
+    }
+    // WebFileSystemIfc
+    getPackageDirectoryHandle(name, options) {
+        return this.#packagesDir.getDirectoryHandle(name, options);
+    }
+    // WebFileSystemIfc
+    removePackageEntry(name, options) {
+        return this.#packagesDir.removeEntry(name, options);
+    }
+    // WebFileSystemIfc
+    async *getURLEntries() {
+        for await (const [name, handle] of this.#urlsDir.entries()) {
+            yield [name + "://", handle];
+        }
+    }
+    // WebFileSystemIfc
+    getURLDirectoryHandle(name, options) {
+        return this.#urlsDir.getDirectoryHandle(name.substring(0, name.length - 3), options);
+    }
+    // WebFileSystemIfc
+    removeURLDirectory(name, options) {
+        return this.#urlsDir.removeEntry(name.substring(0, name.length - 3), options);
+    }
+    // WebFileSystemIfc
+    getDirectoryByResolvedPath(fullPath) {
+        let startDirPromise;
+        if (URL.canParse(fullPath)) {
+            const { protocol, hostname, pathname } = URL.parse(fullPath);
+            startDirPromise = this.#urlsDir.getDirectoryHandle(protocol.substring(0, protocol.length - 1));
+            fullPath = hostname + pathname;
+        }
+        else {
+            startDirPromise = Promise.resolve(this.#packagesDir);
+        }
+        return this.#getDirectoryRecursive(startDirPromise, fullPath.split("/"));
+    }
+    // WebFileSystemIfc
+    async getFileByResolvedPath(fullPath) {
+        const lastSlashIndex = fullPath.lastIndexOf("/");
+        const parentPath = fullPath.substring(0, lastSlashIndex);
+        const leaf = fullPath.substring(lastSlashIndex + 1);
+        const dirHandle = await this.getDirectoryByResolvedPath(parentPath);
+        return dirHandle.getFileHandle(leaf);
+    }
+    #getDirectoryRecursive(dirPromise, pathSequence) {
+        for (const name of pathSequence) {
+            dirPromise = dirPromise.then(dir => dir.getDirectoryHandle(name));
+        }
+        return dirPromise;
+    }
+    // WebFileSystemIfc
     async getWebFilesMap() {
         const packagesMap = new AwaitedMap;
         const urlsMap = new AwaitedMap;
         await Promise.all([
-            this.#fillFileMap("", packagesMap, this.packagesDir, false),
-            this.#fillFileMap("", urlsMap, this.urlsDir, false),
+            this.#fillFileMap("", packagesMap, this.#packagesDir, false),
+            this.#fillFileMap("", urlsMap, this.#urlsDir, false),
         ]);
         const [resolvedPackages, resolvedURLs] = await Promise.all([
             packagesMap.allResolved(),
@@ -55,8 +109,8 @@ export class WebFileSystem {
     async exportAsZip() {
         const pendingFilesMap = new AwaitedMap;
         await Promise.all([
-            this.#fillFileMap("packages", pendingFilesMap, this.packagesDir, true),
-            this.#fillFileMap("urls", pendingFilesMap, this.urlsDir, true)
+            this.#fillFileMap("packages", pendingFilesMap, this.#packagesDir, true),
+            this.#fillFileMap("urls", pendingFilesMap, this.#urlsDir, true)
         ]);
         const fileMap = await pendingFilesMap.allResolved();
         const fileEntries = Array.from(fileMap.entries());
@@ -77,10 +131,10 @@ export class WebFileSystem {
         const entries = await Array.fromAsync(currentDirectory.entries());
         const promiseArray = [];
         for (let [pathToFile, handle] of entries) {
-            if (mustJoinDirs || (currentDirectory !== this.urlsDir && currentDirectory !== this.packagesDir)) {
+            if (mustJoinDirs || (currentDirectory !== this.#urlsDir && currentDirectory !== this.#packagesDir)) {
                 pathToFile = prefix + "/" + pathToFile;
             }
-            else if (currentDirectory === this.urlsDir) {
+            else if (currentDirectory === this.#urlsDir) {
                 pathToFile += ":/";
             }
             if (handle instanceof FileSystemFileHandle) {
@@ -99,8 +153,8 @@ export class WebFileSystem {
     }
     async importFilesMap(map) {
         const pendingDirsMap = new AwaitedMap([
-            ["packages", Promise.resolve(this.packagesDir)],
-            ["urls", Promise.resolve(this.urlsDir)]
+            ["packages", Promise.resolve(this.#packagesDir)],
+            ["urls", Promise.resolve(this.#urlsDir)]
         ]);
         const filePromises = new Set;
         for (const [filePath, contents] of map) {
