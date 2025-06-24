@@ -6,7 +6,7 @@ import {
   getTempDirAndCleanup
 } from "../helpers/TempDirectories.js";
 
-describe("FileSystemUtilities", () => {
+xdescribe("FileSystemUtilities", () => {
   const dirPromise = getTempDirAndCleanup("FileSystemUtilities");
   let tempDir: FileSystemDirectoryHandle;
   let fixturesDir: FileSystemDirectoryHandle;

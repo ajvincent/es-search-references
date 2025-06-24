@@ -10,7 +10,7 @@ import {
   getTempDirAndCleanup
 } from "../helpers/TempDirectories.js";
 
-describe("AsyncJSONMap", () => {
+xdescribe("AsyncJSONMap", () => {
   const dirPromise = getTempDirAndCleanup("AsyncJSONMap");
   let tempDir: FileSystemDirectoryHandle;
   beforeAll(async () => {

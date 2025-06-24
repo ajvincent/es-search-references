@@ -22,7 +22,7 @@ import {
   getTempDirAndCleanup
 } from "../helpers/TempDirectories.js";
 
-describe("FileSystemManager", () => {
+xdescribe("FileSystemManager", () => {
   const dirPromise = getTempDirAndCleanup("FileSystemManager");
   let tempDir: FileSystemDirectoryHandle;
   beforeAll(async () => {

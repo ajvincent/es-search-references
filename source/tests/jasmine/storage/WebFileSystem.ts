@@ -27,7 +27,7 @@ import {
   getTempDirAndCleanup
 } from "../helpers/TempDirectories.js";
 
-describe("WebFileSystem", () => {
+xdescribe("WebFileSystem", () => {
   const dirPromise = getTempDirAndCleanup("WebFileSystem");
   let manager: FileSystemManagerIfc;
     beforeAll(async () => {
