@@ -7,7 +7,7 @@ export interface FileSystemClipboardIfc {
   ): Promise<void>;
 
   copyTo(
-    sourceDirectory: FileSystemDirectoryHandle
+    targetDirectory: FileSystemDirectoryHandle
   ): Promise<void>;
 
   clear(): Promise<void>;
