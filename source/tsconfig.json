@@ -4,7 +4,11 @@
       "ES2024",
       "DOM",
       "DOM.AsyncIterable",
-      "ESNext.Array"
+      "ESNext.Array",
+      "WebWorker",
+      "Webworker.Iterable",
+      "WebWorker.AsyncIterable",
+      
     ],
     "module": "NodeNext",
     "target": "ES2024",

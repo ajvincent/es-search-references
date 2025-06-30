@@ -8,7 +8,8 @@ export default {
     "docs/tests/jasmine/**/*.js"
   ],
   helpers: [
-    "docs/tests/jasmine/helpers/**/*.js"
+    "docs/tests/jasmine/helpers/**/*.js",
+    "docs/tests/jasmine/fixtures/**/*.js",
   ],
   esmFilenameExtension: ".js",
   // Set to true if you need to load module src files instead of loading via the spec files.

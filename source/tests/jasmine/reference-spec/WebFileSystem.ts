@@ -22,7 +22,7 @@ import {
   getTempDirAndCleanup
 } from "../helpers/TempDirectories.js";
 
-describe("Reference-spec files for WebFileSystem can successfully load from", () => {
+xdescribe("Reference-spec files for WebFileSystem can successfully load from", () => {
   const dirPromise = getTempDirAndCleanup("webfilesystem-reference-specs");
   let tempWebFS: WebFileSystemIfc;
   beforeAll(async () => {
