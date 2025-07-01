@@ -42,7 +42,8 @@ export type RejectMessageUnion<Type> = {
   [key in keyof Type]: Type[key] extends (...args: any[]) => any ? key extends string ? MethodRejectedMessage<key> : never : never;
 }[keyof Type];
 
-export type WorkerUnionExtract<Type, UnionType extends RequestMessageUnion<Type> | FulfillMessageUnion<Type>, ServiceName extends keyof Type>  = Extract<
-  UnionType<Type>,
-  { serviceName: ServiceName }
->;
+export type WorkerUnionExtract<
+  Type,
+  UnionType extends RequestMessageUnion<Type> | FulfillMessageUnion<Type>,
+  ServiceName extends keyof Type
+> = Extract<UnionType, { serviceName: ServiceName } >;

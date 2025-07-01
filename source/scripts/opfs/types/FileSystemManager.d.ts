@@ -2,6 +2,7 @@ import type {
   RequestMessageUnion,
   FulfillMessageUnion,
   RejectMessageUnion,
+  WorkerUnionExtract,
 } from "./messages.js";
 
 export interface OPFSFileSystemManagerIfc {
@@ -12,10 +13,3 @@ export interface OPFSFileSystemManagerIfc {
 export type OPFSRequestMessageUnion = RequestMessageUnion<OPFSFileSystemManagerIfc>;
 export type OPFSFulfillMessageUnion = FulfillMessageUnion<OPFSFileSystemManagerIfc>;
 export type OPFSRejectMessageUnion = RejectMessageUnion<OPFSFileSystemManagerIfc>;
-
-export type OPFSExtract<
-  UnionType extends OPFSRequestMessageUnion | OPFSFulfillMessageUnion,
-  ServiceName extends UnionType["serviceName"]
-> = Extract<
-  UnionType, { serviceName: ServiceName }
->;

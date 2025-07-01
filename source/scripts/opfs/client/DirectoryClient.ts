@@ -50,7 +50,7 @@ export class DirectoryClient<Type>
     ): Promise<WorkerUnionExtract<Type, FulfillMessageUnion<Type>, ServiceName>["result"]>
     {
       // @ts-expect-error
-      const message: OPFSExtract<OPFSRequestMessageUnion, typeof serviceName> = {
+      const message: WorkerUnionExtract<Type, RequestMessageUnion<Type>, typeof serviceName> = {
         serviceName,
         uuid: window.crypto.randomUUID(),
         parameters,
