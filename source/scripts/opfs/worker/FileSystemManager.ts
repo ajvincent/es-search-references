@@ -33,13 +33,6 @@ class OPFSFileSystemWorker implements OPFSFileSystemIfc {
     throw new Error("Method not implemented.");
   }
 
-  setFileSystemKey(
-    key: string
-  ): Promise<void>
-  {
-    throw new Error("Method not implemented.");
-  }
-
   // Worker support
   async #callAsync
   (

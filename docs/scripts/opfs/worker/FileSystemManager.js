@@ -15,9 +15,6 @@ class OPFSFileSystemWorker {
     getFileSystems() {
         throw new Error("Method not implemented.");
     }
-    setFileSystemKey(key) {
-        throw new Error("Method not implemented.");
-    }
     // Worker support
     async #callAsync(requestMessage) {
         try {

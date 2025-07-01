@@ -1,6 +1,6 @@
 import type {
   OPFSFileSystemIfc
-} from "./types/file-system.js";
+} from "../types/file-system.js";
 
 import type {
   OPFSRequestMessageUnion,
@@ -8,11 +8,11 @@ import type {
   OPFSRejectMessageUnion,
   OPFSExtract,
   UUID,
-} from "./types/messages.js";
+} from "../types/messages.js";
 
 export class OPFSFileSystemClientImpl implements OPFSFileSystemIfc {
   static async build(pathToRootDir: string): Promise<OPFSFileSystemClientImpl> {
-    const url = new URL("./worker/main.js", import.meta.url);
+    const url = new URL("../worker/FileSystemManager.js", import.meta.url);
     url.searchParams.set("pathToRootDir", pathToRootDir);
     const worker = new Worker(url, { type: "module" });
 
@@ -43,9 +43,6 @@ export class OPFSFileSystemClientImpl implements OPFSFileSystemIfc {
 
   getFileSystems(): Promise<{ [key: string]: string; }> {
     return this.#requestAsync("getFileSystems", []);
-  }
-  setFileSystemKey(key: string): Promise<void> {
-    return this.#requestAsync("setFileSystemKey", [key]);
   }
 
   #requestAsync<ServiceName extends keyof OPFSFileSystemIfc>(

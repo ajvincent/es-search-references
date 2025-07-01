@@ -1,6 +1,6 @@
 import {
   OPFSFileSystemClientImpl
-} from "../../../scripts/opfs/client.js";
+} from "../../../scripts/opfs/client/FileSystemManager.js";
 
 describe("OPFS workers", () => {
   let firstWorker: OPFSFileSystemClientImpl;
