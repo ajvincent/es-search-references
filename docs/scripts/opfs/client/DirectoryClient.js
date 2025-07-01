@@ -1,15 +1,17 @@
-export class OPFSFileSystemClientImpl {
-    static async build(pathToRootDir) {
-        const url = new URL("./worker/main.js", import.meta.url);
+const REQUEST_ASYNC_METHOD = Symbol("#requestAsync");
+const BUILD_WORKER_METHOD = Symbol("#buildWorker");
+export { REQUEST_ASYNC_METHOD, BUILD_WORKER_METHOD, };
+export class DirectoryClient {
+    static [BUILD_WORKER_METHOD](pathToWorker, pathToRootDir) {
+        const url = new URL(pathToWorker, import.meta.url);
         url.searchParams.set("pathToRootDir", pathToRootDir);
         const worker = new Worker(url, { type: "module" });
         const { promise, resolve } = Promise.withResolvers();
         worker.onmessage = (event => {
             if (event.data === "initialized")
-                resolve();
+                resolve(worker);
         });
-        await promise;
-        return new OPFSFileSystemClientImpl(worker);
+        return promise;
     }
     #worker;
     #uuidToResolversMap = new Map;
@@ -17,16 +19,7 @@ export class OPFSFileSystemClientImpl {
         this.#worker = worker;
         this.#worker.onmessage = event => this.#processResponse(event.data);
     }
-    echo(token) {
-        return this.#requestAsync("echo", [token]);
-    }
-    getFileSystems() {
-        return this.#requestAsync("getFileSystems", []);
-    }
-    setFileSystemKey(key) {
-        return this.#requestAsync("setFileSystemKey", [key]);
-    }
-    #requestAsync(serviceName, parameters) {
+    [REQUEST_ASYNC_METHOD](serviceName, parameters) {
         // @ts-expect-error
         const message = {
             serviceName,
@@ -55,6 +48,7 @@ export class OPFSFileSystemClientImpl {
             for (const { reject } of this.#uuidToResolversMap.values()) {
                 reject(err);
             }
+            this.#uuidToResolversMap.clear();
         }
     }
 }

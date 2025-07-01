@@ -1,10 +1,17 @@
+import { DirectoryWorker, GET_ROOT_DIR_METHOD, } from "./DirectoryWorker.js";
 const WorkerGlobal = self;
-class OPFSFileSystemWorker {
+class OPFSFileSystemManagerWorker extends DirectoryWorker {
+    static async build() {
+        const rootDir = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
+        void (new OPFSFileSystemManagerWorker(rootDir));
+        WorkerGlobal.postMessage("initialized");
+    }
     #rootDir;
     constructor(rootDir) {
-        WorkerGlobal.onmessage = event => this.#callAsync(event.data);
+        super();
         this.#rootDir = rootDir;
     }
+    // OPFSFileSystemIfc
     echo(token) {
         console.log("token: " + token);
         const params = new URLSearchParams(WorkerGlobal.location.search);
@@ -15,39 +22,5 @@ class OPFSFileSystemWorker {
     getFileSystems() {
         throw new Error("Method not implemented.");
     }
-    // Worker support
-    async #callAsync(requestMessage) {
-        try {
-            // @ts-expect-error
-            const result = await this[requestMessage.serviceName](...requestMessage.parameters);
-            // @ts-expect-error merging the types back together is troublesome, but this works for each type... I think
-            const fulfilledMessage = {
-                serviceName: requestMessage.serviceName,
-                uuid: requestMessage.uuid,
-                isSuccess: true,
-                result,
-            };
-            WorkerGlobal.postMessage(fulfilledMessage);
-        }
-        catch (ex) {
-            const rejectedMessage = {
-                serviceName: requestMessage.serviceName,
-                uuid: requestMessage.uuid,
-                isSuccess: false,
-                exception: ex
-            };
-            WorkerGlobal.postMessage(rejectedMessage);
-        }
-    }
 }
-{
-    const params = new URLSearchParams(WorkerGlobal.location.search);
-    const stepsToRootDir = params.get("pathToRootDir").split("/");
-    let rootDir = await WorkerGlobal.navigator.storage.getDirectory();
-    for (const step of stepsToRootDir) {
-        rootDir = await rootDir.getDirectoryHandle(step, { create: true });
-    }
-    void (new OPFSFileSystemWorker(rootDir));
-}
-WorkerGlobal.postMessage("initialized");
-export {};
+await OPFSFileSystemManagerWorker.build();

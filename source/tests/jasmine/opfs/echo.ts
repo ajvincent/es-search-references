@@ -1,14 +1,14 @@
 import {
-  OPFSFileSystemClientImpl
+  OPFSFileSystemManagerClientImpl
 } from "../../../scripts/opfs/client/FileSystemManager.js";
 
 describe("OPFS workers", () => {
-  let firstWorker: OPFSFileSystemClientImpl;
-  let secondWorker: OPFSFileSystemClientImpl;
+  let firstWorker: OPFSFileSystemManagerClientImpl;
+  let secondWorker: OPFSFileSystemManagerClientImpl;
 
   it("can access the file system", async () => {
-    firstWorker = await OPFSFileSystemClientImpl.build("tmp/one");
-    secondWorker = await OPFSFileSystemClientImpl.build("tmp/two");
+    firstWorker = await OPFSFileSystemManagerClientImpl.build("tmp/one");
+    secondWorker = await OPFSFileSystemManagerClientImpl.build("tmp/two");
 
     const results = Promise.all([
       firstWorker.echo("alpha"),
