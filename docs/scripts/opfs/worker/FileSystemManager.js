@@ -1,26 +1,76 @@
 import { DirectoryWorker, GET_ROOT_DIR_METHOD, } from "./DirectoryWorker.js";
+import { JSONMap } from "./JSONMap.js";
 const WorkerGlobal = self;
 class OPFSFileSystemManagerWorker extends DirectoryWorker {
     static async build() {
-        const rootDir = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
-        void (new OPFSFileSystemManagerWorker(rootDir));
+        const topDir = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
+        const systemsDir = await topDir.getDirectoryHandle("filesystems", { create: true });
+        const indexFile = await topDir.getFileHandle("index.json", { create: true });
+        const indexSync = await indexFile.createSyncAccessHandle();
+        const indexMap = new JSONMap(indexSync);
+        void (new OPFSFileSystemManagerWorker(systemsDir, indexMap));
         WorkerGlobal.postMessage("initialized");
     }
-    #rootDir;
-    constructor(rootDir) {
+    #systemsDir;
+    #indexMap;
+    #descriptionsSet;
+    constructor(systemsDir, indexMap) {
         super();
-        this.#rootDir = rootDir;
+        this.#systemsDir = systemsDir;
+        this.#indexMap = indexMap;
+        this.#descriptionsSet = new Set(indexMap.values());
     }
     // OPFSFileSystemIfc
-    echo(token) {
-        console.log("token: " + token);
-        const params = new URLSearchParams(WorkerGlobal.location.search);
-        const pathToRoot = params.get("pathToRootDir");
-        return Promise.resolve({ token, pathToRoot });
+    getAvailableSystems() {
+        return Promise.resolve(Object.fromEntries(this.#indexMap));
     }
     // OPFSFileSystemIfc
-    getFileSystems() {
-        throw new Error("Method not implemented.");
+    async buildEmpty(newDescription) {
+        newDescription = newDescription.trim();
+        if (!newDescription) {
+            throw new Error("whitespace descriptions not allowed");
+        }
+        if (this.#descriptionsSet.has(newDescription)) {
+            throw new Error("description already exists");
+        }
+        const key = WorkerGlobal.crypto.randomUUID();
+        await this.#systemsDir.getDirectoryHandle(key, { create: true });
+        this.#indexMap.set(key, newDescription);
+        this.#descriptionsSet.add(newDescription);
+        return key;
+    }
+    // OPFSFileSystemIfc
+    setDescription(key, newDescription) {
+        newDescription = newDescription.trim();
+        if (!newDescription) {
+            throw new Error("whitespace descriptions not allowed");
+        }
+        if (this.#descriptionsSet.has(newDescription)) {
+            throw new Error("description already exists");
+        }
+        if (!this.#indexMap.has(key)) {
+            throw new Error("key not found: " + key);
+        }
+        const oldDescription = this.#indexMap.get(key);
+        this.#indexMap.set(key, newDescription);
+        this.#descriptionsSet.delete(oldDescription);
+        this.#descriptionsSet.add(newDescription);
+        return Promise.resolve(null);
+    }
+    // OPFSFileSystemIfc
+    async remove(key) {
+        if (!this.#indexMap.has(key)) {
+            throw new Error("key not found: " + key);
+        }
+        await this.#systemsDir.removeEntry(key, { recursive: true });
+        const oldDescription = this.#indexMap.get(key);
+        this.#indexMap.delete(key);
+        this.#descriptionsSet.delete(oldDescription);
+        return null;
+    }
+    // OPFSFileSystemIfc
+    terminate() {
+        throw new Error("not implemented");
     }
 }
 await OPFSFileSystemManagerWorker.build();

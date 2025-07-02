@@ -4,10 +4,16 @@ export class OPFSFileSystemManagerClientImpl extends DirectoryClient {
         const worker = await DirectoryClient[BUILD_WORKER_METHOD]("../worker/FileSystemManager.js", pathToRootDir);
         return new OPFSFileSystemManagerClientImpl(worker);
     }
-    echo(token) {
-        return this[REQUEST_ASYNC_METHOD]("echo", [token]);
+    getAvailableSystems() {
+        return this[REQUEST_ASYNC_METHOD]("getAvailableSystems", []);
     }
-    getFileSystems() {
-        return this[REQUEST_ASYNC_METHOD]("getFileSystems", []);
+    buildEmpty(description) {
+        return this[REQUEST_ASYNC_METHOD]("buildEmpty", [description]);
+    }
+    setDescription(key, newDescription) {
+        return this[REQUEST_ASYNC_METHOD]("setDescription", [key, newDescription]);
+    }
+    remove(key) {
+        return this[REQUEST_ASYNC_METHOD]("remove", [key]);
     }
 }

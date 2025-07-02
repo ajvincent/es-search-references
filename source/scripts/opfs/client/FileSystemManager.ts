@@ -1,6 +1,10 @@
 import type {
   OPFSFileSystemManagerIfc,
-} from "../types/FileSystemManager.js";
+} from "../types/FileSystemManagerIfc.js";
+
+import type {
+  UUID
+} from "../types/messages.js";
 
 import {
   DirectoryClient,
@@ -23,11 +27,21 @@ implements OPFSFileSystemManagerIfc
     return new OPFSFileSystemManagerClientImpl(worker);
   }
 
-  echo(token: string): Promise<{ token: string; pathToRoot: string; }> {
-    return this[REQUEST_ASYNC_METHOD]("echo", [token]);
+  getAvailableSystems(): Promise<{ [key: string]: string; }> {
+    return this[REQUEST_ASYNC_METHOD]("getAvailableSystems", []);
   }
 
-  getFileSystems(): Promise<{ [key: string]: string; }> {
-    return this[REQUEST_ASYNC_METHOD]("getFileSystems", []);
+  buildEmpty(description: string): Promise<UUID> {
+    return this[REQUEST_ASYNC_METHOD]("buildEmpty", [description]);
   }
+
+  setDescription(key: UUID, newDescription: string): Promise<null> {
+    return this[REQUEST_ASYNC_METHOD]("setDescription", [key, newDescription]);
+  }
+
+  remove(key: UUID): Promise<null> {
+    return this[REQUEST_ASYNC_METHOD]("remove", [key]);
+  }
+
+  // terminate(): void;
 }

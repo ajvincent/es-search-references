@@ -1,11 +1,19 @@
 import type {
   OPFSFileSystemManagerIfc,
-} from "../types/FileSystemManager.js";
+} from "../types/FileSystemManagerIfc.js";
+
+import type {
+  UUID
+} from "../types/messages.js";
 
 import {
   DirectoryWorker,
   GET_ROOT_DIR_METHOD,
 } from "./DirectoryWorker.js";
+
+import {
+  JSONMap
+} from "./JSONMap.js";
 
 const WorkerGlobal = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -14,35 +22,108 @@ extends DirectoryWorker<OPFSFileSystemManagerIfc>
 implements OPFSFileSystemManagerIfc
 {
   static async build(): Promise<void> {
-    const rootDir = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
-    void(new OPFSFileSystemManagerWorker(rootDir));
+    const topDir = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
+
+    const systemsDir: FileSystemDirectoryHandle = await topDir.getDirectoryHandle(
+      "filesystems", { create: true }
+    );
+    const indexFile: FileSystemFileHandle = await topDir.getFileHandle(
+      "index.json", { create: true }
+    );
+    const indexSync: FileSystemSyncAccessHandle = await indexFile.createSyncAccessHandle();
+    const indexMap = new JSONMap<UUID, string>(indexSync);
+
+    void(new OPFSFileSystemManagerWorker(systemsDir, indexMap));
     WorkerGlobal.postMessage("initialized");
   }
 
-  readonly #rootDir: FileSystemDirectoryHandle;
+  readonly #systemsDir: FileSystemDirectoryHandle;
+  readonly #indexMap: JSONMap<UUID, string>;
+  readonly #descriptionsSet: Set<string>;
 
   private constructor(
-    rootDir: FileSystemDirectoryHandle
+    systemsDir: FileSystemDirectoryHandle,
+    indexMap: JSONMap<UUID, string>,
   )
   {
     super();
-    this.#rootDir = rootDir;
+    this.#systemsDir = systemsDir;
+    this.#indexMap = indexMap;
+    this.#descriptionsSet = new Set(indexMap.values());
   }
 
   // OPFSFileSystemIfc
-  echo(
-    token: string
-  ): Promise<{ token: string; pathToRoot: string; }>
+  getAvailableSystems(): Promise<{ [key: string]: string; }> {
+    return Promise.resolve(Object.fromEntries(this.#indexMap));
+  }
+
+  // OPFSFileSystemIfc
+  async buildEmpty(
+    newDescription: string
+  ): Promise<UUID>
   {
-    console.log("token: " + token);
-    const params = new URLSearchParams(WorkerGlobal.location.search);
-    const pathToRoot = params.get("pathToRootDir")!;
-    return Promise.resolve({ token, pathToRoot});
+    newDescription = newDescription.trim();
+    if (!newDescription) {
+      throw new Error("whitespace descriptions not allowed");
+    }
+    if (this.#descriptionsSet.has(newDescription)) {
+      throw new Error("description already exists");
+    }
+    const key = WorkerGlobal.crypto.randomUUID();
+
+    await this.#systemsDir.getDirectoryHandle(key, { create: true });
+
+    this.#indexMap.set(key, newDescription);
+    this.#descriptionsSet.add(newDescription);
+
+    return key;
   }
 
   // OPFSFileSystemIfc
-  getFileSystems(): Promise<{ [key: string]: string; }> {
-    throw new Error("Method not implemented.");
+  setDescription(
+    key: UUID,
+    newDescription: string
+  ): Promise<null>
+  {
+    newDescription = newDescription.trim();
+    if (!newDescription) {
+      throw new Error("whitespace descriptions not allowed");
+    }
+    if (this.#descriptionsSet.has(newDescription)) {
+      throw new Error("description already exists");
+    }
+    if (!this.#indexMap.has(key)) {
+      throw new Error("key not found: " + key);
+    }
+
+    const oldDescription = this.#indexMap.get(key)!;
+    this.#indexMap.set(key, newDescription);
+    this.#descriptionsSet.delete(oldDescription);
+    this.#descriptionsSet.add(newDescription);
+
+    return Promise.resolve(null);
+  }
+
+  // OPFSFileSystemIfc
+  async remove(
+    key: UUID
+  ): Promise<null>
+  {
+    if (!this.#indexMap.has(key)) {
+      throw new Error("key not found: " + key);
+    }
+
+    await this.#systemsDir.removeEntry(key, { recursive: true });
+    const oldDescription = this.#indexMap.get(key)!;
+    this.#indexMap.delete(key);
+    this.#descriptionsSet.delete(oldDescription);
+
+    return null;
+  }
+
+  // OPFSFileSystemIfc
+  terminate(): void {
+    throw new Error("not implemented");
   }
 }
 

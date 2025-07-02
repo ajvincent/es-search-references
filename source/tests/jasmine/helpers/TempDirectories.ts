@@ -22,3 +22,10 @@ export function getTempDirAndCleanup(
   });
   return dirPromise;
 }
+
+export function getResolvedTempDirPath(
+  name: string
+): string
+{
+  return "tmp/" + name;
+}
