@@ -40,15 +40,14 @@ export class ParentChildMap {
             this.#internalMap.get(key).value = value;
         }
         else {
-            let ancestorKey = parentKey;
-            while (ancestorKey) {
-                if (ancestorKey === key) {
-                    throw new Error(`key ${key} is an ancestor of key ${parentKey}`);
-                }
-                ancestorKey = this.#internalMap.get(key)?.parentKey;
+            if (parentKey !== undefined && !this.#internalMap.has(parentKey)) {
+                throw new Error("parent key not established: " + parentKey);
             }
             const node = new ParentChildNode(value, parentKey);
             this.#internalMap.set(key, node);
+            if (parentKey !== undefined) {
+                this.#internalMap.get(parentKey).childKeys.add(key);
+            }
         }
         return this;
     }
