@@ -1,4 +1,4 @@
-var _a;
+import { SyncFileUtilities } from "./FSUtilities.js";
 export class JSONMap extends Map {
     static #encoder = new TextEncoder();
     static #decoder = new TextDecoder();
@@ -6,9 +6,7 @@ export class JSONMap extends Map {
     constructor(fileHandle) {
         super();
         this.#fileHandle = fileHandle;
-        const buffer = new Uint8Array();
-        this.#fileHandle.read(buffer, { at: 0 });
-        let text = _a.#decoder.decode(buffer);
+        let text = SyncFileUtilities.readContents(fileHandle);
         if (text[0] !== "{")
             text = "{}";
         const object = JSON.parse(text);
@@ -32,13 +30,10 @@ export class JSONMap extends Map {
         return this;
     }
     #commit() {
-        this.#fileHandle.truncate(0);
         const data = JSON.stringify(Object.fromEntries(this));
-        const buffer = new Uint8Array(_a.#encoder.encode(data));
-        this.#fileHandle.write(buffer, { at: 0 });
+        SyncFileUtilities.writeContents(this.#fileHandle, data);
     }
     close() {
         this.#fileHandle.close();
     }
 }
-_a = JSONMap;

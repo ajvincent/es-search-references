@@ -2,6 +2,10 @@ import type {
   Jsonifiable
 } from "type-fest";
 
+import {
+  SyncFileUtilities
+} from "./FSUtilities.js";
+
 export class JSONMap<
   K extends string,
   V extends Jsonifiable
@@ -18,9 +22,7 @@ export class JSONMap<
     super();
     this.#fileHandle = fileHandle;
 
-    const buffer = new Uint8Array();
-    this.#fileHandle.read(buffer, { at: 0 });
-    let text = JSONMap.#decoder.decode(buffer);
+    let text = SyncFileUtilities.readContents(fileHandle);
     if (text[0] !== "{")
       text = "{}";
     const object = JSON.parse(text) as Record<K, V>;
@@ -49,10 +51,8 @@ export class JSONMap<
   }
 
   #commit(): void {
-    this.#fileHandle.truncate(0);
     const data: string = JSON.stringify(Object.fromEntries(this));
-    const buffer = new Uint8Array(JSONMap.#encoder.encode(data));
-    this.#fileHandle.write(buffer, { at: 0});
+    SyncFileUtilities.writeContents(this.#fileHandle, data);
   }
 
   close(): void {
