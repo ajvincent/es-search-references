@@ -1,8 +1,4 @@
 import type {
-  RequestMessageUnion,
-  FulfillMessageUnion,
-  RejectMessageUnion,
-  WorkerUnionExtract,
   UUID
 } from "./messages.js";
 
