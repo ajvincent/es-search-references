@@ -11,8 +11,6 @@ export class JSONMap<
   V extends Jsonifiable
 > extends Map<K, V>
 {
-  static #encoder = new TextEncoder();
-  static #decoder = new TextDecoder();
   readonly #fileHandle: FileSystemSyncAccessHandle;
 
   constructor(

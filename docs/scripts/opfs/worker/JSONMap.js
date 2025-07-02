@@ -1,7 +1,5 @@
 import { SyncFileUtilities } from "./FSUtilities.js";
 export class JSONMap extends Map {
-    static #encoder = new TextEncoder();
-    static #decoder = new TextDecoder();
     #fileHandle;
     constructor(fileHandle) {
         super();
