@@ -18,5 +18,5 @@ export interface OPFSFileSystemManagerIfc {
     key: UUID
   ): Promise<null>;
 
-  terminate(): void;
+  terminate(): Promise<void>;
 }

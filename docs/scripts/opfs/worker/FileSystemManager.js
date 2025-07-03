@@ -70,7 +70,8 @@ class OPFSFileSystemManagerWorker extends DirectoryWorker {
     }
     // OPFSFileSystemIfc
     terminate() {
-        throw new Error("not implemented");
+        this.#indexMap.close();
+        return Promise.resolve();
     }
 }
 await OPFSFileSystemManagerWorker.build();

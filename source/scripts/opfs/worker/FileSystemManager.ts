@@ -122,8 +122,9 @@ implements OPFSFileSystemManagerIfc
   }
 
   // OPFSFileSystemIfc
-  terminate(): void {
-    throw new Error("not implemented");
+  terminate(): Promise<void> {
+    this.#indexMap.close();
+    return Promise.resolve();
   }
 }
 

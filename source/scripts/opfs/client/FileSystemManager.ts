@@ -43,5 +43,8 @@ implements OPFSFileSystemManagerIfc
     return this[REQUEST_ASYNC_METHOD]("remove", [key]);
   }
 
-  // terminate(): void;
+  async terminate(): Promise<void> {
+    await this[REQUEST_ASYNC_METHOD]("terminate", []);
+    super.terminate();
+  }
 }

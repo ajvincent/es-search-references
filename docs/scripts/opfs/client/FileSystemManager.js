@@ -16,4 +16,8 @@ export class OPFSFileSystemManagerClientImpl extends DirectoryClient {
     remove(key) {
         return this[REQUEST_ASYNC_METHOD]("remove", [key]);
     }
+    async terminate() {
+        await this[REQUEST_ASYNC_METHOD]("terminate", []);
+        super.terminate();
+    }
 }

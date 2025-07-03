@@ -25,4 +25,6 @@ export interface OPFSWebFileSystemIfc {
   readURLFileDeep(pathToFile: string): Promise<string>;
   writeURLFileDeep(pathToFile: string, contents: string): Promise<void>;
   removeURLEntry(pathToEntry: string): Promise<void>;
+
+  terminate(): Promise<void>;
 }
