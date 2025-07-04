@@ -1,4 +1,4 @@
-import { DirectoryWorker, GET_ROOT_DIR_METHOD, } from "./DirectoryWorker.js";
+import { DirectoryWorker, GET_ROOT_DIR_METHOD, GET_ROOT_DIR_PATH, } from "./DirectoryWorker.js";
 import { JSONMap } from "./JSONMap.js";
 const WorkerGlobal = self;
 class OPFSFileSystemManagerWorker extends DirectoryWorker {
@@ -66,6 +66,9 @@ class OPFSFileSystemManagerWorker extends DirectoryWorker {
         this.#indexMap.delete(key);
         this.#descriptionsSet.delete(oldDescription);
         return null;
+    }
+    getClipboardPath() {
+        return Promise.resolve(OPFSFileSystemManagerWorker[GET_ROOT_DIR_PATH]() + "/clipboard");
     }
     // OPFSFileSystemIfc
     terminate() {

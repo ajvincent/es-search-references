@@ -27,6 +27,7 @@ describe("OPFS/WebFileSystem", () => {
         "red": "const RED = { value: 'red' };\n export { RED };\n"
       }
     },
+
     urls: {
       one: {
         two: {
@@ -37,6 +38,7 @@ describe("OPFS/WebFileSystem", () => {
           "six.js": "const SIX = { value: 6 };\nexport { SIX };\n",
         },
       },
+
       seven: {
         "eight.js": "const EIGHT = { value: 8 };\nexport { EIGHT };\n",
       }
@@ -44,11 +46,17 @@ describe("OPFS/WebFileSystem", () => {
   };
 
   it("can preserve and echo an index", async () => {
-    WFS = await OPFSWebFileSystemClientImpl.build(getResolvedTempDirPath("opfs_WebFileSystem/echo"));
+    WFS = await OPFSWebFileSystemClientImpl.build(
+      getResolvedTempDirPath("opfs_WebFileSystem/echo"),
+      getResolvedTempDirPath("opfs_WebFileSystem/emptyClipboard")
+    );
     await WFS.importDirectoryRecord(mockDirectories);
     await WFS.terminate();
 
-    WFS = await OPFSWebFileSystemClientImpl.build(getResolvedTempDirPath("opfs_WebFileSystem/echo"));
+    WFS = await OPFSWebFileSystemClientImpl.build(
+      getResolvedTempDirPath("opfs_WebFileSystem/echo"),
+      getResolvedTempDirPath("opfs_WebFileSystem/emptyClipboard")
+    );
 
     const persisted = await WFS.exportDirectoryRecord();
     expect(persisted).toEqual(mockDirectories);
@@ -85,7 +93,10 @@ describe("OPFS/WebFileSystem", () => {
   });
 
   it("can manipulate files", async () => {
-    WFS = await OPFSWebFileSystemClientImpl.build(getResolvedTempDirPath("opfs_WebFileSystem/file_io"));
+    WFS = await OPFSWebFileSystemClientImpl.build(
+      getResolvedTempDirPath("opfs_WebFileSystem/file_io"),
+      getResolvedTempDirPath("opfs_WebFileSystem/emptyClipboard")
+    );
     await WFS.importDirectoryRecord(mockDirectories);
 
     await expectAsync(
@@ -102,7 +113,7 @@ describe("OPFS/WebFileSystem", () => {
     ).withContext("write seven://nine.js").toBeResolvedTo("const EIGHT = { value: 8 };\nexport { EIGHT };\n");
 
     await expectAsync(
-      WFS.removeEntry("one://five")
+      WFS.removeEntryDeep("one://five")
     ).withContext("remove one://five").toBeResolved();
 
     let index = await WFS.getIndex();
@@ -123,7 +134,7 @@ describe("OPFS/WebFileSystem", () => {
     });
 
     await expectAsync(
-      WFS.removeEntry("seven://nine.js")
+      WFS.removeEntryDeep("seven://nine.js")
     ).withContext("remove seven://nine.js").toBeResolved();
 
     index = await WFS.getIndex();
@@ -165,7 +176,7 @@ describe("OPFS/WebFileSystem", () => {
     });
 
     await expectAsync(
-      WFS.removeEntry("seven://")
+      WFS.removeEntryDeep("seven://")
     ).withContext("remove seven://").toBeResolved();
 
     index = await WFS.getIndex();
@@ -185,7 +196,10 @@ describe("OPFS/WebFileSystem", () => {
   });
 
   it("can create a new file system from scratch", async () => {
-    WFS = await OPFSWebFileSystemClientImpl.build(getResolvedTempDirPath("opfs_WebFileSystem/fromScratch"));
+    WFS = await OPFSWebFileSystemClientImpl.build(
+      getResolvedTempDirPath("opfs_WebFileSystem/fromScratch"),
+      getResolvedTempDirPath("opfs_WebFileSystem/emptyClipboard")
+    );
     await Promise.all([
       WFS.writeFileDeep("es-search-references/red", mockDirectories.packages["es-search-references"].red),
       WFS.writeFileDeep("one://two/three.js", mockDirectories.urls.one.two["three.js"]),
@@ -196,6 +210,64 @@ describe("OPFS/WebFileSystem", () => {
 
     const persisted = await WFS.exportDirectoryRecord();
     expect(persisted).toEqual(mockDirectories);
+
+    await WFS.terminate();
+  });
+
+  it("can work with a clipboard", async () => {
+    WFS = await OPFSWebFileSystemClientImpl.build(
+      getResolvedTempDirPath("opfs_WebFileSystem/clipboardTest"),
+      getResolvedTempDirPath("opfs_WebFileSystem/scratchClipboard")
+    );
+    await WFS.importDirectoryRecord(mockDirectories);
+
+    await WFS.copyToClipboard("es-search-references/red");
+    let index = await WFS.getClipboardIndex();
+    expect(index).toEqual({ red: "" });
+
+    await WFS.createDirDeep("es-test/one");
+    await WFS.copyFromClipboard("es-test/one");
+
+    await expectAsync(
+      WFS.readFileDeep("es-test/one/red")
+    ).toBeResolvedTo(mockDirectories.packages["es-search-references"].red);
+
+    await WFS.copyToClipboard("es-search-references");
+    index = await WFS.getClipboardIndex();
+    expect(index).toEqual({
+      "es-search-references": {
+        "red": ""
+      }
+    });
+
+    await WFS.createDirDeep("es-test/two");
+    await WFS.copyFromClipboard("es-test/two");
+    await expectAsync(
+      WFS.readFileDeep("es-test/two/es-search-references/red")
+    ).toBeResolvedTo(mockDirectories.packages["es-search-references"].red);
+
+    // recursive directory copy test
+    await WFS.writeFileDeep("one://nine/ten/eleven.js", "// eleven\n");
+
+    await WFS.copyToClipboard("one://nine");
+    index = await WFS.getClipboardIndex();
+    expect(index).toEqual({
+      nine: {
+        ten: {
+          "eleven.js": ""
+        }
+      }
+    });
+
+    await WFS.createDirDeep("twelve://");
+    await WFS.copyFromClipboard("twelve://");
+    await expectAsync(
+      WFS.readFileDeep("twelve://nine/ten/eleven.js")
+    ).toBeResolvedTo("// eleven\n");
+
+    await WFS.clearClipboard();
+    index = await WFS.getClipboardIndex();
+    expect(index).toEqual({});
 
     await WFS.terminate();
   });

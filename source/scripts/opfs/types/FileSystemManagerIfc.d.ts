@@ -18,5 +18,7 @@ export interface OPFSFileSystemManagerIfc {
     key: UUID
   ): Promise<null>;
 
+  getClipboardPath(): Promise<string>;
+
   terminate(): Promise<void>;
 }

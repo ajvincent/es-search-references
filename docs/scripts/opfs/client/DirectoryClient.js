@@ -2,9 +2,13 @@ const REQUEST_ASYNC_METHOD = Symbol("#requestAsync");
 const BUILD_WORKER_METHOD = Symbol("#buildWorker");
 export { REQUEST_ASYNC_METHOD, BUILD_WORKER_METHOD, };
 export class DirectoryClient {
-    static [BUILD_WORKER_METHOD](pathToWorker, pathToRootDir) {
+    static [BUILD_WORKER_METHOD](pathToWorker, pathToRootDir, extraParams) {
         const url = new URL(pathToWorker, import.meta.url);
         url.searchParams.set("pathToRootDir", pathToRootDir);
+        if (extraParams) {
+            for (const [key, value] of extraParams)
+                url.searchParams.set(key, value);
+        }
         const worker = new Worker(url, { type: "module" });
         const { promise, resolve } = Promise.withResolvers();
         worker.onmessage = (event => {

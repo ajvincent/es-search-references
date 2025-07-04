@@ -43,6 +43,10 @@ implements OPFSFileSystemManagerIfc
     return this[REQUEST_ASYNC_METHOD]("remove", [key]);
   }
 
+  getClipboardPath(): Promise<string> {
+    return this[REQUEST_ASYNC_METHOD]("getClipboardPath", []);
+  }
+
   async terminate(): Promise<void> {
     await this[REQUEST_ASYNC_METHOD]("terminate", []);
     super.terminate();

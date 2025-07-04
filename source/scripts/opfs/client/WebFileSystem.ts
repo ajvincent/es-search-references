@@ -15,12 +15,14 @@ extends DirectoryClient<OPFSWebFileSystemIfc>
 implements OPFSWebFileSystemIfc
 {
   static async build(
-    pathToRootDir: string
+    pathToRootDir: string,
+    pathToClipboardDir: string
   ): Promise<OPFSWebFileSystemClientImpl>
   {
     const worker = await DirectoryClient[BUILD_WORKER_METHOD](
       "../worker/WebFileSystem.js",
-      pathToRootDir
+      pathToRootDir,
+      new Map([["pathToClipboardDir", pathToClipboardDir]])
     );
     return new OPFSWebFileSystemClientImpl(worker);
   }
@@ -53,8 +55,24 @@ implements OPFSWebFileSystemIfc
     return this[REQUEST_ASYNC_METHOD]("writeFileDeep", [pathToFile, contents]);
   }
 
-  removeEntry(pathToEntry: string): Promise<void> {
-    return this[REQUEST_ASYNC_METHOD]("removeEntry", [pathToEntry]);
+  removeEntryDeep(pathToEntry: string): Promise<void> {
+    return this[REQUEST_ASYNC_METHOD]("removeEntryDeep", [pathToEntry]);
+  }
+
+  getClipboardIndex(): Promise<DirectoryRecord> {
+    return this[REQUEST_ASYNC_METHOD]("getClipboardIndex", []);
+  }
+
+  copyFromClipboard(pathToDir: string): Promise<void> {
+    return this[REQUEST_ASYNC_METHOD]("copyFromClipboard", [pathToDir]);
+  }
+
+  copyToClipboard(pathToEntry: string): Promise<void> {
+    return this[REQUEST_ASYNC_METHOD]("copyToClipboard", [pathToEntry]);
+  }
+
+  clearClipboard(): Promise<void> {
+    return this[REQUEST_ASYNC_METHOD]("clearClipboard", []);
   }
 
   async terminate(): Promise<void> {

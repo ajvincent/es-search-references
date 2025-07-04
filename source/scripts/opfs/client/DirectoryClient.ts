@@ -18,10 +18,16 @@ export class DirectoryClient<Type>
   protected static [BUILD_WORKER_METHOD](
     pathToWorker: string,
     pathToRootDir: string,
+    extraParams?: ReadonlyMap<string, string>
   ): Promise<Worker>
   {
     const url = new URL(pathToWorker, import.meta.url);
     url.searchParams.set("pathToRootDir", pathToRootDir);
+    if (extraParams) {
+      for (const [key, value] of extraParams)
+        url.searchParams.set(key, value);
+    }
+
     const worker = new Worker(url, { type: "module" });
 
     const { promise, resolve } = Promise.withResolvers<Worker>();

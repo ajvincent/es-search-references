@@ -20,7 +20,12 @@ export interface OPFSWebFileSystemIfc {
   createDirDeep(pathToDir: string): Promise<void>;
   readFileDeep(pathToFile: string): Promise<string>;
   writeFileDeep(pathToFile: string, contents: string): Promise<void>;
-  removeEntry(pathToEntry: string): Promise<void>;
+  removeEntryDeep(pathToEntry: string): Promise<void>;
+
+  getClipboardIndex(): Promise<DirectoryRecord>;
+  copyFromClipboard(pathToDir: string): Promise<void>;
+  copyToClipboard(pathToEntry: string): Promise<void>;
+  clearClipboard(): Promise<void>;
 
   terminate(): Promise<void>;
 }

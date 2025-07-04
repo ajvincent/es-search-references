@@ -1,6 +1,7 @@
 var _a;
 import { AwaitedMap } from "../../utilities/AwaitedMap.js";
-import { DirectoryWorker, GET_ROOT_DIR_METHOD } from "./DirectoryWorker.js";
+import { DirectoryWorker, GET_ROOT_DIR_METHOD, SEARCH_PARAMS } from "./DirectoryWorker.js";
+import { FileSystemClipboard } from "./FileSystemClipboard.js";
 import { FileSystemUtilities } from "./FSUtilities.js";
 import { URLDirHandle } from "./URLDirHandle.js";
 const WorkerGlobal = self;
@@ -11,7 +12,10 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
             topDir.getDirectoryHandle("packages", { create: true }),
             topDir.getDirectoryHandle("urls", { create: true })
         ]);
-        void (new _a(packagesDir, new URLDirHandle(urlsDir)));
+        let rootDir = await WorkerGlobal.navigator.storage.getDirectory();
+        const clipboardDir = await this.#getDirectoryDeep(rootDir, this[SEARCH_PARAMS].get("pathToClipboardDir").split("/"), true);
+        const clipboard = new FileSystemClipboard(clipboardDir);
+        void (new _a(packagesDir, new URLDirHandle(urlsDir), clipboard));
         WorkerGlobal.postMessage("initialized");
     }
     static #getPathSequence(pathToEntry) {
@@ -30,11 +34,14 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
     }
     #packagesDir;
     #urlsDir;
-    constructor(packagesDir, urlsDir) {
+    #clipboard;
+    constructor(packagesDir, urlsDir, clipboard) {
         super();
         this.#packagesDir = packagesDir;
         this.#urlsDir = urlsDir;
+        this.#clipboard = clipboard;
     }
+    // OPFSWebFileSystemIfc
     async getWebFilesRecord() {
         const entries = [];
         async function callback(pathToEntry, entry) {
@@ -47,6 +54,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         }
         return Promise.resolve(Object.fromEntries(entries));
     }
+    // OPFSWebFileSystemIfc
     async importDirectoryRecord(dirRecord) {
         let promisesSet = new Set;
         promisesSet.add(this.#addRecordsRecursive(this.#packagesDir, dirRecord.packages, ""));
@@ -74,6 +82,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         const fileHandle = await currentDir.getFileHandle(fileLeafName, { create: true });
         await FileSystemUtilities.writeFile(fileHandle, contents);
     }
+    // OPFSWebFileSystemIfc
     async exportDirectoryRecord() {
         const [packages, urlsRaw] = await Promise.all([
             this.#exportDirectoryRecordRecursive(this.#packagesDir, true),
@@ -95,6 +104,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         }
         return Object.fromEntries(await map.allResolved());
     }
+    // OPFSWebFileSystemIfc
     async getIndex() {
         const [packageIndex, urlsIndex] = await Promise.all([
             this.#exportDirectoryRecordRecursive(this.#packagesDir, false),
@@ -105,14 +115,17 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         }
         return packageIndex;
     }
+    // OPFSWebFileSystemIfc
     async createDirDeep(pathToDir) {
         const pathSequence = _a.#getPathSequence(pathToDir);
         await _a.#getDirectoryDeep(URL.canParse(pathToDir) ? this.#urlsDir : this.#packagesDir, pathSequence, true);
     }
+    // OPFSWebFileSystemIfc
     async readFileDeep(pathToFile) {
         const fileHandle = await this.#getFileDeep(pathToFile, false);
         return FileSystemUtilities.readFile(fileHandle);
     }
+    // OPFSWebFileSystemIfc
     async writeFileDeep(pathToFile, contents) {
         const fileHandle = await this.#getFileDeep(pathToFile, true);
         return FileSystemUtilities.writeFile(fileHandle, contents);
@@ -123,12 +136,42 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToFile) ? this.#urlsDir : this.#packagesDir, pathSequence, create);
         return await dirHandle.getFileHandle(leafName, { create });
     }
-    async removeEntry(pathToEntry) {
+    // OPFSWebFileSystemIfc
+    async removeEntryDeep(pathToEntry) {
         const pathSequence = _a.#getPathSequence(pathToEntry);
         const leafName = pathSequence.pop();
         const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToEntry) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
         return dirHandle.removeEntry(leafName, { recursive: true });
     }
+    // OPFSWebFileSystemIfc
+    async getClipboardIndex() {
+        const clipboardDir = await this.#clipboard.getCurrent();
+        if (clipboardDir)
+            return this.#exportDirectoryRecordRecursive(clipboardDir, false);
+        return {};
+    }
+    // OPFSWebFileSystemIfc
+    async copyFromClipboard(pathToDir) {
+        const pathSequence = _a.#getPathSequence(pathToDir);
+        const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToDir) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
+        if (dirHandle === this.#urlsDir)
+            return this.#clipboard.copyTo(this.#urlsDir.rawDirectory);
+        return this.#clipboard.copyTo(dirHandle);
+    }
+    // OPFSWebFileSystemIfc
+    async copyToClipboard(pathToEntry) {
+        const pathSequence = _a.#getPathSequence(pathToEntry);
+        const leafName = pathSequence.pop();
+        const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToEntry) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
+        if (dirHandle === this.#urlsDir)
+            return this.#clipboard.copyFrom(this.#urlsDir.rawDirectory, leafName.substring(0, leafName.length - 3));
+        return this.#clipboard.copyFrom(dirHandle, leafName);
+    }
+    // OPFSWebFileSystemIfc
+    clearClipboard() {
+        return this.#clipboard.clear();
+    }
+    // OPFSWebFileSystemIfc
     terminate() {
         return Promise.resolve();
     }

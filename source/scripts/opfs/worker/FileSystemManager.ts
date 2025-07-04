@@ -9,6 +9,7 @@ import type {
 import {
   DirectoryWorker,
   GET_ROOT_DIR_METHOD,
+  GET_ROOT_DIR_PATH,
 } from "./DirectoryWorker.js";
 
 import {
@@ -119,6 +120,10 @@ implements OPFSFileSystemManagerIfc
     this.#descriptionsSet.delete(oldDescription);
 
     return null;
+  }
+
+  getClipboardPath(): Promise<string> {
+    return Promise.resolve(OPFSFileSystemManagerWorker[GET_ROOT_DIR_PATH]() + "/clipboard");
   }
 
   // OPFSFileSystemIfc

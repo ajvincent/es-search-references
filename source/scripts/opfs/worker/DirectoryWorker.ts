@@ -6,16 +6,25 @@ import type {
 
 const WorkerGlobal = self as unknown as DedicatedWorkerGlobalScope;
 
+const SEARCH_PARAMS = Symbol("#searchParams");
+const GET_ROOT_DIR_PATH = Symbol("#getRootDirPath");
 const GET_ROOT_DIR_METHOD = Symbol("#getRootDir");
 export {
+  SEARCH_PARAMS,
+  GET_ROOT_DIR_PATH,
   GET_ROOT_DIR_METHOD
 }
 
 export class DirectoryWorker<Type> {
+  protected static readonly [SEARCH_PARAMS] = new URLSearchParams(WorkerGlobal.location.search);
+
+  protected static [GET_ROOT_DIR_PATH](): string {
+    return this[SEARCH_PARAMS].get("pathToRootDir")!
+  }
+
   protected static async [GET_ROOT_DIR_METHOD](): Promise<FileSystemDirectoryHandle>
   {
-    const params = new URLSearchParams(WorkerGlobal.location.search);
-    const stepsToRootDir: readonly string[] = params.get("pathToRootDir")!.split("/");
+    const stepsToRootDir: readonly string[] = this[GET_ROOT_DIR_PATH]().split("/");
     let rootDir = await WorkerGlobal.navigator.storage.getDirectory();
     for (const step of stepsToRootDir) {
       rootDir = await rootDir.getDirectoryHandle(step, { create: true });
