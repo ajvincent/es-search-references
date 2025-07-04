@@ -27,11 +27,11 @@ implements OPFSFileSystemManagerIfc
     const systemsDir: FileSystemDirectoryHandle = await topDir.getDirectoryHandle(
       "filesystems", { create: true }
     );
+
     const indexFile: FileSystemFileHandle = await topDir.getFileHandle(
       "index.json", { create: true }
     );
-    const indexSync: FileSystemSyncAccessHandle = await indexFile.createSyncAccessHandle();
-    const indexMap = new JSONMap<UUID, string>(indexSync);
+    const indexMap = await JSONMap.build<UUID, string>(indexFile);
 
     void(new OPFSFileSystemManagerWorker(systemsDir, indexMap));
     WorkerGlobal.postMessage("initialized");
@@ -123,7 +123,6 @@ implements OPFSFileSystemManagerIfc
 
   // OPFSFileSystemIfc
   terminate(): Promise<void> {
-    this.#indexMap.close();
     return Promise.resolve();
   }
 }

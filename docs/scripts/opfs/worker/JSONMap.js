@@ -1,16 +1,18 @@
 import { FileSystemUtilities } from "./FSUtilities.js";
 export class JSONMap extends Map {
+    static async build(fileHandle) {
+        const initialText = await FileSystemUtilities.readFile(fileHandle);
+        return new JSONMap(fileHandle, initialText);
+    }
     #fileHandle;
-    constructor(fileHandle) {
+    constructor(fileHandle, initialText) {
         super();
         this.#fileHandle = fileHandle;
-        let text = FileSystemUtilities.readContents(fileHandle);
-        if (text[0] !== "{")
-            text = "{}";
-        const object = JSON.parse(text);
-        this.clear();
+        if (initialText[0] !== "{")
+            initialText = "{}";
+        const object = JSON.parse(initialText);
         for (const [key, value] of Object.entries(object)) {
-            this.set(key, value);
+            super.set(key, value);
         }
     }
     clear() {
@@ -29,9 +31,6 @@ export class JSONMap extends Map {
     }
     #commit() {
         const data = JSON.stringify(Object.fromEntries(this));
-        FileSystemUtilities.writeContents(this.#fileHandle, data);
-    }
-    close() {
-        this.#fileHandle.close();
+        return FileSystemUtilities.writeFile(this.#fileHandle, data);
     }
 }

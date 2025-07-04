@@ -1,37 +1,24 @@
-const encoder = new TextEncoder();
-const decoder = new TextDecoder();
 const FileSystemUtilities = {
-    readContents: function (fileHandle) {
-        const buffer = new Uint8Array();
-        fileHandle.read(buffer, { at: 0 });
-        return decoder.decode(buffer);
+    readFile: async function (fileHandle) {
+        const file = await fileHandle.getFile();
+        return file.text();
     },
-    writeContents: function (fileHandle, contents) {
-        fileHandle.truncate(0);
-        const buffer = new Uint8Array(encoder.encode(contents));
-        fileHandle.write(buffer, { at: 0 });
+    writeFile: async function (fileHandle, contents) {
+        const writable = await fileHandle.createWritable();
+        await writable.write(contents);
+        await writable.close();
     },
-    copyFileSync: function (sourceFileHandle, targetFileHandle) {
-        const buffer = new Uint8Array();
-        sourceFileHandle.read(buffer, { at: 0 });
-        targetFileHandle.truncate(0);
-        targetFileHandle.write(buffer);
-    },
-    directoryTraversal: async function (pathToCurrentDirectory, directory, callback) {
+    directoryTraversal: async function (pathToCurrentDirectory, excludeDelimiter, directory, callback) {
         for await (let [key, value] of directory.entries()) {
-            key = key ? pathToCurrentDirectory + "/" + key : key;
-            callback(key, value);
+            if (excludeDelimiter)
+                key = pathToCurrentDirectory + key;
+            else
+                key = pathToCurrentDirectory + "/" + key;
+            await callback(key, value);
             if (value.kind === "directory") {
-                await this.directoryTraversal(key, value, callback);
+                await this.directoryTraversal(key, false, value, callback);
             }
         }
     },
-    protocolTraversal: async function (urlsDirectory, callback) {
-        for await (let [key, value] of urlsDirectory.entries()) {
-            key += "://";
-            callback(key, value);
-            this.directoryTraversal(key, value, callback);
-        }
-    }
 };
 export { FileSystemUtilities, };

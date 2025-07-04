@@ -34,6 +34,14 @@ export class DirectoryWorker<Type> {
   ): Promise<void>
   {
     try {
+      if (!(requestMessage.serviceName in this)) {
+        throw new Error("service name not found: " + requestMessage.serviceName);
+      }
+      // @ts-expect-error
+      if (typeof this[requestMessage.serviceName] !== "function") {
+        throw new Error("service is not a method: " + requestMessage.serviceName);
+      }
+
       // @ts-expect-error
       const result = await this[requestMessage.serviceName](...requestMessage.parameters);
       // @ts-expect-error merging the types back together is troublesome, but this works for each type... I think

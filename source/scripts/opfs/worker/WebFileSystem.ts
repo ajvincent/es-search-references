@@ -1,4 +1,3 @@
-import { dir } from "console";
 import {
   AwaitedMap
 } from "../../utilities/AwaitedMap.js";
@@ -7,7 +6,6 @@ import type {
   DirectoryRecord,
   OPFSWebFileSystemIfc,
   TopDirectoryRecord,
-  URLString
 } from "../types/WebFileSystemIfc.js";
 
 import {
@@ -18,6 +16,10 @@ import {
 import {
   FileSystemUtilities
 } from "./FSUtilities.js";
+
+import {
+  URLDirHandle
+} from "./URLDirHandle.js";
 
 const WorkerGlobal = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -32,20 +34,41 @@ implements OPFSWebFileSystemIfc
       topDir.getDirectoryHandle("urls", { create: true })
     ]);
 
-    const FSWorker = new OPFSWebFileSystemWorker(packagesDir, urlsDir);
-    await FSWorker.fillSyncAccessMap();
-
+    void(new OPFSWebFileSystemWorker(packagesDir, new URLDirHandle(urlsDir)));
     WorkerGlobal.postMessage("initialized");
   }
 
-  readonly #packagesDir: FileSystemDirectoryHandle;
-  readonly #urlsDir: FileSystemDirectoryHandle;
+  static #getPathSequence(
+    pathToEntry: string
+  ): string[]
+  {
+    if (URL.canParse(pathToEntry)) {
+      const {protocol, hostname, pathname} = URL.parse(pathToEntry)!;
+      return [protocol + "://", hostname, ...pathname.substring(1).split("/")];
+    }
 
-  readonly #syncAccessMap = new Map<string, FileSystemSyncAccessHandle>;
+    return pathToEntry.split("/");
+  }
+
+  static async #getDirectoryDeep(
+    currentDir: FileSystemDirectoryHandle,
+    pathSequence: readonly string[],
+    create: boolean
+  ): Promise<FileSystemDirectoryHandle>
+  {
+    const options = { create };
+    for (const part of pathSequence) {
+      currentDir = await currentDir.getDirectoryHandle(part, options);
+    }
+    return currentDir;
+  }
+
+  readonly #packagesDir: FileSystemDirectoryHandle;
+  readonly #urlsDir: URLDirHandle;
 
   private constructor(
     packagesDir: FileSystemDirectoryHandle,
-    urlsDir: FileSystemDirectoryHandle
+    urlsDir: URLDirHandle,
   )
   {
     super();
@@ -53,90 +76,32 @@ implements OPFSWebFileSystemIfc
     this.#urlsDir = urlsDir;
   }
 
-  #resolvePathToEntry(
-    pathToEntry: string,
-  ): [FileSystemDirectoryHandle, string]
-  {
-    if (URL.canParse(pathToEntry)) {
-      const topDir = this.#urlsDir;
-      const {protocol, hostname, pathname} = URL.parse(pathToEntry)!;
-      let fullPath = protocol.substring(0, protocol.length - 1);
-      if (hostname)
-        fullPath += "/" + hostname + pathname;
-      return [topDir, fullPath];
-    }
-
-    return [this.#packagesDir, pathToEntry];
-  }
-
-  async #getDirectoryDeep(
-    currentDir: FileSystemDirectoryHandle,
-    pathToDir: string,
-    create: boolean
-  ): Promise<FileSystemDirectoryHandle>
-  {
-    const options = { create };
-    for (const part of pathToDir.split("/")) {
-      currentDir = await currentDir.getDirectoryHandle(part, options);
-    }
-    return currentDir;
-  }
-
-  async #requireSyncAccessHandle(
-    pathToFile: string,
-    fileHandle: FileSystemFileHandle
-  ): Promise<FileSystemSyncAccessHandle>
-  {
-    if (!this.#syncAccessMap.has(pathToFile)) {
-      this.#syncAccessMap.set(pathToFile, await fileHandle.createSyncAccessHandle());
-    }
-    return this.#syncAccessMap.get(pathToFile)!;
-  }
-
-  #closeAndDeleteSyncAccessHandle(
-    pathToFile: string
-  ): void
-  {
-    const fileHandle = this.#syncAccessMap.get(pathToFile);
-    if (fileHandle) {
-      fileHandle.close();
-    }
-    this.#syncAccessMap.delete(pathToFile);
-  }
-
-  protected async fillSyncAccessMap(): Promise<void> {
-    const promisesSet = new Set<Promise<FileSystemSyncAccessHandle>>;
-    const handleCallback = (
-      pathToEntry: string,
-      entry: FileSystemDirectoryHandle | FileSystemFileHandle
-    ): void =>
-    {
-      if (entry.kind === "file") {
-        promisesSet.add(this.#requireSyncAccessHandle(pathToEntry, entry));
-      }
-    }
-
-    // This sequential await is intentional: packages come before urls.
-    await FileSystemUtilities.directoryTraversal("", this.#packagesDir, handleCallback);
-    await FileSystemUtilities.protocolTraversal(this.#urlsDir, handleCallback);
-
-    await Promise.all(promisesSet);
-  }
-
   async getWebFilesRecord(): Promise<{ [key: string]: string; }> {
     const entries: [string, string][] = [];
-    for (const [pathToFile, syncAccessHandle] of this.#syncAccessMap) {
-      entries.push([pathToFile, FileSystemUtilities.readContents(syncAccessHandle)]);
+    async function callback(
+      pathToEntry: string,
+      entry: FileSystemDirectoryHandle | FileSystemFileHandle
+    ): Promise<void>
+    {
+      if (entry.kind === "file")
+        entries.push([pathToEntry, await FileSystemUtilities.readFile(entry)]);
     }
+
+    await FileSystemUtilities.directoryTraversal("", true, this.#packagesDir, callback);
+    for await (const [protocol, dirEntry] of this.#urlsDir.entries()) {
+      await FileSystemUtilities.directoryTraversal(protocol, true, dirEntry as FileSystemDirectoryHandle, callback);
+    }
+
     return Promise.resolve(Object.fromEntries(entries));
   }
 
-  async importDirectoryRecord(dirRecord: TopDirectoryRecord): Promise<void> {
+  async importDirectoryRecord(
+    dirRecord: TopDirectoryRecord
+  ): Promise<void>
+  {
     let promisesSet = new Set<Promise<void>>;
     promisesSet.add(this.#addRecordsRecursive(this.#packagesDir, dirRecord.packages, ""));
-    for (const [protocol, dirEntry] of Object.entries(dirRecord.urls)) {
-      promisesSet.add(this.#addDirectoryRecursive(this.#urlsDir, protocol, dirEntry, protocol + "://"));
-    }
+    promisesSet.add(this.#addRecordsRecursive(this.#urlsDir.rawDirectory, dirRecord.urls, ""));
 
     await Promise.all(promisesSet);
   }
@@ -149,14 +114,15 @@ implements OPFSWebFileSystemIfc
   {
     const promises = new Set<Promise<void>>;
     for (const [key, stringOrDir] of Object.entries(dirRecord)) {
-      const childPath = key ? pathToEntry + "/" + key : key;
+      const childPath = pathToEntry ? pathToEntry + "/" + key : key;
       if (typeof stringOrDir === "string") {
-        promises.add(this.#addFileShallow(currentDir, key, stringOrDir, childPath));
+        promises.add(this.#addFileShallow(currentDir, key, stringOrDir));
       }
       else {
         promises.add(this.#addDirectoryRecursive(currentDir, key, stringOrDir, childPath));
       }
     }
+
     await Promise.all(promises);
   }
 
@@ -177,46 +143,118 @@ implements OPFSWebFileSystemIfc
     currentDir: FileSystemDirectoryHandle,
     fileLeafName: string,
     contents: string,
-    childPath: string
   ): Promise<void>
   {
     const fileHandle = await currentDir.getFileHandle(fileLeafName, { create: true });
-    const syncAccessHandle = await this.#requireSyncAccessHandle(childPath, fileHandle);
-    FileSystemUtilities.writeContents(syncAccessHandle, contents);
+    await FileSystemUtilities.writeFile(fileHandle, contents);
   }
 
   async exportDirectoryRecord(): Promise<TopDirectoryRecord> {
-    throw new Error("Method not implemented.");
-    /*
-    const packages: DirectoryRecord = {}, urls: { [key: string]: DirectoryRecord } = {};
+    const [
+      packages, urlsRaw
+    ] = await Promise.all([
+      this.#exportDirectoryRecordRecursive(this.#packagesDir, true),
+      this.#exportDirectoryRecordRecursive(this.#urlsDir.rawDirectory, true)
+    ]);
+    const urls = urlsRaw as { [key: string]: DirectoryRecord };
     return { packages, urls };
-    */
   }
 
-  getIndex(): Promise<TopDirectoryRecord> {
-    throw new Error("Method not implemented.");
+  async #exportDirectoryRecordRecursive(
+    dirHandle: FileSystemDirectoryHandle,
+    readFiles: boolean
+  ): Promise<DirectoryRecord>
+  {
+    const fileEntries = await Array.fromAsync(dirHandle.entries());
+
+    const map = new AwaitedMap<string, DirectoryRecord | string>;
+    for (const [leafName, entry] of fileEntries) {
+      if (entry.kind === "directory")
+        map.set(leafName, this.#exportDirectoryRecordRecursive(entry as FileSystemDirectoryHandle, readFiles));
+      else if (readFiles)
+        map.set(leafName, FileSystemUtilities.readFile(entry as FileSystemFileHandle));
+      else
+        map.set(leafName, Promise.resolve(""));
+    }
+
+    return Object.fromEntries(await map.allResolved());
   }
 
-  createDirDeep(pathToDir: string): Promise<void> {
-    throw new Error("Method not implemented.");
+  async getIndex(): Promise<DirectoryRecord> {
+    const [packageIndex, urlsIndex] = await Promise.all([
+      this.#exportDirectoryRecordRecursive(this.#packagesDir, false),
+      this.#exportDirectoryRecordRecursive(this.#urlsDir, false)
+    ]);
+
+    for (const [key, entry] of Object.entries(urlsIndex)) {
+      packageIndex[key] = entry;
+    }
+
+    return packageIndex;
   }
 
-  readFileDeep(pathToFile: string): Promise<string> {
-    throw new Error("Method not implemented.");
+  async createDirDeep(
+    pathToDir: string
+  ): Promise<void>
+  {
+    const pathSequence = OPFSWebFileSystemWorker.#getPathSequence(pathToDir);
+    await OPFSWebFileSystemWorker.#getDirectoryDeep(
+      URL.canParse(pathToDir) ? this.#urlsDir : this.#packagesDir,
+      pathSequence,
+      true
+    );
   }
 
-  writeFileDeep(pathToFile: string, contents: string): Promise<void> {
-    throw new Error("Method not implemented.");
+  async readFileDeep(
+    pathToFile: string
+  ): Promise<string>
+  {
+    const fileHandle = await this.#getFileDeep(pathToFile, false);
+    return FileSystemUtilities.readFile(fileHandle);
   }
 
-  removeEntry(pathToEntry: string): Promise<void> {
-    throw new Error("Method not implemented.");
+  async writeFileDeep(
+    pathToFile: string,
+    contents: string
+  ): Promise<void>
+  {
+    const fileHandle = await this.#getFileDeep(pathToFile, true);
+    return FileSystemUtilities.writeFile(fileHandle, contents);
+  }
+
+  async #getFileDeep(
+    pathToFile: string,
+    create: boolean
+  ): Promise<FileSystemFileHandle>
+  {
+    const pathSequence = OPFSWebFileSystemWorker.#getPathSequence(pathToFile);
+    const leafName = pathSequence.pop()!;
+
+    const dirHandle = await OPFSWebFileSystemWorker.#getDirectoryDeep(
+      URL.canParse(pathToFile) ? this.#urlsDir : this.#packagesDir,
+      pathSequence,
+      create
+    );
+
+    return await dirHandle.getFileHandle(leafName, { create });
+  }
+
+  async removeEntry(pathToEntry: string): Promise<void> {
+    const pathSequence = OPFSWebFileSystemWorker.#getPathSequence(pathToEntry);
+    const leafName = pathSequence.pop()!;
+
+    const dirHandle = await OPFSWebFileSystemWorker.#getDirectoryDeep(
+      URL.canParse(pathToEntry) ? this.#urlsDir : this.#packagesDir,
+      pathSequence,
+      false
+    );
+
+    return dirHandle.removeEntry(leafName);
   }
 
   terminate(): Promise<void> {
-    for (const pathToFile of this.#syncAccessMap.keys()) {
-      this.#closeAndDeleteSyncAccessHandle(pathToFile);
-    }
     return Promise.resolve();
   }
 }
+
+await OPFSWebFileSystemWorker.build();

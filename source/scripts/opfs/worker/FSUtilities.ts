@@ -1,72 +1,52 @@
-const encoder = new TextEncoder()
-const decoder = new TextDecoder();
+import type {
+  Promisable
+} from "type-fest";
 
 const FileSystemUtilities = {
-  readContents: function (
-    fileHandle: FileSystemSyncAccessHandle
-  ): string
+  readFile: async function(
+    fileHandle: FileSystemFileHandle
+  ): Promise<string>
   {
-    const buffer = new Uint8Array();
-    fileHandle.read(buffer, { at: 0 });
-    return decoder.decode(buffer);
+    const file = await fileHandle.getFile();
+    return file.text();
   },
 
-  writeContents: function(
-    fileHandle: FileSystemSyncAccessHandle,
+  writeFile: async function(
+    fileHandle: FileSystemFileHandle,
     contents: string
-  ): void
+  ): Promise<void>
   {
-    fileHandle.truncate(0);
-    const buffer = new Uint8Array(encoder.encode(contents));
-    fileHandle.write(buffer, { at: 0 });
-  },
-
-  copyFileSync: function(
-    sourceFileHandle: FileSystemSyncAccessHandle,
-    targetFileHandle: FileSystemSyncAccessHandle
-  ): void
-  {
-    const buffer = new Uint8Array();
-    sourceFileHandle.read(buffer, { at: 0 });
-    targetFileHandle.truncate(0);
-    targetFileHandle.write(buffer);
+    const writable = await fileHandle.createWritable();
+    await writable.write(contents);
+    await writable.close();
   },
 
   directoryTraversal: async function(
     pathToCurrentDirectory: string,
+    excludeDelimiter: boolean,
     directory: FileSystemDirectoryHandle,
     callback: (
       pathToEntry: string,
       entry: FileSystemDirectoryHandle | FileSystemFileHandle,
-    ) => void
+    ) => Promisable<void>
   ): Promise<void>
   {
     for await (let [key, value] of directory.entries()) {
-      key = key ? pathToCurrentDirectory + "/" + key : key;
-      callback(
+      if (excludeDelimiter)
+        key = pathToCurrentDirectory + key;
+      else
+        key = pathToCurrentDirectory + "/" + key;
+
+      await callback(
         key,
         value as FileSystemDirectoryHandle | FileSystemFileHandle
       );
+
       if (value.kind === "directory") {
-        await this.directoryTraversal(key, value as FileSystemDirectoryHandle, callback);
+        await this.directoryTraversal(key, false, value as FileSystemDirectoryHandle, callback);
       }
     }
   },
-
-  protocolTraversal: async function(
-    urlsDirectory: FileSystemDirectoryHandle,
-    callback: (
-      pathToEntry: string,
-      entry: FileSystemDirectoryHandle | FileSystemFileHandle,
-    ) => void
-  ): Promise<void>
-  {
-    for await (let [key, value] of urlsDirectory.entries()) {
-      key += "://";
-      callback(key, value as FileSystemDirectoryHandle);
-      this.directoryTraversal(key, value as FileSystemDirectoryHandle, callback);
-    }
-  }
 }
 
 export {

@@ -6,8 +6,7 @@ class OPFSFileSystemManagerWorker extends DirectoryWorker {
         const topDir = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
         const systemsDir = await topDir.getDirectoryHandle("filesystems", { create: true });
         const indexFile = await topDir.getFileHandle("index.json", { create: true });
-        const indexSync = await indexFile.createSyncAccessHandle();
-        const indexMap = new JSONMap(indexSync);
+        const indexMap = await JSONMap.build(indexFile);
         void (new OPFSFileSystemManagerWorker(systemsDir, indexMap));
         WorkerGlobal.postMessage("initialized");
     }
@@ -70,7 +69,6 @@ class OPFSFileSystemManagerWorker extends DirectoryWorker {
     }
     // OPFSFileSystemIfc
     terminate() {
-        this.#indexMap.close();
         return Promise.resolve();
     }
 }

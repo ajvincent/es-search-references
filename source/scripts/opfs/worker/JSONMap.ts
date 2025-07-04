@@ -11,23 +11,30 @@ export class JSONMap<
   V extends Jsonifiable
 > extends Map<K, V>
 {
-  readonly #fileHandle: FileSystemSyncAccessHandle;
+  static async build<K extends string, V extends Jsonifiable>(
+    fileHandle: FileSystemFileHandle
+  ): Promise<JSONMap<K, V>>
+  {
+    const initialText = await FileSystemUtilities.readFile(fileHandle);
+    return new JSONMap<K, V>(fileHandle, initialText);
+  }
 
-  constructor(
-    fileHandle: FileSystemSyncAccessHandle
+  readonly #fileHandle: FileSystemFileHandle;
+
+  private constructor(
+    fileHandle: FileSystemFileHandle,
+    initialText: string
   )
   {
     super();
     this.#fileHandle = fileHandle;
 
-    let text = FileSystemUtilities.readContents(fileHandle);
-    if (text[0] !== "{")
-      text = "{}";
-    const object = JSON.parse(text) as Record<K, V>;
+    if (initialText[0] !== "{")
+      initialText = "{}";
+    const object = JSON.parse(initialText) as Record<K, V>;
 
-    this.clear();
     for (const [key, value] of Object.entries(object)) {
-      this.set(key as K, value as V);
+      super.set(key as K, value as V);
     }
   }
 
@@ -48,12 +55,8 @@ export class JSONMap<
     return this;
   }
 
-  #commit(): void {
+  #commit(): Promise<void> {
     const data: string = JSON.stringify(Object.fromEntries(this));
-    FileSystemUtilities.writeContents(this.#fileHandle, data);
-  }
-
-  close(): void {
-    this.#fileHandle.close();
+    return FileSystemUtilities.writeFile(this.#fileHandle, data);
   }
 }
