@@ -44,7 +44,7 @@ implements OPFSWebFileSystemIfc
   {
     if (URL.canParse(pathToEntry)) {
       const {protocol, hostname, pathname} = URL.parse(pathToEntry)!;
-      return [protocol + "://", hostname, ...pathname.substring(1).split("/")];
+      return [protocol + "//", hostname, ...pathname.substring(1).split("/")].filter(Boolean);
     }
 
     return pathToEntry.split("/");
@@ -249,7 +249,7 @@ implements OPFSWebFileSystemIfc
       false
     );
 
-    return dirHandle.removeEntry(leafName);
+    return dirHandle.removeEntry(leafName, { recursive: true });
   }
 
   terminate(): Promise<void> {

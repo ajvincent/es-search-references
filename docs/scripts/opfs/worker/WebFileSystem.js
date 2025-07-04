@@ -17,7 +17,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
     static #getPathSequence(pathToEntry) {
         if (URL.canParse(pathToEntry)) {
             const { protocol, hostname, pathname } = URL.parse(pathToEntry);
-            return [protocol + "://", hostname, ...pathname.substring(1).split("/")];
+            return [protocol + "//", hostname, ...pathname.substring(1).split("/")].filter(Boolean);
         }
         return pathToEntry.split("/");
     }
@@ -127,7 +127,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         const pathSequence = _a.#getPathSequence(pathToEntry);
         const leafName = pathSequence.pop();
         const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToEntry) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
-        return dirHandle.removeEntry(leafName);
+        return dirHandle.removeEntry(leafName, { recursive: true });
     }
     terminate() {
         return Promise.resolve();
