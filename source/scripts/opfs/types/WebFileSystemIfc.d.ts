@@ -1,10 +1,13 @@
-export type DirectoryRecord<KeyType extends string = string> = {
-  [key: KeyType ]: DirectoryRecord | string
+export type DirectoryRecord = {
+  [ key: string ]: DirectoryRecord | string
 };
 
-export type TopDirectoryRecord = DirectoryRecord<
-  `packages/${string}` | `urls/${string}`
->;
+export type TopDirectoryRecord = {
+  packages: DirectoryRecord;
+  urls: { [key: string]: DirectoryRecord };
+}
+
+export type URLString = `${string}://${string}`;
 
 export interface OPFSWebFileSystemIfc {
   getWebFilesRecord(): Promise<{ [key: string]: string }>;
@@ -14,17 +17,11 @@ export interface OPFSWebFileSystemIfc {
   ): Promise<void>;
   exportDirectoryRecord(): Promise<TopDirectoryRecord>;
 
-  getPackageIndex(): Promise<DirectoryRecord>;
-  createPackageDirDeep(pathToDir: string): Promise<void>;
-  readPackageFileDeep(pathToFile: string): Promise<string>;
-  writePackageFileDeep(pathToFile: string, contents: string): Promise<void>;
-  removePackageEntry(pathToEntry: string): Promise<void>;
-
-  getURLsIndex(): Promise<DirectoryRecord>;
-  createURLDirDeep(pathToDir: string): Promise<void>;
-  readURLFileDeep(pathToFile: string): Promise<string>;
-  writeURLFileDeep(pathToFile: string, contents: string): Promise<void>;
-  removeURLEntry(pathToEntry: string): Promise<void>;
+  getIndex(): Promise<TopDirectoryRecord>;
+  createDirDeep(pathToDir: string): Promise<void>;
+  readFileDeep(pathToFile: string): Promise<string>;
+  writeFileDeep(pathToFile: string, contents: string): Promise<void>;
+  removeEntry(pathToEntry: string): Promise<void>;
 
   terminate(): Promise<void>;
 }

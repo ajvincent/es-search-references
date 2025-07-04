@@ -3,7 +3,7 @@ import type {
 } from "type-fest";
 
 import {
-  SyncFileUtilities
+  FileSystemUtilities
 } from "./FSUtilities.js";
 
 export class JSONMap<
@@ -20,7 +20,7 @@ export class JSONMap<
     super();
     this.#fileHandle = fileHandle;
 
-    let text = SyncFileUtilities.readContents(fileHandle);
+    let text = FileSystemUtilities.readContents(fileHandle);
     if (text[0] !== "{")
       text = "{}";
     const object = JSON.parse(text) as Record<K, V>;
@@ -50,7 +50,7 @@ export class JSONMap<
 
   #commit(): void {
     const data: string = JSON.stringify(Object.fromEntries(this));
-    SyncFileUtilities.writeContents(this.#fileHandle, data);
+    FileSystemUtilities.writeContents(this.#fileHandle, data);
   }
 
   close(): void {

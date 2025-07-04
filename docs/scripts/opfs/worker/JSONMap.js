@@ -1,10 +1,10 @@
-import { SyncFileUtilities } from "./FSUtilities.js";
+import { FileSystemUtilities } from "./FSUtilities.js";
 export class JSONMap extends Map {
     #fileHandle;
     constructor(fileHandle) {
         super();
         this.#fileHandle = fileHandle;
-        let text = SyncFileUtilities.readContents(fileHandle);
+        let text = FileSystemUtilities.readContents(fileHandle);
         if (text[0] !== "{")
             text = "{}";
         const object = JSON.parse(text);
@@ -29,7 +29,7 @@ export class JSONMap extends Map {
     }
     #commit() {
         const data = JSON.stringify(Object.fromEntries(this));
-        SyncFileUtilities.writeContents(this.#fileHandle, data);
+        FileSystemUtilities.writeContents(this.#fileHandle, data);
     }
     close() {
         this.#fileHandle.close();

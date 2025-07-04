@@ -1,7 +1,7 @@
 const encoder = new TextEncoder()
 const decoder = new TextDecoder();
 
-const SyncFileUtilities = {
+const FileSystemUtilities = {
   readContents: function (
     fileHandle: FileSystemSyncAccessHandle
   ): string
@@ -30,7 +30,45 @@ const SyncFileUtilities = {
     sourceFileHandle.read(buffer, { at: 0 });
     targetFileHandle.truncate(0);
     targetFileHandle.write(buffer);
+  },
+
+  directoryTraversal: async function(
+    pathToCurrentDirectory: string,
+    directory: FileSystemDirectoryHandle,
+    callback: (
+      pathToEntry: string,
+      entry: FileSystemDirectoryHandle | FileSystemFileHandle,
+    ) => void
+  ): Promise<void>
+  {
+    for await (let [key, value] of directory.entries()) {
+      key = key ? pathToCurrentDirectory + "/" + key : key;
+      callback(
+        key,
+        value as FileSystemDirectoryHandle | FileSystemFileHandle
+      );
+      if (value.kind === "directory") {
+        await this.directoryTraversal(key, value as FileSystemDirectoryHandle, callback);
+      }
+    }
+  },
+
+  protocolTraversal: async function(
+    urlsDirectory: FileSystemDirectoryHandle,
+    callback: (
+      pathToEntry: string,
+      entry: FileSystemDirectoryHandle | FileSystemFileHandle,
+    ) => void
+  ): Promise<void>
+  {
+    for await (let [key, value] of urlsDirectory.entries()) {
+      key += "://";
+      callback(key, value as FileSystemDirectoryHandle);
+      this.directoryTraversal(key, value as FileSystemDirectoryHandle, callback);
+    }
   }
 }
 
-export { SyncFileUtilities };
+export {
+  FileSystemUtilities,
+};
