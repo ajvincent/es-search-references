@@ -319,6 +319,27 @@ implements OPFSWebFileSystemIfc
     return this.#clipboard.copyFrom(dirHandle, leafName);
   }
 
+  async readClipboardFile(
+    pathToFile: string
+  ): Promise<string>
+  {
+    const pathSequence = OPFSWebFileSystemWorker.#getPathSequence(pathToFile);
+    const leafName = pathSequence.pop()!;
+
+    const clipboardDir = (await this.#clipboard.getCurrent());
+    if (!clipboardDir)
+      throw new Error("no clipboard directory found");
+
+    const dirHandle = await OPFSWebFileSystemWorker.#getDirectoryDeep(
+      clipboardDir,
+      pathSequence,
+      false
+    );
+
+    const fileHandle = await dirHandle.getFileHandle(leafName, { create: false });
+    return FileSystemUtilities.readFile(fileHandle);
+  }
+
   // OPFSWebFileSystemIfc
   clearClipboard(): Promise<void> {
     return this.#clipboard.clear();

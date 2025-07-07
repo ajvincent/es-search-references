@@ -259,6 +259,10 @@ describe("OPFS/WebFileSystem", () => {
       }
     });
 
+    await expectAsync(
+      WFS.readClipboardFile("nine/ten/eleven.js")
+    ).toBeResolvedTo("// eleven\n");
+
     await WFS.createDirDeep("twelve://");
     await WFS.copyFromClipboard("twelve://");
     await expectAsync(

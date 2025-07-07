@@ -37,6 +37,9 @@ export class OPFSWebFileSystemClientImpl extends DirectoryClient {
     copyToClipboard(pathToEntry) {
         return this[REQUEST_ASYNC_METHOD]("copyToClipboard", [pathToEntry]);
     }
+    readClipboardFile(pathToFile) {
+        return this[REQUEST_ASYNC_METHOD]("readClipboardFile", [pathToFile]);
+    }
     clearClipboard() {
         return this[REQUEST_ASYNC_METHOD]("clearClipboard", []);
     }

@@ -71,6 +71,10 @@ implements OPFSWebFileSystemIfc
     return this[REQUEST_ASYNC_METHOD]("copyToClipboard", [pathToEntry]);
   }
 
+  readClipboardFile(pathToFile: string): Promise<string> {
+    return this[REQUEST_ASYNC_METHOD]("readClipboardFile", [pathToFile]);
+  }
+
   clearClipboard(): Promise<void> {
     return this[REQUEST_ASYNC_METHOD]("clearClipboard", []);
   }

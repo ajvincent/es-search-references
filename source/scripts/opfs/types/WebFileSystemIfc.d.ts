@@ -25,6 +25,7 @@ export interface OPFSWebFileSystemIfc {
   getClipboardIndex(): Promise<DirectoryRecord>;
   copyFromClipboard(pathToDir: string): Promise<void>;
   copyToClipboard(pathToEntry: string): Promise<void>;
+  readClipboardFile(pathToFile: string): Promise<string>;
   clearClipboard(): Promise<void>;
 
   terminate(): Promise<void>;
