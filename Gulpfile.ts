@@ -29,6 +29,11 @@ import {
   asyncFork
 } from "./build-utilities/dist/source/childProcess.js";
 
+import type {
+  TopDirectoryRecord,
+  DirectoryRecord
+} from "./source/scripts/opfs/types/WebFileSystemIfc.js";
+
 async function buildLocalhost(): Promise<void> {
   await InvokeTSC(path.join(projectRoot, "tsconfig-localhost.json"), []);
 }
@@ -107,13 +112,7 @@ export const ReferenceSpecFileMap = new FileSystemMap("reference-spec-filesystem
 }
 
 async function installReferenceSpecs(): Promise<void> {
-  const codeBlocks: string[] = [];
-  codeBlocks.push(
-    `
-{
-    const referencesDir = await webFS.getPackageDirectoryHandle("es-search-references", createOptions);
-    const guestHandle = await referencesDir.getFileHandle("guest", createOptions);
-    const contents = \`
+  const guestContents = `
 /*
 declare function searchReferences(
   this: void,
@@ -124,105 +123,70 @@ declare function searchReferences(
 ): void;
 */
 export {};
-    \`.trim() + "\\n";
-    const writable = await guestHandle.createWritable();
-    await writable.write(contents);
-    await writable.close();
-  }`,
+  `.trim() + "\\n";
 
-    `const urlsMap = new AwaitedMap();`,
-    `urlsMap.set("virtual", webFS.getURLDirectoryHandle("virtual://", createOptions));`,
-    `addDirectory(urlsMap, "virtual", "home");`,
-    `addDirectory(urlsMap, "virtual/home", "fixtures");`,
-  );
+  const topDir = {
+    packages: {
+      "es-search-references": {
+        "guest": guestContents,
+      }
+    },
+    urls: {
+      "virtual": {
+        "home": {
+          "fixtures": {
+          },
+          "reference-spec": {
+          },
+        },
+      },
+    },
+  } as TopDirectoryRecord;
 
-  async function appendDirectorySources(
-    prefix: string,
-    absolutePathToDirectory: string,
+  async function addDirectory(
+    dirObject: DirectoryRecord,
+    absolutePathToDirectory: string
   ): Promise<void>
   {
     const entries: Dirent[] = await fs.readdir(
       absolutePathToDirectory,
       { encoding: "utf-8", withFileTypes: true }
     );
+    let promises = new Set<Promise<void>>();
+
     for (const entry of entries) {
       const { name } = entry;
       const fullPath = path.join(absolutePathToDirectory, name);
       if (entry.isDirectory()) {
-        codeBlocks.push(`addDirectory(urlsMap, "${prefix}", "${name}");`);
-        await appendDirectorySources(prefix + "/" + name, fullPath);
+        const subDirObject: DirectoryRecord = {};
+        dirObject[name] = subDirObject;
+        promises.add(addDirectory(subDirObject, fullPath));
       } else if (entry.isFile()) {
         let contents = await fs.readFile(fullPath, { encoding: "utf-8" });
-        contents = contents.replace(/`/g, "\\`");
-
-        let block = `    // ${prefix.replace("virtual/", "virtual://")}/${name}\n`;
-        block += "  " + `{
-    const contents = \`
-${contents}
-    \`.trim() + "\\n";
-    addFile(
-      urlsMap,
-      "${prefix}",
-      "${name}",
-      contents
-    );
-  }
-`.trim();
-        codeBlocks.push(block);
+        dirObject[name] = contents;
       }
     }
+    await Promise.all(promises);
   }
 
-  await appendDirectorySources(
-    "virtual/home/fixtures",
-    path.join(projectRoot, "dist/fixtures")
-  );
+  await Promise.all([
+    addDirectory(
+      (topDir.urls.virtual.home as DirectoryRecord)["fixtures"] as DirectoryRecord,
+      path.join(projectRoot, "dist/fixtures")
+    ),
 
-  codeBlocks.push(
-    `addDirectory(urlsMap, "virtual/home", "reference-spec");`
-  );
-
-  await appendDirectorySources(
-    "virtual/home/reference-spec",
-    path.join(projectRoot, "dist/reference-spec")
-  );
-
-  codeBlocks.push(
-    `await urlsMap.allResolved();`
-  );
+    addDirectory(
+      (topDir.urls.virtual.home as DirectoryRecord)["reference-spec"] as DirectoryRecord,
+      path.join(projectRoot, "dist/reference-spec")
+    ),
+  ]);
 
   const sourceCode = `
-// This file is auto-generated.  Do not edit.
-import {
-  AwaitedMap
-} from "../utilities/AwaitedMap.js";
-
-const createOptions = { create: true };
-
-export async function installReferenceSpecs(webFS) {
-${codeBlocks.map(block => "  " + block.trim()).join("\n\n")}
+const ReferenceSpecRecord = ${JSON.stringify(topDir, null, 2)};
+export {
+  ReferenceSpecRecord
 }
-
-function addDirectory(urlsMap, parentDirectory, directoryName) {
-  let promise = urlsMap.get(parentDirectory);
-  promise = promise.then(
-    dirHandle => dirHandle.getDirectoryHandle(directoryName, createOptions)
-  );
-  urlsMap.set(parentDirectory + "/" + directoryName, promise);
-}
-
-function addFile(urlsMap, parentDirectory, fileName, contents) {
-  let promise = urlsMap.get(parentDirectory);
-  promise = promise.then(async dirHandle => {
-    const fileHandle = await dirHandle.getFileHandle(fileName, createOptions);
-    const writable = await fileHandle.createWritable();
-    await writable.write(contents);
-    await writable.close();
-  });
-
-  urlsMap.set(parentDirectory + "/" + fileName, promise);
-}
-`.trim() + "\n";
+  `.trim() + "\n";
 
   await fs.writeFile(
     path.join(projectRoot, "docs/scripts/reference-spec/WebFileSystem.js"),

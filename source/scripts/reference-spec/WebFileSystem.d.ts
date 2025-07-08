@@ -1,5 +1,5 @@
 import type {
-  WebFileSystemIfc
-} from "../storage/types/WebFileSystemIfc.d.ts";
+  TopDirectoryRecord
+} from "../opfs/types/WebFileSystemIfc.d.ts";
 
-export declare function installReferenceSpecs(webFS: WebFileSystemIfc): Promise<void>;
+export declare const ReferenceSpecRecord: TopDirectoryRecord;
