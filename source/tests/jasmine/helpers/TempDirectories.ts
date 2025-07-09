@@ -1,4 +1,3 @@
-
 const rootDir = await navigator.storage.getDirectory();
 const TempRoot = await rootDir.getDirectoryHandle("tmp", { create: true });
 
