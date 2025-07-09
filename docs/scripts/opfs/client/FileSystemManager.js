@@ -16,6 +16,9 @@ export class OPFSFileSystemManagerClientImpl extends DirectoryClient {
     remove(key) {
         return this[REQUEST_ASYNC_METHOD]("remove", [key]);
     }
+    getWebFSPath(key) {
+        return this[REQUEST_ASYNC_METHOD]("getWebFSPath", [key]);
+    }
     getClipboardPath() {
         return this[REQUEST_ASYNC_METHOD]("getClipboardPath", []);
     }

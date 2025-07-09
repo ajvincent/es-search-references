@@ -1,20 +1,26 @@
 import { DirectoryWorker, GET_ROOT_DIR_METHOD, GET_ROOT_DIR_PATH, } from "./DirectoryWorker.js";
-import { JSONMap } from "./JSONMap.js";
+import { AsyncJSONMap } from "./AsyncJSONMap.js";
 const WorkerGlobal = self;
 class OPFSFileSystemManagerWorker extends DirectoryWorker {
     static async build() {
         const topDir = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
-        const systemsDir = await topDir.getDirectoryHandle("filesystems", { create: true });
-        const indexFile = await topDir.getFileHandle("index.json", { create: true });
-        const indexMap = await JSONMap.build(indexFile);
-        void (new OPFSFileSystemManagerWorker(systemsDir, indexMap));
+        const [systemsDir, indexFile, clipboardDir] = await Promise.all([
+            topDir.getDirectoryHandle("filesystems", { create: true }),
+            topDir.getFileHandle("index.json", { create: true }),
+            topDir.getDirectoryHandle("clipboard", { create: true }),
+        ]);
+        const indexMap = await AsyncJSONMap.build(indexFile);
+        void (new OPFSFileSystemManagerWorker(topDir + "/filesystems", systemsDir, indexMap));
+        void (clipboardDir);
         WorkerGlobal.postMessage("initialized");
     }
+    #pathToSystemsDir;
     #systemsDir;
     #indexMap;
     #descriptionsSet;
-    constructor(systemsDir, indexMap) {
+    constructor(pathToSystemsDir, systemsDir, indexMap) {
         super();
+        this.#pathToSystemsDir = pathToSystemsDir;
         this.#systemsDir = systemsDir;
         this.#indexMap = indexMap;
         this.#descriptionsSet = new Set(indexMap.values());
@@ -36,10 +42,11 @@ class OPFSFileSystemManagerWorker extends DirectoryWorker {
         await this.#systemsDir.getDirectoryHandle(key, { create: true });
         this.#indexMap.set(key, newDescription);
         this.#descriptionsSet.add(newDescription);
+        await this.#indexMap.commit();
         return key;
     }
     // OPFSFileSystemIfc
-    setDescription(key, newDescription) {
+    async setDescription(key, newDescription) {
         newDescription = newDescription.trim();
         if (!newDescription) {
             throw new Error("whitespace descriptions not allowed");
@@ -54,7 +61,8 @@ class OPFSFileSystemManagerWorker extends DirectoryWorker {
         this.#indexMap.set(key, newDescription);
         this.#descriptionsSet.delete(oldDescription);
         this.#descriptionsSet.add(newDescription);
-        return Promise.resolve(null);
+        await this.#indexMap.commit();
+        return null;
     }
     // OPFSFileSystemIfc
     async remove(key) {
@@ -65,8 +73,14 @@ class OPFSFileSystemManagerWorker extends DirectoryWorker {
         const oldDescription = this.#indexMap.get(key);
         this.#indexMap.delete(key);
         this.#descriptionsSet.delete(oldDescription);
+        await this.#indexMap.commit();
         return null;
     }
+    // OPFSFileSystemIfc
+    getWebFSPath(key) {
+        return Promise.resolve(this.#pathToSystemsDir + "/" + key);
+    }
+    // OPFSFileSystemIfc
     getClipboardPath() {
         return Promise.resolve(OPFSFileSystemManagerWorker[GET_ROOT_DIR_PATH]() + "/clipboard");
     }

@@ -18,6 +18,10 @@ export interface OPFSFileSystemManagerIfc {
     key: UUID
   ): Promise<null>;
 
+  getWebFSPath(
+    key: UUID
+  ): Promise<string>;
+
   getClipboardPath(): Promise<string>;
 
   terminate(): Promise<void>;

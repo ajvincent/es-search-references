@@ -43,6 +43,10 @@ implements OPFSFileSystemManagerIfc
     return this[REQUEST_ASYNC_METHOD]("remove", [key]);
   }
 
+  getWebFSPath(key: UUID): Promise<string> {
+    return this[REQUEST_ASYNC_METHOD]("getWebFSPath", [key]);
+  }
+
   getClipboardPath(): Promise<string> {
     return this[REQUEST_ASYNC_METHOD]("getClipboardPath", []);
   }

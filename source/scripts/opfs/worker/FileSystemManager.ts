@@ -13,8 +13,8 @@ import {
 } from "./DirectoryWorker.js";
 
 import {
-  JSONMap
-} from "./JSONMap.js";
+  AsyncJSONMap
+} from "./AsyncJSONMap.js";
 
 const WorkerGlobal = self as unknown as DedicatedWorkerGlobalScope;
 
@@ -25,29 +25,32 @@ implements OPFSFileSystemManagerIfc
   static async build(): Promise<void> {
     const topDir = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
 
-    const systemsDir: FileSystemDirectoryHandle = await topDir.getDirectoryHandle(
-      "filesystems", { create: true }
-    );
+    const [systemsDir, indexFile, clipboardDir] = await Promise.all([
+      topDir.getDirectoryHandle("filesystems", { create: true }),
+      topDir.getFileHandle("index.json", { create: true }),
+      topDir.getDirectoryHandle("clipboard", { create: true }),
+    ])
 
-    const indexFile: FileSystemFileHandle = await topDir.getFileHandle(
-      "index.json", { create: true }
-    );
-    const indexMap = await JSONMap.build<UUID, string>(indexFile);
+    const indexMap = await AsyncJSONMap.build<UUID, string>(indexFile);
 
-    void(new OPFSFileSystemManagerWorker(systemsDir, indexMap));
+    void(new OPFSFileSystemManagerWorker(topDir + "/filesystems", systemsDir, indexMap));
+    void(clipboardDir);
     WorkerGlobal.postMessage("initialized");
   }
 
+  readonly #pathToSystemsDir: string;
   readonly #systemsDir: FileSystemDirectoryHandle;
-  readonly #indexMap: JSONMap<UUID, string>;
+  readonly #indexMap: AsyncJSONMap<UUID, string>;
   readonly #descriptionsSet: Set<string>;
 
   private constructor(
+    pathToSystemsDir: string,
     systemsDir: FileSystemDirectoryHandle,
-    indexMap: JSONMap<UUID, string>,
+    indexMap: AsyncJSONMap<UUID, string>,
   )
   {
     super();
+    this.#pathToSystemsDir = pathToSystemsDir;
     this.#systemsDir = systemsDir;
     this.#indexMap = indexMap;
     this.#descriptionsSet = new Set(indexMap.values());
@@ -76,12 +79,13 @@ implements OPFSFileSystemManagerIfc
 
     this.#indexMap.set(key, newDescription);
     this.#descriptionsSet.add(newDescription);
+    await this.#indexMap.commit();
 
     return key;
   }
 
   // OPFSFileSystemIfc
-  setDescription(
+  async setDescription(
     key: UUID,
     newDescription: string
   ): Promise<null>
@@ -101,8 +105,9 @@ implements OPFSFileSystemManagerIfc
     this.#indexMap.set(key, newDescription);
     this.#descriptionsSet.delete(oldDescription);
     this.#descriptionsSet.add(newDescription);
+    await this.#indexMap.commit();
 
-    return Promise.resolve(null);
+    return null;
   }
 
   // OPFSFileSystemIfc
@@ -118,10 +123,20 @@ implements OPFSFileSystemManagerIfc
     const oldDescription = this.#indexMap.get(key)!;
     this.#indexMap.delete(key);
     this.#descriptionsSet.delete(oldDescription);
+    await this.#indexMap.commit();
 
     return null;
   }
 
+  // OPFSFileSystemIfc
+  getWebFSPath(
+    key: UUID
+  ): Promise<string>
+  {
+    return Promise.resolve(this.#pathToSystemsDir + "/" + key);
+  }
+
+  // OPFSFileSystemIfc
   getClipboardPath(): Promise<string> {
     return Promise.resolve(OPFSFileSystemManagerWorker[GET_ROOT_DIR_PATH]() + "/clipboard");
   }
