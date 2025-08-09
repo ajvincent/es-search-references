@@ -1,7 +1,4 @@
-import type {
-  FileSystemMap
-} from "../../storage/FileSystemMap.js";
-
+import { OPFSWebFileSystemIfc } from "scripts/opfs/types/WebFileSystemIfc.js";
 import {
   type BaseView,
   TabPanelsView
@@ -12,33 +9,28 @@ import {
 } from "./EditorView.js";
 
 export class FileEditorMapView implements BaseView {
-  readonly #fileMap: FileSystemMap;
   readonly #panelsView: TabPanelsView<EditorPanelView>;
+  readonly #webFS: OPFSWebFileSystemIfc;
 
-  public readonly panelSetId: string;
   public readonly displayElement: HTMLElement;
   readonly #isReadonly: boolean;
 
   constructor(
-    fileMap: FileSystemMap,
     panelSetId: string,
     isReadonly: boolean,
-    parentElement: HTMLElement
+    parentElement: HTMLElement,
+
+    webFS: OPFSWebFileSystemIfc
   )
   {
-    this.#fileMap = fileMap;
     this.#isReadonly = isReadonly;
 
-    this.panelSetId = panelSetId;
     this.displayElement = document.createElement("tab-panels");
     this.displayElement.id = panelSetId;
     parentElement.append(this.displayElement);
     this.#panelsView = new TabPanelsView(panelSetId);
 
-    for (const filePath of this.#fileMap.keys()) {
-
-      this.addEditorForPath(filePath);
-    }
+    this.#webFS = webFS;
   }
 
   dispose(): void {
@@ -46,16 +38,16 @@ export class FileEditorMapView implements BaseView {
     this.#panelsView.dispose();
   }
 
-  public addEditorForPath(filePath: string): void {
-    if (!this.displayElement) {
-      throw new Error("no parent element for editor, call this.createEditors() first!");
-    }
+  public hasEditorForPath(filePath: string): boolean {
+    return this.#panelsView.hasPanel(filePath);
+  }
 
+  public async addEditorForPath(filePath: string): Promise<void> {
     if (this.#panelsView.hasPanel(filePath)) {
       throw new Error("we already have an editor for " + filePath);
     }
 
-    const contents = this.#fileMap.get(filePath);
+    const contents = await this.#webFS.readFileDeep(filePath);
     if (contents === undefined) {
       throw new Error("unknown file path: " + filePath);
     }
@@ -73,6 +65,7 @@ export class FileEditorMapView implements BaseView {
     this.#panelsView.currentPanel!.scrollToLine(lineNumber);
   }
 
+  /*
   public updateFileMap(): void {
     this.#fileMap.batchUpdate(() => {
       const unvisited = new Set<string>(this.#fileMap.keys());
@@ -86,4 +79,5 @@ export class FileEditorMapView implements BaseView {
       }
     });
   }
+  */
 }

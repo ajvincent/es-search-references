@@ -1,4 +1,3 @@
-import { FileSystemMap } from "../../storage/FileSystemMap.js";
 export var ValidFileOperations;
 (function (ValidFileOperations) {
     ValidFileOperations["clone"] = "clone";
@@ -10,13 +9,14 @@ export var ValidFileOperations;
 })(ValidFileOperations || (ValidFileOperations = {}));
 ;
 export class FileSystemSetView {
-    static #createOption(value) {
+    static #createOption(keyAndLabel) {
+        const [fsKey, label] = keyAndLabel;
         const option = document.createElement("option");
-        option.value = value;
-        option.append(value);
+        option.value = fsKey;
+        option.append(label);
         return option;
     }
-    static #referenceFileOption = FileSystemSetView.#createOption("reference-spec-filesystem");
+    #fsFrontEnd;
     displayElement;
     operationSelect;
     fileUploadPicker;
@@ -31,7 +31,8 @@ export class FileSystemSetView {
         [ValidFileOperations.export, new Map],
         [ValidFileOperations.delete, new Map],
     ]);
-    constructor() {
+    constructor(fsFrontEnd) {
+        this.#fsFrontEnd = fsFrontEnd;
         this.displayElement = document.getElementById("filesystem-controls-form");
         this.operationSelect = this.#getElement("filesystem-operation");
         this.fileUploadPicker = this.#getElement("file-upload-picker");
@@ -54,11 +55,13 @@ export class FileSystemSetView {
         this.updateExistingSystemSelector();
         this.#updateElementsVisible();
     }
-    updateExistingSystemSelector() {
-        const currentSystems = FileSystemMap.allKeys();
-        const options = currentSystems.map(FileSystemSetView.#createOption);
+    async updateExistingSystemSelector() {
+        const currentSystems = await this.#fsFrontEnd.fsManager.getAvailableSystems();
+        const options = Object.entries(currentSystems).map(FileSystemSetView.#createOption);
         if (this.operationSelect.value !== "rename" && this.operationSelect.value !== "delete") {
+            /*
             options.unshift(FileSystemSetView.#referenceFileOption);
+            */
         }
         this.sourceSelector.replaceChildren(...options);
     }

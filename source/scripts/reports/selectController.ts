@@ -22,6 +22,10 @@ import type {
   OutputController
 } from "./outputController.js";
 
+import type {
+  DirectoryRecord,
+} from "../opfs/types/WebFileSystemIfc.js";
+
 void(ReportSelectorElement); // force the custom element upgrade
 
 export class ReportSelectController {
@@ -34,11 +38,12 @@ export class ReportSelectController {
   constructor(
     rootId: string,
     outputController: OutputController,
+    index: DirectoryRecord
   )
   {
     this.#rootElement = document.getElementById(rootId) as ReportSelectorElement;
     this.#fileSystemView = new FileSystemView(
-      BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows!
+      BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows!, index
     );
     this.#outputController = outputController;
   }
@@ -48,8 +53,19 @@ export class ReportSelectController {
     this.#fileSystemView.clearRowMap();
   }
 
-  refreshTree(): void {
+  refreshTree(
+    index: DirectoryRecord
+  ): void
+  {
     this.clear();
+    this.#fileSystemView.fillDirectoryFromTop(index);
+
+    for (const [fullPath, view] of this.#fileSystemView.descendantFileViews()) {
+      for (const searchKey of this.#outputController.filePathsAndSearchKeys.get(fullPath)!) {
+        this.#addSearchKeyRow(fullPath, searchKey, view);
+      }
+    }
+    /*
     const directoriesSet = new Set<string>;
 
     const fileKeys = Array.from(this.#outputController.filePathsAndSearchKeys.keys());
@@ -61,6 +77,7 @@ export class ReportSelectController {
         this.#addSearchKeyRow(key, searchKey, fileRowView);
       }
     }
+    */
   }
 
   #addSearchKeyRow(

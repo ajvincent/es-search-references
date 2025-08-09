@@ -4,8 +4,9 @@ import {
 } from "../codemirror/views/FileEditorMapView.js";
 
 import type {
-  FileSystemMap
-} from "../storage/FileSystemMap.js";
+  DirectoryRecord,
+  OPFSWebFileSystemIfc
+} from "../opfs/types/WebFileSystemIfc.js";
 
 import type {
   BaseView
@@ -47,10 +48,31 @@ export interface FileSystemControllerIfc {
 }
 
 export class FileSystemController implements BaseView, FileSystemControllerIfc {
+  public static async build(
+    rootId: string,
+    isReadonly: boolean,
+    fileSystemElement: FileSystemElement,
+    codeMirrorPanelsElement: HTMLElement,
+
+    webFS: OPFSWebFileSystemIfc,
+  ): Promise<FileSystemController>
+  {
+    const index: DirectoryRecord = await webFS.getIndex();
+    return new FileSystemController(
+      rootId,
+      isReadonly,
+      fileSystemElement,
+      codeMirrorPanelsElement,
+      webFS,
+      index
+    );
+  }
+
   readonly isReadOnly: boolean;
   readonly displayElement: FileSystemElement;
 
-  readonly fileMap: FileSystemMap;
+  readonly #webFS: OPFSWebFileSystemIfc;
+
   readonly #filesCheckedSet = new Set<string>;
   readonly filesCheckedSet: ReadonlySet<string> = this.#filesCheckedSet;
 
@@ -62,25 +84,25 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
 
   readonly #directoriesSet = new Set<string>;
 
-  constructor(
+  private constructor(
     rootId: string,
     isReadonly: boolean,
     fileSystemElement: FileSystemElement,
-    fileMap: FileSystemMap,
     codeMirrorPanelsElement: HTMLElement,
+    webFS: OPFSWebFileSystemIfc,
+    index: DirectoryRecord
   )
   {
     this.displayElement = fileSystemElement;
     this.isReadOnly = isReadonly;
-    this.fileMap = fileMap;
+    this.#webFS = webFS;
 
-    this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows!);
-
-    for (const key of this.fileMap.keys()) {
-      this.#addFileKey(key);
+    this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows!, index);
+    for (const [fullPath, fileView] of this.#fileSystemView.descendantFileViews()) {
+      this.#addFileEventHandlers(fullPath, fileView)
     }
 
-    this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
+    this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS);
 
     this.#fsContextMenu = new FileSystemContextMenu(this);
     void this.#fsContextMenu;
@@ -100,15 +122,14 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
       this.#filesCheckedSet.delete(pathToFile);
   }
 
-  #addFileKey(key: string): void {
-    const view: FileRowView = this.#fileSystemView.addFileKey(key, this.#directoriesSet);
-    this.#fileToRowMap.set(key, view);
+  #addFileEventHandlers(fullPath: string, view: FileRowView): void {
+    this.#fileToRowMap.set(fullPath, view);
 
     view.checkboxElement!.onclick = (ev: MouseEvent): void => {
-      this.#fileCheckToggled(key, view.checkboxElement!.checked);
+      this.#fileCheckToggled(fullPath, view.checkboxElement!.checked);
     };
     view.radioElement!.onclick = (ev: Event): void => {
-      this.editorMapView.selectFile(key);
+      this.editorMapView.selectFile(fullPath);
     };
 
     view.rowElement!.onclick = (ev: MouseEvent): void => {
@@ -126,7 +147,10 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
   }
 
   updateFileMap(): void {
+    throw new Error("need to reimplement");
+    /*
     this.editorMapView.updateFileMap();
+    */
   }
 
   // FileSystemControllerIfc
@@ -141,6 +165,7 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
 
   // FileSystemControllerIfc
   async startAddFile(pathToDirectory: string): Promise<void> {
+    /*
     const parentRowView = this.#fileSystemView.getRowView(pathToDirectory);
     if (parentRowView.rowType !== "directory") {
       throw new Error("row type must be a directory: " + pathToDirectory);
@@ -167,10 +192,12 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
 
     this.fileMap.set(fullPath, "");
     this.#addFileKey(fullPath);
-    this.editorMapView.addEditorForPath(fullPath);
+    await this.editorMapView.addEditorForPath(fullPath);
 
     this.#fileSystemView.showFile(fullPath);
     resolve(null);
+    */
+    return Promise.reject(new Error("this is being rewritten"));
   }
 
   #isValidNewFileName(

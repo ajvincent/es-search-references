@@ -1,10 +1,10 @@
 import {
-  FileSystemMap
-} from "../../storage/FileSystemMap.js";
-
-import {
   BaseView
 } from "../../tab-panels/tab-panels-view.js";
+
+import type {
+  OPFSFrontEnd
+} from "../../opfs/client/FrontEnd.js";
 
 export enum ValidFileOperations {
   clone = "clone",
@@ -16,16 +16,15 @@ export enum ValidFileOperations {
 };
 
 export class FileSystemSetView implements BaseView {
-  static #createOption(value: string): HTMLOptionElement {
+  static #createOption(keyAndLabel: [string, string]): HTMLOptionElement {
+    const [fsKey, label] = keyAndLabel;
     const option = document.createElement("option");
-    option.value = value;
-    option.append(value);
+    option.value = fsKey;
+    option.append(label);
     return option;
   }
 
-  static readonly #referenceFileOption = FileSystemSetView.#createOption(
-    "reference-spec-filesystem"
-  );
+  readonly #fsFrontEnd: OPFSFrontEnd;
 
   readonly displayElement: HTMLFormElement;
 
@@ -44,7 +43,10 @@ export class FileSystemSetView implements BaseView {
     [ValidFileOperations.delete, new Map],
   ]);
 
-  constructor() {
+  constructor(fsFrontEnd: OPFSFrontEnd)
+  {
+    this.#fsFrontEnd = fsFrontEnd;
+
     this.displayElement = document.getElementById("filesystem-controls-form") as HTMLFormElement;
 
     this.operationSelect = this.#getElement<HTMLSelectElement>("filesystem-operation");
@@ -72,11 +74,13 @@ export class FileSystemSetView implements BaseView {
     this.#updateElementsVisible();
   }
 
-  updateExistingSystemSelector(): void {
-    const currentSystems: readonly string[] = FileSystemMap.allKeys();
-    const options: HTMLOptionElement[] = currentSystems.map(FileSystemSetView.#createOption);
+  async updateExistingSystemSelector(): Promise<void> {
+    const currentSystems: Record<string, string> = await this.#fsFrontEnd.fsManager.getAvailableSystems();
+    const options: HTMLOptionElement[] = Object.entries(currentSystems).map(FileSystemSetView.#createOption);
     if (this.operationSelect.value !== "rename" && this.operationSelect.value !== "delete") {
+      /*
       options.unshift(FileSystemSetView.#referenceFileOption);
+      */
     }
     this.sourceSelector.replaceChildren(...options);
   }

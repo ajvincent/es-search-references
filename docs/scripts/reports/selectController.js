@@ -9,26 +9,36 @@ export class ReportSelectController {
     #rootElement;
     #selectedView;
     #fileSystemView;
-    constructor(rootId, outputController) {
+    constructor(rootId, outputController, index) {
         this.#rootElement = document.getElementById(rootId);
-        this.#fileSystemView = new FileSystemView(BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows);
+        this.#fileSystemView = new FileSystemView(BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows, index);
         this.#outputController = outputController;
     }
     clear() {
         this.#rootElement.treeRows.replaceChildren();
         this.#fileSystemView.clearRowMap();
     }
-    refreshTree() {
+    refreshTree(index) {
         this.clear();
-        const directoriesSet = new Set;
+        this.#fileSystemView.fillDirectoryFromTop(index);
+        for (const [fullPath, view] of this.#fileSystemView.descendantFileViews()) {
+            for (const searchKey of this.#outputController.filePathsAndSearchKeys.get(fullPath)) {
+                this.#addSearchKeyRow(fullPath, searchKey, view);
+            }
+        }
+        /*
+        const directoriesSet = new Set<string>;
+    
         const fileKeys = Array.from(this.#outputController.filePathsAndSearchKeys.keys());
         fileKeys.sort();
         for (const key of fileKeys) {
-            const fileRowView = this.#fileSystemView.addFileKey(key, directoriesSet);
-            for (const searchKey of this.#outputController.filePathsAndSearchKeys.get(key)) {
-                this.#addSearchKeyRow(key, searchKey, fileRowView);
-            }
+          const fileRowView = this.#fileSystemView.addFileKey(key, directoriesSet);
+    
+          for (const searchKey of this.#outputController.filePathsAndSearchKeys.get(key)!) {
+            this.#addSearchKeyRow(key, searchKey, fileRowView);
+          }
         }
+        */
     }
     #addSearchKeyRow(fileKey, searchKey, fileRowView) {
         const view = new SearchKeyRowView(fileRowView.depth + 1, searchKey);

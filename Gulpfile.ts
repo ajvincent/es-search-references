@@ -18,10 +18,6 @@ import {
 } from "./build-utilities/dist/source/InvokeTSC.js";
 
 import {
-  PromiseAllParallel,
-} from "./build-utilities/dist/source/PromiseTypes.js";
-
-import {
   projectRoot
 } from "./build-utilities/dist/source/constants.js";
 
@@ -70,45 +66,6 @@ function installSearchReferences_d_ts() {
     .pipe(replace("@engine262/engine262", "./engine262.mjs"))
     .pipe(replace("@dagrejs/graphlib", "./dagre-imports.js"))
     .pipe(dest("source/lib/packages"));
-}
-
-async function installReferenceSpecsOld(): Promise<void> {
-  const files: string[] = (await fs.readdir(path.join(projectRoot, "dist"), { recursive: true })).filter(
-    f => (f.startsWith("fixtures") || f.startsWith("reference-spec")) && f.endsWith(".js")
-  );
-
-  const fileEntries: [string, string][] = await PromiseAllParallel(files, async f => [
-    "virtual://home/" + f, await fs.readFile(path.join(projectRoot, "dist", f), { encoding: "utf-8"})
-  ]);
-  fileEntries.unshift([
-    `es-search-references/guest`,
-    `
-/*
-declare function searchReferences(
-  this: void,
-  resultsKey: string,
-  targetValue: WeakKey,
-  heldValues: readonly WeakKey[],
-  strongReferencesOnly: boolean,
-): void;
-*/
-export {};
-    `.trim() + "\n"
-  ])
-
-  const serialized = JSON.stringify(fileEntries);
-  const moduleSource = `
-import {
-  FileSystemMap
-} from "../storage/FileSystemMap.js";
-export const ReferenceSpecFileMap = new FileSystemMap("reference-spec-filesystem", ${serialized});
-`.trim();
-
-  await fs.writeFile(
-    path.join(projectRoot, "docs/scripts/reference-spec/FileMap.js"),
-    moduleSource,
-    { encoding: "utf-8"}
-  );
 }
 
 async function installReferenceSpecs(): Promise<void> {
@@ -217,7 +174,6 @@ export default series([
     installFFlate,
     installSearchReferencesJs,
     installSearchReferences_d_ts,
-    installReferenceSpecsOld,
     installReferenceSpecs,
     installCodeMirror,
     buildScripts,

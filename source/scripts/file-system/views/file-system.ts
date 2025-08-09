@@ -2,9 +2,9 @@ import type {
   Class
 } from "type-fest";
 
-import type {
-  TreeRowView
-} from "../../tree/views/tree-row.js";
+import {
+  DirectoryRecord
+} from "../../opfs/types/WebFileSystemIfc.js";
 
 import type {
   BaseDirectoryRowView,
@@ -13,10 +13,6 @@ import type {
 import type {
   BaseFileRowView,
 } from "./base-file-row.js";
-
-import {
-  getParentAndLeaf
-} from "../../utilities/getParentAndLeaf.js";
 
 type DirectoryArguments = [
   depth: number, primaryLabel: string, fullPath: string
@@ -41,13 +37,16 @@ export class FileSystemView<
     DirectoryViewClass: Class<DirectoryView, DirectoryArguments>,
     FileViewClass: Class<FileView, FileArguments>,
     isFileCollapsible: boolean,
-    treeRowsElement: HTMLElement
+    treeRowsElement: HTMLElement,
+    initialIndex: DirectoryRecord
   )
   {
     this.#DirectoryViewClass = DirectoryViewClass;
     this.#FileViewClass = FileViewClass;
     this.#isFileCollapsible = isFileCollapsible;
     this.#treeRowsElement = treeRowsElement;
+
+    this.fillDirectoryFromTop(initialIndex);
   }
 
   hasRowView(key: string): boolean {
@@ -67,48 +66,64 @@ export class FileSystemView<
     this.#fileToRowMap.clear();
   }
 
-  addFileKey(key: string, directoriesSet: Set<string>): FileView {
-    const [parent, leaf] = getParentAndLeaf(key);
-    if (parent && directoriesSet.has(parent) === false) {
-      this.#addDirectoryKey(parent, directoriesSet);
-    }
-    const parentRowView = this.#fileToRowMap.get(parent)!;
-    const view: FileView = new this.#FileViewClass(parentRowView.depth +1, this.#isFileCollapsible, leaf, key);
-    this.#fileToRowMap.set(key, view);
-    parentRowView.insertRowSorted(view);
+  fillDirectoryFromTop(
+    topRecord: DirectoryRecord
+  ): void
+  {
+    for (const [key, contentsOrRecord] of Object.entries(topRecord)) {
+      let view: FileView | DirectoryView;
+      if (typeof contentsOrRecord === "string") {
+        view = new this.#FileViewClass(0, this.#isFileCollapsible, key, key);
+      }
+      else {
+        view = new this.#DirectoryViewClass(0, key, key);
+        this.#fillDirectoryView(contentsOrRecord, view);
+      }
 
-    return view;
-  }
-
-  #addDirectoryKey(key: string, directoriesSet: Set<string>): void {
-    let [parent, leaf] = getParentAndLeaf(key);
-    if (parent && directoriesSet.has(parent) === false) {
-      this.#addDirectoryKey(parent, directoriesSet);
-    }
-
-    let depth: number
-    if (parent === "") {
-      depth = 0;
-    } else {
-      depth = this.#fileToRowMap.get(parent)!.depth + 1
-    }
-
-    const view = new this.#DirectoryViewClass(depth, leaf, key);
-    this.#fileToRowMap.set(key, view);
-
-    if (depth > 0) {
-      view.registerCollapseClick();
-      this.#fileToRowMap.get(parent)!.insertRowSorted(view);
-    } else {
+      this.#fileToRowMap.set(key, view);
       this.#treeRowsElement.append(view.rowElement!);
     }
-    directoriesSet.add(key);
+  }
+
+  #fillDirectoryView(
+    parentRecord: DirectoryRecord,
+    parentView: DirectoryView
+  ): void
+  {
+    const depth = parentView.depth + 1;
+    for (const [key, contentsOrRecord] of Object.entries(parentRecord)) {
+      let fullPath: string;
+      if (parentView.fullPath.endsWith("/")) {
+        fullPath = parentView.fullPath + key;
+      } else {
+        fullPath = parentView.fullPath + "/" + key;
+      }
+
+      let view: FileView | DirectoryView;
+      if (typeof contentsOrRecord === "string") {
+        view = new this.#FileViewClass(depth, this.#isFileCollapsible, key, fullPath);
+      } else {
+        view = new this.#DirectoryViewClass(depth, key, fullPath);
+        this.#fillDirectoryView(contentsOrRecord, view);
+      }
+
+      this.#fileToRowMap.set(fullPath, view);
+      parentView.rowElement!.append(view.rowElement!);
+    }
   }
 
   showFile(
-    key: string
+    fullPath: string
   ): void
   {
-    (this.#fileToRowMap.get(key) as FileView).selectFile(key);
+    (this.#fileToRowMap.get(fullPath) as FileView).selectFile(fullPath);
+  }
+
+  * descendantFileViews(): IterableIterator<[string, FileView]>
+  {
+    for (const [fullPath, view] of this.#fileToRowMap.entries()) {
+      if (view instanceof this.#FileViewClass)
+        yield [fullPath, view];
+    }
   }
 }

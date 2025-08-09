@@ -1,23 +1,11 @@
-import type {
-  FlateCallback,
-  UnzipCallback,
-  UnzipFileFilter,
-} from "fflate";
-
 import {
   FileSystemSetView,
   ValidFileOperations
 } from "./views/fs-set.js";
 
-import {
-  unzip,
-  zip
-} from "../../lib/packages/fflate.js";
-
 import type {
-  ExportedFileSystem,
-  FileSystemMap
-} from "../storage/FileSystemMap.js";
+  OPFSFrontEnd
+} from "../opfs/client/FrontEnd.js";
 
 export {
   ValidFileOperations
@@ -26,7 +14,14 @@ export {
 export class FileSystemSetController {
   static readonly #decoder = new TextDecoder;
 
-  readonly view = new FileSystemSetView();
+  readonly view: FileSystemSetView;
+
+  constructor(
+    fsFrontEnd: OPFSFrontEnd
+  )
+  {
+    this.view = new FileSystemSetView(fsFrontEnd);
+  }
 
   get form(): HTMLFormElement {
     return this.view.displayElement;
@@ -44,6 +39,19 @@ export class FileSystemSetController {
     return this.view.targetInput.value;
   }
 
+  async ensureReferenceFS(): Promise<void> {
+    
+  }
+
+  async getFileEntries(): Promise<[string, string][]> {
+    throw new Error("to be re-implemented");
+  }
+
+  async getExportedFilesZip(): Promise<File> {
+    throw new Error("to be re-implemented");
+  }
+
+  /*
   async getFileEntries(): Promise<[string, string][]> {
     const buffer: ArrayBuffer = await this.view.fileUploadPicker.files![0]!.arrayBuffer();
     const firstFile = new Uint8Array(buffer);
@@ -83,6 +91,7 @@ export class FileSystemSetController {
     const zipUint8: Uint8Array<ArrayBufferLike> = await deferred.promise;
     return new File([zipUint8], "exported-files.zip", { type: "application/zip" });
   }
+  */
 
   reset(): void {
     this.view.updateExistingSystemSelector();
