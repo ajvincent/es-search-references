@@ -1,9 +1,13 @@
 import { FileSystemSetView, ValidFileOperations } from "./views/fs-set.js";
+import { ReferenceSpecRecord } from "../reference-spec/WebFileSystem.js";
 export { ValidFileOperations };
 export class FileSystemSetController {
+    static referenceFSLabel = "Reference-spec file system";
     static #decoder = new TextDecoder;
+    #fsFrontEnd;
     view;
     constructor(fsFrontEnd) {
+        this.#fsFrontEnd = fsFrontEnd;
         this.view = new FileSystemSetView(fsFrontEnd);
     }
     get form() {
@@ -19,6 +23,15 @@ export class FileSystemSetController {
         return this.view.targetInput.value;
     }
     async ensureReferenceFS() {
+        const currentFileSystems = await this.#fsFrontEnd.getAvailableSystems();
+        const descriptions = Object.values(currentFileSystems);
+        for (const desc of descriptions) {
+            if (desc === FileSystemSetController.referenceFSLabel)
+                return;
+        }
+        const uuid = await this.#fsFrontEnd.buildEmpty(FileSystemSetController.referenceFSLabel);
+        const webFS = await this.#fsFrontEnd.getWebFS(uuid);
+        await webFS.importDirectoryRecord(ReferenceSpecRecord);
     }
     async getFileEntries() {
         throw new Error("to be re-implemented");

@@ -1,4 +1,5 @@
 export type UUID = ReturnType<Crypto["randomUUID"]>;
+export type FileSystemsRecords = { [ key: UUID ]: string };
 
 interface MethodMessageBase<ServiceName extends string> {
   readonly serviceName: ServiceName;

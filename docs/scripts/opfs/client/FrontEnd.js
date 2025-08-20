@@ -11,11 +11,11 @@ export class OPFSFrontEnd {
     constructor(fsManager) {
         this.#fsManager = fsManager;
     }
-    get fsManager() {
-        if (!this.#isLive || !this.#fsManager) {
+    async getAvailableSystems() {
+        if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
             throw new Error("this front end is dead");
         }
-        return this.#fsManager;
+        return this.#fsManager.getAvailableSystems();
     }
     async getWebFS(key) {
         if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
@@ -25,12 +25,18 @@ export class OPFSFrontEnd {
         if (webFS)
             return webFS;
         const [pathToWebFiles, clipboardPath] = await Promise.all([
-            this.fsManager.getWebFSPath(key),
-            this.fsManager.getClipboardPath()
+            this.#fsManager.getWebFSPath(key),
+            this.#fsManager.getClipboardPath()
         ]);
         webFS = await OPFSWebFileSystemClientImpl.build(pathToWebFiles, clipboardPath);
         this.#webFsMap.set(key, webFS);
         return webFS;
+    }
+    async buildEmpty(description) {
+        if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
+            throw new Error("this front end is dead");
+        }
+        return this.#fsManager.buildEmpty(description);
     }
     async removeWebFS(key) {
         if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
@@ -38,10 +44,11 @@ export class OPFSFrontEnd {
         }
         const webFS = this.#webFsMap.get(key);
         if (!webFS)
-            return;
+            return false;
         this.#webFsMap.delete(key);
         await webFS.terminate();
         await this.#fsManager.remove(key);
+        return true;
     }
     async terminate() {
         if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
@@ -53,7 +60,7 @@ export class OPFSFrontEnd {
             promises.add(webFS.terminate());
         }
         await Promise.all(promises);
-        await this.fsManager.terminate();
+        await this.#fsManager.terminate();
         this.#webFsMap = undefined;
         this.#fsManager = undefined;
     }

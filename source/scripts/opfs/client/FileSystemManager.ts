@@ -3,6 +3,7 @@ import type {
 } from "../types/FileSystemManagerIfc.js";
 
 import type {
+  FileSystemsRecords,
   UUID
 } from "../types/messages.js";
 
@@ -27,7 +28,7 @@ implements OPFSFileSystemManagerIfc
     return new OPFSFileSystemManagerClientImpl(worker);
   }
 
-  getAvailableSystems(): Promise<{ [key: string]: string; }> {
+  getAvailableSystems(): Promise<FileSystemsRecords> {
     return this[REQUEST_ASYNC_METHOD]("getAvailableSystems", []);
   }
 

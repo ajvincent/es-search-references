@@ -1,10 +1,10 @@
-import {
-  BaseView
-} from "../../tab-panels/tab-panels-view.js";
-
 import type {
   OPFSFrontEnd
 } from "../../opfs/client/FrontEnd.js";
+
+import {
+  BaseView
+} from "../../tab-panels/tab-panels-view.js";
 
 export enum ValidFileOperations {
   clone = "clone",
@@ -75,7 +75,7 @@ export class FileSystemSetView implements BaseView {
   }
 
   async updateExistingSystemSelector(): Promise<void> {
-    const currentSystems: Record<string, string> = await this.#fsFrontEnd.fsManager.getAvailableSystems();
+    const currentSystems: Record<string, string> = await this.#fsFrontEnd.getAvailableSystems();
     const options: HTMLOptionElement[] = Object.entries(currentSystems).map(FileSystemSetView.#createOption);
     if (this.operationSelect.value !== "rename" && this.operationSelect.value !== "delete") {
       /*

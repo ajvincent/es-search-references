@@ -56,7 +56,7 @@ export class FileSystemSetView {
         this.#updateElementsVisible();
     }
     async updateExistingSystemSelector() {
-        const currentSystems = await this.#fsFrontEnd.fsManager.getAvailableSystems();
+        const currentSystems = await this.#fsFrontEnd.getAvailableSystems();
         const options = Object.entries(currentSystems).map(FileSystemSetView.#createOption);
         if (this.operationSelect.value !== "rename" && this.operationSelect.value !== "delete") {
             /*

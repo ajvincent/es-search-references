@@ -7,6 +7,7 @@ import type {
 } from "../types/WebFileSystemIfc.js";
 
 import type {
+  FileSystemsRecords,
   UUID
 } from "../types/messages.js";
 
@@ -36,14 +37,17 @@ export class OPFSFrontEnd {
     this.#fsManager = fsManager;
   }
 
-  get fsManager(): OPFSFileSystemManagerIfc {
-    if (!this.#isLive || !this.#fsManager) {
+  async getAvailableSystems(): Promise<FileSystemsRecords>
+  {
+    if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
       throw new Error("this front end is dead");
     }
-    return this.#fsManager;
+    return this.#fsManager.getAvailableSystems();
   }
 
-  async getWebFS(key: UUID): Promise<OPFSWebFileSystemIfc>
+  async getWebFS(
+    key: UUID
+  ): Promise<OPFSWebFileSystemIfc>
   {
     if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
       throw new Error("this front end is dead");
@@ -57,8 +61,8 @@ export class OPFSFrontEnd {
       pathToWebFiles,
       clipboardPath
     ] = await Promise.all([
-      this.fsManager.getWebFSPath(key),
-      this.fsManager.getClipboardPath()
+      this.#fsManager.getWebFSPath(key),
+      this.#fsManager.getClipboardPath()
     ]);
     webFS = await OPFSWebFileSystemClientImpl.build(
       pathToWebFiles, clipboardPath
@@ -68,18 +72,31 @@ export class OPFSFrontEnd {
     return webFS;
   }
 
-  async removeWebFS(key: UUID): Promise<void>
+  async buildEmpty(
+    description: string
+  ): Promise<UUID>
+  {
+    if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
+      throw new Error("this front end is dead");
+    }
+    return this.#fsManager.buildEmpty(description);
+  }
+
+  async removeWebFS(
+    key: UUID
+  ): Promise<boolean>
   {
     if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
       throw new Error("this front end is dead");
     }
     const webFS: OPFSWebFileSystemIfc | undefined = this.#webFsMap.get(key);
     if (!webFS)
-      return;
+      return false;
 
     this.#webFsMap.delete(key);
     await webFS.terminate();
     await this.#fsManager.remove(key);
+    return true;
   }
 
   async terminate(): Promise<void>
@@ -94,7 +111,7 @@ export class OPFSFrontEnd {
       promises.add(webFS.terminate());
     }
     await Promise.all(promises);
-    await this.fsManager.terminate();
+    await this.#fsManager.terminate();
 
     this.#webFsMap = undefined;
     this.#fsManager = undefined;

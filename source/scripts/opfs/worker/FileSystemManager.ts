@@ -3,6 +3,7 @@ import type {
 } from "../types/FileSystemManagerIfc.js";
 
 import type {
+  FileSystemsRecords,
   UUID
 } from "../types/messages.js";
 
@@ -57,7 +58,7 @@ implements OPFSFileSystemManagerIfc
   }
 
   // OPFSFileSystemIfc
-  getAvailableSystems(): Promise<{ [key: string]: string; }> {
+  getAvailableSystems(): Promise<FileSystemsRecords> {
     return Promise.resolve(Object.fromEntries(this.#indexMap));
   }
 

@@ -7,19 +7,34 @@ import type {
   OPFSFrontEnd
 } from "../opfs/client/FrontEnd.js";
 
+import type {
+  OPFSWebFileSystemIfc
+} from "../opfs/types/WebFileSystemIfc.js";
+
+import type {
+  FileSystemsRecords
+} from "../opfs/types/messages.js";
+
+import {
+  ReferenceSpecRecord
+} from "../reference-spec/WebFileSystem.js";
+
 export {
   ValidFileOperations
 };
 
 export class FileSystemSetController {
+  static readonly referenceFSLabel = "Reference-spec file system";
   static readonly #decoder = new TextDecoder;
 
+  readonly #fsFrontEnd: OPFSFrontEnd;
   readonly view: FileSystemSetView;
 
   constructor(
     fsFrontEnd: OPFSFrontEnd
   )
   {
+    this.#fsFrontEnd = fsFrontEnd;
     this.view = new FileSystemSetView(fsFrontEnd);
   }
 
@@ -39,8 +54,18 @@ export class FileSystemSetController {
     return this.view.targetInput.value;
   }
 
-  async ensureReferenceFS(): Promise<void> {
-    
+  public async ensureReferenceFS(): Promise<void> {
+    const currentFileSystems: FileSystemsRecords = await this.#fsFrontEnd.getAvailableSystems();
+    const descriptions = Object.values(currentFileSystems);
+    for (const desc of descriptions) {
+      if (desc === FileSystemSetController.referenceFSLabel)
+        return;
+    }
+
+    const uuid = await this.#fsFrontEnd.buildEmpty(FileSystemSetController.referenceFSLabel);
+    const webFS: OPFSWebFileSystemIfc = await this.#fsFrontEnd.getWebFS(uuid);
+
+    await webFS.importDirectoryRecord(ReferenceSpecRecord);
   }
 
   async getFileEntries(): Promise<[string, string][]> {

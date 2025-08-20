@@ -1,9 +1,10 @@
 import type {
+  FileSystemsRecords,
   UUID
 } from "./messages.js";
 
 export interface OPFSFileSystemManagerIfc {
-  getAvailableSystems(): Promise<{[key: string]: string}>;
+  getAvailableSystems(): Promise<FileSystemsRecords>;
 
   buildEmpty(
     description: string

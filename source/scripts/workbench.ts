@@ -40,9 +40,18 @@ import {
   ProjectDir
 } from "./opfs/client/ProjectDir.js";
 
+import type {
+  FileSystemsRecords,
+  UUID
+} from "./opfs/types/messages.js";
+
 import {
   GenericPanelView
 } from "./tab-panels/panelView.js";
+
+import {
+  FileSystemSelectorView
+} from "./workbench-views/FileSystemSelector.js";
 //#endregion preamble
 
 interface ClassClickDetails {
@@ -56,20 +65,30 @@ class Workbench_Base {
 
   readonly #displayElement: HTMLDivElement;
 
-  readonly #fsSelector: HTMLSelectElement;
+  readonly #fsSelectElement: HTMLSelectElement;
+  readonly #fsSelector: FileSystemSelectorView;
   readonly #fileSystemToControllerMap = new Map<string, FileSystemController>;
 
   #fileSystemControlsLeftView?: GenericPanelView;
   #fileSystemSetController?: FileSystemSetController;
 
   #codeMirrorPanels?: TabPanelsView;
+
+  /** A container for the file system trees in the lower left corner. */
   #fileSystemPanels?: TabPanelsView;
 
   #lastRunSpan?: HTMLElement;
 
   constructor() {
     this.#displayElement = document.getElementById("workbench") as HTMLDivElement;
-    this.#fsSelector = document.getElementById("workspace-selector") as HTMLSelectElement;
+    this.#fsSelectElement = document.getElementById("workspace-selector") as HTMLSelectElement;
+
+    this.#fsSelector = new FileSystemSelectorView(
+      document.getElementById("workspace-selector") as HTMLSelectElement,
+      uuid => this.#onWorkspaceSelect(uuid),
+      () => this.#onFileSystemControlsSelect(),
+    );
+
     if (document.readyState === "complete")
       Promise.resolve().then(() => this.#initialize());
     else
@@ -91,18 +110,18 @@ class Workbench_Base {
     );
 
     this.#lastRunSpan = document.getElementById("lastRun")!;
-
-    this.#attachEvents();
     */
+    this.#attachEvents();
   }
 
   async #fillFileSystemPanels(): Promise<void> {
-    this.#fileSystemSetController = new FileSystemSetController(await this.#getFrontEnd());
+    const frontEnd: OPFSFrontEnd = await this.#getFrontEnd();
+    this.#fileSystemSetController = new FileSystemSetController(frontEnd);
     await this.#fileSystemSetController.ensureReferenceFS();
 
-    this.#fileSystemPanels = new TabPanelsView("filesystem-selector");
+    this.#fileSystemPanels = new TabPanelsView("filesystem-panels");
+    await this.#fsSelector.fillOptions(frontEnd);
     /*
-
     const refSpecOption: HTMLOptionElement = await this.#addFileSystemOption(
       "reference-spec-filesystem", ReferenceSpecFileMap, true
     );
@@ -120,9 +139,6 @@ class Workbench_Base {
     this.#fsSelector.append(refSpecOption, ...options);
 
     this.#fsSelector.value = "reference-spec-filesystem";
-
-    this.#fileSystemSetController.reset();
-    this.#onWorkspaceSelect();
     */
   }
 
@@ -132,7 +148,7 @@ class Workbench_Base {
   }
 
   #getCurrentFSController(): FileSystemController | undefined {
-    return this.#fileSystemToControllerMap.get(this.#fsSelector.value);
+    return this.#fileSystemToControllerMap.get(this.#fsSelectElement.value);
   }
 
   async #runSearches(event: MouseEvent): Promise<void> {
@@ -161,13 +177,13 @@ class Workbench_Base {
   }
 
   #attachEvents(): void {
+    /*
     document.getElementById("runSearchesButton")!.onclick = this.#runSearches.bind(this);
     const tabs = Array.from(document.querySelectorAll(OutputController.tabsSelector)) as HTMLElement[];
     for (const tab of tabs) {
       tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey!);
     }
 
-    this.#fsSelector.onchange = this.#onWorkspaceSelect.bind(this);
     this.#fileSystemSetController!.form.onsubmit = this.#onFileSetControllerSubmit.bind(this);
 
     this.#displayElement.addEventListener(
@@ -175,6 +191,7 @@ class Workbench_Base {
       (event) => this.#handleClassClick(event as CustomEvent),
       { capture: true, passive: true }
     );
+    */
   }
 
   #selectOutputReportTab(tabKey: string, event: MouseEvent): void {
@@ -183,6 +200,16 @@ class Workbench_Base {
     this.#outputController?.selectTabKey(tabKey);
   }
 
+  #onWorkspaceSelect(key: UUID): void {
+    /*
+    this.#fileSystemPanels!.activeViewKey = "fss:" + value;
+    this.#codeMirrorPanels!.activeViewKey = value;
+
+    this.#reportSelectorController?.clear();
+    this.#outputController?.clearResults();
+    */
+  }
+  /*
   #onWorkspaceSelect(event?: Event): void {
     event?.stopPropagation();
     event?.preventDefault();
@@ -198,6 +225,11 @@ class Workbench_Base {
 
     this.#reportSelectorController?.clear();
     this.#outputController?.clearResults();
+  }
+  */
+
+  #onFileSystemControlsSelect(): void {
+
   }
 
   async #onFileSetControllerSubmit(event: SubmitEvent): Promise<void> {
@@ -358,14 +390,14 @@ class Workbench_Base {
   #insertFileSystemOption(option: HTMLOptionElement) {
     const targetFileSystem = option.value;
     let referenceOption: HTMLOptionElement | null = null;
-    for (const currentOption of Array.from(this.#fsSelector.options).slice(2)) {
+    for (const currentOption of Array.from(this.#fsSelectElement.options).slice(2)) {
       if (targetFileSystem.localeCompare(currentOption.text) < 0) {
         referenceOption = currentOption;
         break;
       }
     }
 
-    this.#fsSelector.options.add(option, referenceOption);
+    this.#fsSelectElement.options.add(option, referenceOption);
   }
 
   #handleClassClick(event: CustomEvent): void {
@@ -374,7 +406,7 @@ class Workbench_Base {
       classLineNumber
     } = event.detail as ClassClickDetails;
 
-    const currentFS: FileSystemController = this.#fileSystemToControllerMap.get(this.#fsSelector.value)!;
+    const currentFS: FileSystemController = this.#fileSystemToControllerMap.get(this.#fsSelectElement.value)!;
     currentFS.showFileAndLineNumber(classSpecifier, classLineNumber);
   }
 }
