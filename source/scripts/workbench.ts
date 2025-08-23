@@ -1,4 +1,8 @@
 //#region preamble
+import type {
+  FileEditorMapView
+} from "./codemirror/views/FileEditorMapView.js";
+
 import {
   FileSystemController,
 } from "./file-system/controller.js";
@@ -60,6 +64,13 @@ interface ClassClickDetails {
 }
 
 class Workbench_Base {
+  static async build(): Promise<Workbench_Base> {
+    const frontEnd: OPFSFrontEnd = await OPFSFrontEnd.build(ProjectDir);
+    return new Workbench_Base(frontEnd);
+  }
+
+  #frontEnd: OPFSFrontEnd;
+
   #outputController?: OutputController;
   #reportSelectorController?: ReportSelectController;
 
@@ -69,17 +80,24 @@ class Workbench_Base {
   readonly #fsSelector: FileSystemSelectorView;
   readonly #fileSystemToControllerMap = new Map<string, FileSystemController>;
 
+  /*
   #fileSystemControlsLeftView?: GenericPanelView;
+  */
   #fileSystemSetController?: FileSystemSetController;
 
-  #codeMirrorPanels?: TabPanelsView;
+  #codeMirrorPanels?: TabPanelsView<FileEditorMapView>;
 
   /** A container for the file system trees in the lower left corner. */
-  #fileSystemPanels?: TabPanelsView;
+  #fileSystemPanels?: TabPanelsView<FileSystemController>;
 
   #lastRunSpan?: HTMLElement;
 
-  constructor() {
+  private constructor(
+    frontEnd: OPFSFrontEnd
+  )
+  {
+    this.#frontEnd = frontEnd;
+
     this.#displayElement = document.getElementById("workbench") as HTMLDivElement;
     this.#fsSelectElement = document.getElementById("workspace-selector") as HTMLSelectElement;
 
@@ -97,7 +115,6 @@ class Workbench_Base {
 
   async #initialize(): Promise<void> {
     this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
-
     await this.#fillFileSystemPanels();
 
     /*
@@ -115,36 +132,15 @@ class Workbench_Base {
   }
 
   async #fillFileSystemPanels(): Promise<void> {
-    const frontEnd: OPFSFrontEnd = await this.#getFrontEnd();
-    this.#fileSystemSetController = new FileSystemSetController(frontEnd);
+    this.#fileSystemSetController = new FileSystemSetController(this.#frontEnd);
     await this.#fileSystemSetController.ensureReferenceFS();
 
     this.#fileSystemPanels = new TabPanelsView("filesystem-panels");
-    await this.#fsSelector.fillOptions(frontEnd);
     /*
-    const refSpecOption: HTMLOptionElement = await this.#addFileSystemOption(
-      "reference-spec-filesystem", ReferenceSpecFileMap, true
-    );
-
-    this.#fileSystemControlsLeftView = new GenericPanelView("filesystem-controls-left", false);
-    this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView);
-
-    const fileSystems: OrderedKeyMap<FileSystemMap> = FileSystemMap.getAll();
-
-    const optionPromises: Promise<HTMLOptionElement>[] = [];
-    for (const [systemKey, fileSystem] of fileSystems) {
-      optionPromises.push(this.#addFileSystemOption(systemKey, fileSystem, false));
-    }
-    const options = await Promise.all(optionPromises);
-    this.#fsSelector.append(refSpecOption, ...options);
-
-    this.#fsSelector.value = "reference-spec-filesystem";
+    this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView!);
     */
-  }
 
-  async #getFrontEnd(): Promise<OPFSFrontEnd>
-  {
-    return OPFSFrontEnd.build(ProjectDir);
+    await this.#fsSelector.fillOptions(this.#frontEnd);
   }
 
   #getCurrentFSController(): FileSystemController | undefined {
@@ -200,11 +196,25 @@ class Workbench_Base {
     this.#outputController?.selectTabKey(tabKey);
   }
 
-  #onWorkspaceSelect(key: UUID): void {
-    /*
-    this.#fileSystemPanels!.activeViewKey = "fss:" + value;
-    this.#codeMirrorPanels!.activeViewKey = value;
+  async #onWorkspaceSelect(key: UUID): Promise<void> {
+    const panelKey = "fss:" + key;
+    const webFS = await this.#frontEnd.getWebFS(key);
+    if (!this.#fileSystemPanels!.hasPanel(panelKey)) {
+      const fsDisplayElement = new FileSystemElement();
+      fsDisplayElement.id = panelKey;
+      const fsController = await FileSystemController.build(
+        panelKey, true, fsDisplayElement, this.#codeMirrorPanels!.rootElement, webFS
+      );
 
+      this.#fileSystemPanels!.addPanel(panelKey, fsController);
+      this.#codeMirrorPanels!.addPanel(panelKey, fsController.editorMapView);
+      this.#fileSystemToControllerMap.set(panelKey, fsController);
+    }
+
+    this.#fileSystemPanels!.activeViewKey = panelKey;
+    this.#codeMirrorPanels!.activeViewKey = panelKey;
+
+    /*
     this.#reportSelectorController?.clear();
     this.#outputController?.clearResults();
     */
@@ -411,5 +421,5 @@ class Workbench_Base {
   }
 }
 
-const Workbench = new Workbench_Base();
+const Workbench = await Workbench_Base.build();
 export { Workbench };

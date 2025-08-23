@@ -23,6 +23,8 @@ export abstract class TreeRowView {
     this.rowElement = new TreeRowElement(this.depth, this.isCollapsible);
   }
 
+  protected abstract getCellElements(): HTMLElement[];
+
   public get primaryLabel(): string {
     return this.#primaryLabel;
   }
@@ -99,8 +101,6 @@ export abstract class TreeRowView {
       resolve(this.#primaryLabelElement!.innerText.trim());
     }
   }
-
-  protected abstract getCellElements(): HTMLElement[];
 
   public prependRow(rowView: TreeRowView): void {
     this.rowElement!.insertRow(rowView.rowElement!, this.#childRowViews[0]?.rowElement);

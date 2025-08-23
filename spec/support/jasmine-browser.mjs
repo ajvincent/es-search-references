@@ -11,6 +11,10 @@ export default {
     "docs/tests/jasmine/helpers/**/*.js",
     "docs/tests/jasmine/fixtures/**/*.js",
   ],
+  cssFiles: [
+    "css/tab-panels.css",
+    "css/tree.css",
+  ],
   esmFilenameExtension: ".js",
   // Set to true if you need to load module src files instead of loading via the spec files.
   modulesWithSideEffectsInSrcFiles: false,

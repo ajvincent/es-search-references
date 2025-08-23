@@ -1,4 +1,5 @@
 export class TabPanelsView {
+    // CODEREVIEW: why is this still public?
     rootElement;
     #viewsMap = new Map;
     #activeViewKey;

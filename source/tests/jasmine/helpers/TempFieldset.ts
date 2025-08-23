@@ -1,12 +1,10 @@
+import {
+  EnsureStyleRules
+} from "./EnsureStyleRules.js";
 let hasAddedStylesheet = false;
 
 function buildFieldsetStylesheet() {
-  if (hasAddedStylesheet) {
-    return;
-  }
-  hasAddedStylesheet = true;
-  const styleElm = document.createElement("style");
-  styleElm.append(`
+  EnsureStyleRules(`
 fieldset {
   border-color: red;
   border-radius: 15px;
@@ -17,9 +15,7 @@ fieldset {
 fieldset > legend {
   color: red;
 }
-  `.trim() + "\n");
-
-  document.body.prepend(styleElm);
+  `);
 }
 
 export function getTempFieldset(
