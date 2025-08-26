@@ -1,4 +1,3 @@
-//#region preamble
 import { FileSystemController, } from "./file-system/controller.js";
 import { FileSystemElement } from "./file-system/elements/file-system.js";
 import { FileSystemSetController, ValidFileOperations } from "./file-system/setController.js";

@@ -25,7 +25,7 @@ import {
 it("FileSystemView builds a view of an existing file system", () => {
   //#region test preamble
   const fieldset = getTempFieldset("File system view");
-  const mockDirectories: DirectoryRecord = {
+  const mockDirectoryRecord: DirectoryRecord = {
     "es-search-references": {
       "red": "const RED = { value: 'red' };\n export { RED };\n"
     },
@@ -91,7 +91,7 @@ tree-grid.filesystemview-test {
   fieldset.append(form);
   //#endregion test preamble
 
-  const view = new FileSystemView(DirectoryRowView, FileRowView, false, treeRows, mockDirectories);
+  const view = new FileSystemView(DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord);
   {
     expect(view.hasRowView("one://two/three.js")).toBeTrue();
     expect(view.hasRowView("one://two/zero.js")).toBeFalse();

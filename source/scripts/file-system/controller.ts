@@ -39,6 +39,7 @@ import {
 
 void(FileSystemElement); // force the custom element upgrade
 
+/* This is for the context menu. */
 export interface FileSystemControllerIfc {
   getTreeRowsElement(): HTMLElement;
   readonly isReadOnly: boolean;
