@@ -2,7 +2,7 @@ import type {
   Class
 } from "type-fest";
 
-import {
+import type {
   DirectoryRecord
 } from "../../opfs/types/WebFileSystemIfc.js";
 
