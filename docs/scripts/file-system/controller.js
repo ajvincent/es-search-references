@@ -52,11 +52,20 @@ export class FileSystemController {
             this.#fileCheckToggled(fullPath, view.checkboxElement.checked);
         };
         view.radioElement.onclick = (ev) => {
-            this.editorMapView.selectFile(fullPath);
+            this.#selectFile(fullPath, ev);
         };
         view.rowElement.onclick = (ev) => {
             ev.stopPropagation();
         };
+    }
+    async #selectFile(fullPath, event) {
+        if (event) {
+            event.stopPropagation();
+        }
+        if (!this.editorMapView.hasEditorForPath(fullPath)) {
+            await this.editorMapView.addEditorForPath(fullPath);
+        }
+        this.editorMapView.selectFile(fullPath);
     }
     showFileAndLineNumber(specifier, lineNumber) {
         this.#fileSystemView.showFile(specifier);

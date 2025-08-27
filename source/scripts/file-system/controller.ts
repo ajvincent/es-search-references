@@ -130,12 +130,27 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
       this.#fileCheckToggled(fullPath, view.checkboxElement!.checked);
     };
     view.radioElement!.onclick = (ev: Event): void => {
-      this.editorMapView.selectFile(fullPath);
+      this.#selectFile(fullPath, ev);
     };
 
     view.rowElement!.onclick = (ev: MouseEvent): void => {
       ev.stopPropagation();
     }
+  }
+
+  async #selectFile(
+    fullPath: string,
+    event?: Event
+  ): Promise<void>
+  {
+    if (event) {
+      event.stopPropagation();
+    }
+
+    if (!this.editorMapView.hasEditorForPath(fullPath)) {
+      await this.editorMapView.addEditorForPath(fullPath);
+    }
+    this.editorMapView.selectFile(fullPath);
   }
 
   showFileAndLineNumber(
