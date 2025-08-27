@@ -51,6 +51,11 @@ export abstract class TreeRowView {
     label.classList.add("indent");
     label.append(this.#primaryLabel);
     this.#primaryLabelElement = label;
+
+    if (this.isCollapsible) {
+      label.onclick = event => this.#handleLabelClick(event);
+    }
+
     return label;
   }
 
@@ -151,5 +156,11 @@ export abstract class TreeRowView {
 
   public toggleCollapsed(): void {
     this.rowElement!.toggleCollapsed();
+  }
+
+  #handleLabelClick(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.toggleCollapsed();
   }
 }
