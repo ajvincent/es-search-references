@@ -80,7 +80,7 @@ declare function searchReferences(
 ): void;
 */
 export {};
-  `.trim() + "\\n";
+  `.trim() + "\n";
 
   const topDir = {
     packages: {

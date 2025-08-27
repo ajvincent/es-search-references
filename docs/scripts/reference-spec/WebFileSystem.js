@@ -1,7 +1,7 @@
 const ReferenceSpecRecord = {
   "packages": {
     "es-search-references": {
-      "guest": "/*\ndeclare function searchReferences(\n  this: void,\n  resultsKey: string,\n  targetValue: WeakKey,\n  heldValues: readonly WeakKey[],\n  strongReferencesOnly: boolean,\n): void;\n*/\nexport {};\\n"
+      "guest": "/*\ndeclare function searchReferences(\n  this: void,\n  resultsKey: string,\n  targetValue: WeakKey,\n  heldValues: readonly WeakKey[],\n  strongReferencesOnly: boolean,\n): void;\n*/\nexport {};\n"
     }
   },
   "urls": {
