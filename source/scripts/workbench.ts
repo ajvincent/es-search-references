@@ -219,24 +219,6 @@ class Workbench_Base {
     this.#outputController?.clearResults();
     */
   }
-  /*
-  #onWorkspaceSelect(event?: Event): void {
-    event?.stopPropagation();
-    event?.preventDefault();
-
-    const fsController: FileSystemController | undefined = this.#getCurrentFSController();
-    if (fsController) {
-      fsController.updateFileMap();
-    }
-
-    const { value } = this.#fsSelector;
-    this.#fileSystemPanels!.activeViewKey = "fss:" + value;
-    this.#codeMirrorPanels!.activeViewKey = value;
-
-    this.#reportSelectorController?.clear();
-    this.#outputController?.clearResults();
-  }
-  */
 
   #onFileSystemControlsSelect(): void {
 
