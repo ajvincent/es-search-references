@@ -69,6 +69,9 @@ describe("OPFS/WebFileSystem", () => {
       }
     });
 
+    // We expect the file system to present the keys in order.
+    expect(Object.keys(index["one://"])).toEqual(["five", "two"]);
+
     await WFS.terminate();
   });
 

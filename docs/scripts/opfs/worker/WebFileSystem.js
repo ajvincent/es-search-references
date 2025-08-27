@@ -32,6 +32,9 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         }
         return currentDir;
     }
+    static #fileEntryComparator(a, b) {
+        return a[0].localeCompare(b[0]);
+    }
     #packagesDir;
     #urlsDir;
     #clipboard;
@@ -93,6 +96,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
     }
     async #exportDirectoryRecordRecursive(dirHandle, readFiles) {
         const fileEntries = await Array.fromAsync(dirHandle.entries());
+        fileEntries.sort(_a.#fileEntryComparator);
         const map = new AwaitedMap;
         for (const [leafName, entry] of fileEntries) {
             if (entry.kind === "directory")

@@ -78,6 +78,13 @@ implements OPFSWebFileSystemIfc
     return currentDir;
   }
 
+  static #fileEntryComparator(
+    a: [string, FileSystemHandle], b: [string, FileSystemHandle]
+  ): number
+  {
+    return a[0].localeCompare(b[0]);
+  }
+
   readonly #packagesDir: FileSystemDirectoryHandle;
   readonly #urlsDir: URLDirHandle;
   readonly #clipboard: FileSystemClipboardIfc;
@@ -186,7 +193,8 @@ implements OPFSWebFileSystemIfc
     readFiles: boolean
   ): Promise<DirectoryRecord>
   {
-    const fileEntries = await Array.fromAsync(dirHandle.entries());
+    const fileEntries: [string, FileSystemHandle][] = await Array.fromAsync(dirHandle.entries());
+    fileEntries.sort(OPFSWebFileSystemWorker.#fileEntryComparator);
 
     const map = new AwaitedMap<string, DirectoryRecord | string>;
     for (const [leafName, entry] of fileEntries) {
