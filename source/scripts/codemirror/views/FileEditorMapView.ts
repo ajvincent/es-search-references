@@ -65,19 +65,13 @@ export class FileEditorMapView implements BaseView {
     this.#panelsView.currentPanel!.scrollToLine(lineNumber);
   }
 
-  /*
-  public updateFileMap(): void {
-    this.#fileMap.batchUpdate(() => {
-      const unvisited = new Set<string>(this.#fileMap.keys());
-      for (const [key, editorView] of this.#panelsView.entries()) {
-        this.#fileMap.set(key, editorView.getContents());
-        unvisited.delete(key);
-      }
+  public async updateSelectedFile(): Promise<void> {
+    const currentPanel: EditorPanelView | undefined = this.#panelsView.currentPanel;
+    if (!currentPanel)
+      return;
+    const pathToFile: string = this.#panelsView.activeViewKey!;
+    const fileContents: string = currentPanel.getContents();
 
-      for (const key of unvisited) {
-        this.#fileMap.delete(key);
-      }
-    });
+    await this.#webFS.writeFileDeep(pathToFile, fileContents);
   }
-  */
 }

@@ -33,6 +33,14 @@ export class FileSystemSetController {
         const webFS = await this.#fsFrontEnd.getWebFS(uuid);
         await webFS.importDirectoryRecord(ReferenceSpecRecord);
     }
+    async getReferenceUUID() {
+        const currentFileSystems = await this.#fsFrontEnd.getAvailableSystems();
+        for (const [uuid, desc] of Object.entries(currentFileSystems)) {
+            if (desc === FileSystemSetController.referenceFSLabel)
+                return uuid;
+        }
+        throw new Error('we should have a reference UUID by now!');
+    }
     async getFileEntries() {
         throw new Error("to be re-implemented");
     }

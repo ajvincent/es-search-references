@@ -62,6 +62,7 @@ export class FileSystemController {
         if (event) {
             event.stopPropagation();
         }
+        await this.editorMapView.updateSelectedFile();
         if (!this.editorMapView.hasEditorForPath(fullPath)) {
             await this.editorMapView.addEditorForPath(fullPath);
         }

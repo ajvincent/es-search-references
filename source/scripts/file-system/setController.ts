@@ -12,7 +12,8 @@ import type {
 } from "../opfs/types/WebFileSystemIfc.js";
 
 import type {
-  FileSystemsRecords
+  FileSystemsRecords,
+  UUID
 } from "../opfs/types/messages.js";
 
 import {
@@ -66,6 +67,15 @@ export class FileSystemSetController {
     const webFS: OPFSWebFileSystemIfc = await this.#fsFrontEnd.getWebFS(uuid);
 
     await webFS.importDirectoryRecord(ReferenceSpecRecord);
+  }
+
+  public async getReferenceUUID(): Promise<UUID> {
+    const currentFileSystems: FileSystemsRecords = await this.#fsFrontEnd.getAvailableSystems();
+    for (const [uuid, desc] of Object.entries(currentFileSystems)) {
+      if (desc === FileSystemSetController.referenceFSLabel)
+        return uuid as UUID;
+    }
+    throw new Error('we should have a reference UUID by now!');
   }
 
   async getFileEntries(): Promise<[string, string][]> {

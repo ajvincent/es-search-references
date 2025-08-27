@@ -38,4 +38,12 @@ export class FileEditorMapView {
     scrollToLine(lineNumber) {
         this.#panelsView.currentPanel.scrollToLine(lineNumber);
     }
+    async updateSelectedFile() {
+        const currentPanel = this.#panelsView.currentPanel;
+        if (!currentPanel)
+            return;
+        const pathToFile = this.#panelsView.activeViewKey;
+        const fileContents = currentPanel.getContents();
+        await this.#webFS.writeFileDeep(pathToFile, fileContents);
+    }
 }

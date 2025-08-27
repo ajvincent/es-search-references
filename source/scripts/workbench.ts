@@ -83,6 +83,7 @@ class Workbench_Base {
   /*
   #fileSystemControlsLeftView?: GenericPanelView;
   */
+  #referenceFileSystemUUID?: UUID;
   #fileSystemSetController?: FileSystemSetController;
 
   #codeMirrorPanels?: TabPanelsView<FileEditorMapView>;
@@ -134,6 +135,7 @@ class Workbench_Base {
   async #fillFileSystemPanels(): Promise<void> {
     this.#fileSystemSetController = new FileSystemSetController(this.#frontEnd);
     await this.#fileSystemSetController.ensureReferenceFS();
+    this.#referenceFileSystemUUID = await this.#fileSystemSetController.getReferenceUUID();
 
     this.#fileSystemPanels = new TabPanelsView("filesystem-panels");
     /*
@@ -202,8 +204,9 @@ class Workbench_Base {
     if (!this.#fileSystemPanels!.hasPanel(panelKey)) {
       const fsDisplayElement = new FileSystemElement();
       fsDisplayElement.id = panelKey;
+      const isReadOnly = key === this.#referenceFileSystemUUID;
       const fsController = await FileSystemController.build(
-        panelKey, true, fsDisplayElement, this.#codeMirrorPanels!.rootElement, webFS
+        panelKey, isReadOnly, fsDisplayElement, this.#codeMirrorPanels!.rootElement, webFS
       );
 
       this.#fileSystemPanels!.addPanel(panelKey, fsController);
