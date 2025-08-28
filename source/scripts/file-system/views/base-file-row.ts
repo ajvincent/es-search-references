@@ -3,8 +3,8 @@ import {
 } from "../../tree/views/tree-row.js";
 
 export class BaseFileRowView extends TreeRowView {
-  protected readonly fullPath: string;
-  readonly rowType = "file";
+  public readonly rowType = "file";
+  public readonly fullPath: string;
 
   constructor(depth: number, isCollapsible: boolean, label: string, fullPath: string) {
     super(depth, isCollapsible, label);

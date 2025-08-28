@@ -33,20 +33,24 @@ export class FileSystemView<
   readonly #DirectoryViewClass: Class<DirectoryView, DirectoryArguments>;
   readonly #FileViewClass: Class<FileView, FileArguments>;
 
+  readonly #fileFilter?: (fullPath: string) => boolean;
+
   constructor(
     DirectoryViewClass: Class<DirectoryView, DirectoryArguments>,
     FileViewClass: Class<FileView, FileArguments>,
     isFileCollapsible: boolean,
     treeRowsElement: HTMLElement,
-    initialIndex: DirectoryRecord
+    initialIndex: DirectoryRecord,
+    fileFilter?: (fullPath: string) => boolean,
   )
   {
     this.#DirectoryViewClass = DirectoryViewClass;
     this.#FileViewClass = FileViewClass;
     this.#isFileCollapsible = isFileCollapsible;
     this.#treeRowsElement = treeRowsElement;
+    this.#fileFilter = fileFilter;
 
-    this.fillDirectoryFromTop(initialIndex);
+    this.#fillDirectoryView(initialIndex, null);
   }
 
   hasRowView(key: string): boolean {
@@ -66,50 +70,52 @@ export class FileSystemView<
     this.#fileToRowMap.clear();
   }
 
-  fillDirectoryFromTop(
-    topRecord: DirectoryRecord
-  ): void
-  {
-    for (const [key, contentsOrRecord] of Object.entries(topRecord)) {
-      let view: FileView | DirectoryView;
-      if (typeof contentsOrRecord === "string") {
-        view = new this.#FileViewClass(0, this.#isFileCollapsible, key, key);
-      }
-      else {
-        view = new this.#DirectoryViewClass(0, key, key);
-        this.#fillDirectoryView(contentsOrRecord, view);
-      }
-
-      this.#fileToRowMap.set(key, view);
-      this.#treeRowsElement.append(view.rowElement!);
-    }
-  }
-
   #fillDirectoryView(
     parentRecord: DirectoryRecord,
-    parentView: DirectoryView
-  ): void
+    parentView: DirectoryView | null
+  ): boolean
   {
-    const depth = parentView.depth + 1;
+    const depth = parentView ? parentView.depth + 1 : 0;
+
+    const shouldShowSet = new Set<FileView | DirectoryView>;
     for (const [key, contentsOrRecord] of Object.entries(parentRecord)) {
       let fullPath: string;
-      if (parentView.fullPath.endsWith("/")) {
-        fullPath = parentView.fullPath + key;
+      if (parentView) {
+        if (parentView.fullPath.endsWith("/")) {
+          fullPath = parentView.fullPath + key;
+        } else {
+          fullPath = parentView.fullPath + "/" + key;
+        }
       } else {
-        fullPath = parentView.fullPath + "/" + key;
+        fullPath = key;
       }
 
       let view: FileView | DirectoryView;
+      let mustShowDir: boolean;
       if (typeof contentsOrRecord === "string") {
         view = new this.#FileViewClass(depth, this.#isFileCollapsible, key, fullPath);
+        mustShowDir = !this.#fileFilter || this.#fileFilter(fullPath);
       } else {
         view = new this.#DirectoryViewClass(depth, key, fullPath);
-        this.#fillDirectoryView(contentsOrRecord, view);
+        mustShowDir = this.#fillDirectoryView(contentsOrRecord, view);
       }
 
-      this.#fileToRowMap.set(fullPath, view);
-      parentView.rowElement!.append(view.rowElement!);
+      if (mustShowDir) {
+        shouldShowSet.add(view);
+      }
     }
+
+    if (shouldShowSet.size) {
+      for (const view of shouldShowSet) {
+        this.#fileToRowMap.set(view.fullPath, view);
+        if (parentView)
+          parentView.addRow(view);
+        else
+          this.#treeRowsElement.append(view.rowElement!);
+      }
+    }
+
+    return shouldShowSet.size > 0;
   }
 
   showFile(

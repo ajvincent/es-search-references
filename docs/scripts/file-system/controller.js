@@ -68,15 +68,19 @@ export class FileSystemController {
         }
         this.editorMapView.selectFile(fullPath);
     }
+    async getWebFilesMap() {
+        const record = await this.#webFS.getWebFilesRecord();
+        return new Map(Object.entries(record));
+    }
+    getWebFilesIndex() {
+        return this.#webFS.getIndex();
+    }
     showFileAndLineNumber(specifier, lineNumber) {
         this.#fileSystemView.showFile(specifier);
         this.editorMapView.scrollToLine(lineNumber);
     }
-    updateFileMap() {
-        throw new Error("need to reimplement");
-        /*
-        this.editorMapView.updateFileMap();
-        */
+    async updateSelectedFile() {
+        return this.editorMapView.updateSelectedFile();
     }
     // FileSystemControllerIfc
     getTreeRowsElement() {

@@ -1,8 +1,4 @@
 import {
-  ReportSelectorElement
-} from "./elements/report-selector.js";
-
-import {
   BaseDirectoryRowView
 } from "../file-system/views/base-directory-row.js";
 
@@ -14,6 +10,14 @@ import {
   FileSystemView
 } from "../file-system/views/file-system.js";
 
+import type {
+  DirectoryRecord,
+} from "../opfs/types/WebFileSystemIfc.js";
+
+import {
+  ReportSelectorElement
+} from "./elements/report-selector.js";
+
 import {
   SearchKeyRowView
 } from "./views/searchKey-row.js";
@@ -22,10 +26,6 @@ import type {
   OutputController
 } from "./outputController.js";
 
-import type {
-  DirectoryRecord,
-} from "../opfs/types/WebFileSystemIfc.js";
-
 void(ReportSelectorElement); // force the custom element upgrade
 
 export class ReportSelectController {
@@ -33,24 +33,20 @@ export class ReportSelectController {
   readonly #rootElement: ReportSelectorElement;
 
   #selectedView: SearchKeyRowView | undefined;
-  readonly #fileSystemView: FileSystemView<BaseDirectoryRowView, BaseFileRowView>;
+  #fileSystemView?: FileSystemView<BaseDirectoryRowView, BaseFileRowView>;
 
   constructor(
     rootId: string,
     outputController: OutputController,
-    index: DirectoryRecord
   )
   {
     this.#rootElement = document.getElementById(rootId) as ReportSelectorElement;
-    this.#fileSystemView = new FileSystemView(
-      BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows!, index
-    );
     this.#outputController = outputController;
   }
 
   clear(): void {
     this.#rootElement.treeRows!.replaceChildren();
-    this.#fileSystemView.clearRowMap();
+    this.#fileSystemView?.clearRowMap();
   }
 
   refreshTree(
@@ -58,26 +54,19 @@ export class ReportSelectController {
   ): void
   {
     this.clear();
-    this.#fileSystemView.fillDirectoryFromTop(index);
+    this.#fileSystemView = new FileSystemView(
+      BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows!, index,
+      (fullPath: string) => this.#outputController.filePathsAndSearchKeys.has(fullPath)
+    );
 
     for (const [fullPath, view] of this.#fileSystemView.descendantFileViews()) {
-      for (const searchKey of this.#outputController.filePathsAndSearchKeys.get(fullPath)!) {
+      const searchKeysIterator = this.#outputController.filePathsAndSearchKeys.get(fullPath);
+      if (!searchKeysIterator)
+        continue;
+      for (const searchKey of searchKeysIterator) {
         this.#addSearchKeyRow(fullPath, searchKey, view);
       }
     }
-    /*
-    const directoriesSet = new Set<string>;
-
-    const fileKeys = Array.from(this.#outputController.filePathsAndSearchKeys.keys());
-    fileKeys.sort();
-    for (const key of fileKeys) {
-      const fileRowView = this.#fileSystemView.addFileKey(key, directoriesSet);
-
-      for (const searchKey of this.#outputController.filePathsAndSearchKeys.get(key)!) {
-        this.#addSearchKeyRow(key, searchKey, fileRowView);
-      }
-    }
-    */
   }
 
   #addSearchKeyRow(

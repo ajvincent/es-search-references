@@ -121,6 +121,7 @@ class Workbench_Base {
     /*
     this.#codeMirrorPanels.addPanel("filesystem-controls", this.#fileSystemSetController!.view);
     this.#codeMirrorPanels.activeViewKey = "reference-spec-filesystem";
+    */
 
     this.#outputController = new OutputController;
     this.#reportSelectorController = new ReportSelectController(
@@ -128,7 +129,6 @@ class Workbench_Base {
     );
 
     this.#lastRunSpan = document.getElementById("lastRun")!;
-    */
     this.#attachEvents();
   }
 
@@ -152,30 +152,28 @@ class Workbench_Base {
   async #runSearches(event: MouseEvent): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
-    /*
 
     this.#reportSelectorController!.clear();
     this.#outputController!.clearResults();
+
     const fsController: FileSystemController | undefined = this.#getCurrentFSController();
     if (!fsController) {
       return;
     }
+    await fsController.updateSelectedFile();
+    const driver = new SearchDriver(await fsController.getWebFilesMap());
 
-    fsController.updateFileMap();
-
-    const driver = new SearchDriver(fsController!.fileMap);
-    const fileSet = fsController!.filesCheckedSet;
+    const fileSet = fsController.filesCheckedSet;
     const resultsMap: ReadonlyMap<string, ReadonlyMap<string, SearchResults>> = await driver.run(Array.from(fileSet));
 
     this.#outputController!.addResults(resultsMap);
-    this.#reportSelectorController!.refreshTree();
+    const index = await fsController.getWebFilesIndex();
+    this.#reportSelectorController!.refreshTree(index);
 
     this.#lastRunSpan!.replaceChildren((new Date()).toLocaleString());
-    */
   }
 
   #attachEvents(): void {
-    /*
     document.getElementById("runSearchesButton")!.onclick = this.#runSearches.bind(this);
     const tabs = Array.from(document.querySelectorAll(OutputController.tabsSelector)) as HTMLElement[];
     for (const tab of tabs) {
@@ -184,6 +182,7 @@ class Workbench_Base {
 
     this.#fileSystemSetController!.form.onsubmit = this.#onFileSetControllerSubmit.bind(this);
 
+    /*
     this.#displayElement.addEventListener(
       "classClick",
       (event) => this.#handleClassClick(event as CustomEvent),
@@ -217,16 +216,15 @@ class Workbench_Base {
     this.#fileSystemPanels!.activeViewKey = panelKey;
     this.#codeMirrorPanels!.activeViewKey = panelKey;
 
-    /*
     this.#reportSelectorController?.clear();
     this.#outputController?.clearResults();
-    */
   }
 
   #onFileSystemControlsSelect(): void {
 
   }
 
+  //#region file system set manipulation
   async #onFileSetControllerSubmit(event: SubmitEvent): Promise<void> {
     event.preventDefault();
     event.stopPropagation();
@@ -307,6 +305,9 @@ class Workbench_Base {
   }
 
   async #doFileSystemDelete(isRename: boolean): Promise<void> {
+    // TODO: provide API to delete all file systems and all local storage we use!
+    // use case: hey, the reference spec filesystem is out of date.
+
     /*
     const systemKey = this.#fileSystemSetController!.getSourceFileSystem();
     if (!isRename) {
@@ -394,6 +395,7 @@ class Workbench_Base {
 
     this.#fsSelectElement.options.add(option, referenceOption);
   }
+  //#endregion file system set manipulation
 
   #handleClassClick(event: CustomEvent): void {
     const {

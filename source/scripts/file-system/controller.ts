@@ -155,6 +155,17 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
     this.editorMapView.selectFile(fullPath);
   }
 
+  async getWebFilesMap(): Promise<ReadonlyMap<string, string>>
+  {
+    const record: Record<string, string> = await this.#webFS.getWebFilesRecord();
+    return new Map(Object.entries(record));
+  }
+
+  getWebFilesIndex(): Promise<DirectoryRecord>
+  {
+    return this.#webFS.getIndex();
+  }
+
   showFileAndLineNumber(
     specifier: string,
     lineNumber: number
@@ -164,11 +175,8 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
     this.editorMapView!.scrollToLine(lineNumber);
   }
 
-  updateFileMap(): void {
-    throw new Error("need to reimplement");
-    /*
-    this.editorMapView.updateFileMap();
-    */
+  async updateSelectedFile(): Promise<void> {
+    return this.editorMapView.updateSelectedFile();
   }
 
   // FileSystemControllerIfc

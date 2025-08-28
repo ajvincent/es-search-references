@@ -1,7 +1,7 @@
-import { ReportSelectorElement } from "./elements/report-selector.js";
 import { BaseDirectoryRowView } from "../file-system/views/base-directory-row.js";
 import { BaseFileRowView } from "../file-system/views/base-file-row.js";
 import { FileSystemView } from "../file-system/views/file-system.js";
+import { ReportSelectorElement } from "./elements/report-selector.js";
 import { SearchKeyRowView } from "./views/searchKey-row.js";
 void (ReportSelectorElement); // force the custom element upgrade
 export class ReportSelectController {
@@ -9,36 +9,25 @@ export class ReportSelectController {
     #rootElement;
     #selectedView;
     #fileSystemView;
-    constructor(rootId, outputController, index) {
+    constructor(rootId, outputController) {
         this.#rootElement = document.getElementById(rootId);
-        this.#fileSystemView = new FileSystemView(BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows, index);
         this.#outputController = outputController;
     }
     clear() {
         this.#rootElement.treeRows.replaceChildren();
-        this.#fileSystemView.clearRowMap();
+        this.#fileSystemView?.clearRowMap();
     }
     refreshTree(index) {
         this.clear();
-        this.#fileSystemView.fillDirectoryFromTop(index);
+        this.#fileSystemView = new FileSystemView(BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows, index, (fullPath) => this.#outputController.filePathsAndSearchKeys.has(fullPath));
         for (const [fullPath, view] of this.#fileSystemView.descendantFileViews()) {
-            for (const searchKey of this.#outputController.filePathsAndSearchKeys.get(fullPath)) {
+            const searchKeysIterator = this.#outputController.filePathsAndSearchKeys.get(fullPath);
+            if (!searchKeysIterator)
+                continue;
+            for (const searchKey of searchKeysIterator) {
                 this.#addSearchKeyRow(fullPath, searchKey, view);
             }
         }
-        /*
-        const directoriesSet = new Set<string>;
-    
-        const fileKeys = Array.from(this.#outputController.filePathsAndSearchKeys.keys());
-        fileKeys.sort();
-        for (const key of fileKeys) {
-          const fileRowView = this.#fileSystemView.addFileKey(key, directoriesSet);
-    
-          for (const searchKey of this.#outputController.filePathsAndSearchKeys.get(key)!) {
-            this.#addSearchKeyRow(key, searchKey, fileRowView);
-          }
-        }
-        */
     }
     #addSearchKeyRow(fileKey, searchKey, fileRowView) {
         const view = new SearchKeyRowView(fileRowView.depth + 1, searchKey);

@@ -1,3 +1,4 @@
+//#region preamble
 import {
   DirectoryRowView
 } from "../../../../scripts/file-system/views/directory-row.js";
@@ -10,9 +11,9 @@ import {
   FileSystemView
 } from "../../../../scripts/file-system/views/file-system.js";
 
-import type {
-  DirectoryRecord
-} from "../../../../scripts/opfs/types/WebFileSystemIfc.js";
+import {
+  mockDirectoryRecord
+} from "../../fixtures/mockDirectories.js";
 
 import {
   getTempFieldset
@@ -22,77 +23,72 @@ import {
   EnsureStyleRules
 } from "../../helpers/EnsureStyleRules.js";
 
-it("FileSystemView builds a view of an existing file system", () => {
-  //#region test preamble
-  const fieldset = getTempFieldset("File system view");
-  const mockDirectoryRecord: DirectoryRecord = {
-    "es-search-references": {
-      "red": "const RED = { value: 'red' };\n export { RED };\n"
-    },
+import {
+  buildSpanCell
+} from "../../helpers/buildElements.js";
+//#endregion preamble
 
-    "one://": {
-      two: {
-        "three.js": "const THREE = { value: 3 };\nexport { THREE };\n",
-        "four.js": "const FOUR = { value: 4 };\nexport { FOUR };\n",
-      },
-      five: {
-        "six.js": "const SIX = { value: 6 };\nexport { SIX };\n",
-      },
-    },
+describe("FileSystemView builds a view of an existing file system", () => {
+  let fieldset: HTMLFieldSetElement;
+  let treeRows: HTMLElement;
+  let view: FileSystemView<DirectoryRowView, FileRowView>;
+  beforeAll(() => {
+    fieldset = getTempFieldset("File system view");
 
-    "seven://": {
-      "eight.js": "const EIGHT = { value: 8 };\nexport { EIGHT };\n",
-    }
-  };
+    const form = document.createElement("form");
 
-  function buildSpanCell(text: string): HTMLSpanElement {
-    const span = document.createElement("span");
-    span.append(text);
-    return span;
-  }
-
-  const form = document.createElement("form");
-
-  const grid = document.createElement("tree-grid");
-  grid.classList.add("filesystemview-test");
-  const treeRows = document.createElement("tree-rows");
-  grid.append(
-    buildSpanCell("Search"),
-    buildSpanCell("File"),
-    buildSpanCell("Show"),
-    treeRows
-  );
-  form.append(grid);
-
-  EnsureStyleRules(`
-tree-grid.filesystemview-test {
-  grid-template-columns:
-    [left] auto
-    [primary] auto
-    [right] auto
-  ;
-}
-
-
-  try {
-    const view = new FileSystemView(
-      DirectoryRowView,
-      FileRowView,
-      false,
-      treeRows,
-      mockDirectories
+    const grid = document.createElement("tree-grid");
+    grid.classList.add("filesystemview-test");
+    treeRows = document.createElement("tree-rows");
+    grid.append(
+      buildSpanCell("Search"),
+      buildSpanCell("File"),
+      buildSpanCell("Show"),
+      treeRows
     );
+    form.append(grid);
+
+    EnsureStyleRules(`
+  tree-grid.filesystemview-test {
+    grid-template-columns:
+      [left] auto
+      [primary] auto
+      [right] auto
+    ;
   }
-  finally {
+
+
+    try {
+      const view = new FileSystemView(
+        DirectoryRowView,
+        FileRowView,
+        false,
+        treeRows,
+        mockDirectories
+      );
+    }
+    finally {
+      fieldset.remove();
+    }
+    `);
+
+    fieldset.append(form);
+  });
+
+  afterAll(() => {
     fieldset.remove();
-  }
-  `);
+  });
 
-  fieldset.append(form);
-  //#endregion test preamble
+  afterEach(() => {
+    view.clearRowMap();
+    treeRows.replaceChildren();
+  });
 
-  const view = new FileSystemView(DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord);
-  {
+  it("without filters for matching files", () => {
+    view = new FileSystemView(
+      DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord
+    );
+
     expect(view.hasRowView("one://two/three.js")).toBeTrue();
     expect(view.hasRowView("one://two/zero.js")).toBeFalse();
     expect(view.hasRowView("one://two")).toBeTrue();
@@ -125,21 +121,39 @@ tree-grid.filesystemview-test {
       "seven://eight.js",
     ]);
 
-    debugger;
     view.showFile("one://two/three.js");
     expect((threeRow as FileRowView).radioElement!.checked).toBeTrue();
 
     view.showFile("es-search-references/red");
     expect((redRow as FileRowView).radioElement!.checked).toBeTrue();
     expect((threeRow as FileRowView).radioElement!.checked).toBeFalse();
-  }
+  });
 
-  view.clearRowMap();
-  expect(view.hasRowView("one://two/three.js")).toBeFalse();
-  expect(view.hasRowView("one://two")).toBeFalse();
-  expect(view.hasRowView("one://")).toBeFalse();
-  expect(view.hasRowView("es-search-references/red")).toBeFalse();
-  expect(Array.from(view.descendantFileViews())).toEqual([]);
+  it("with a filter for matching files", () => {
+    view = new FileSystemView(
+      DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord,
+      (fullPath: string) => fullPath.startsWith("one://two/")
+    );
 
-  fieldset.remove();
-}, 1000 * 60 * 60);
+    expect(view.hasRowView("one://")).toBeTrue();
+    expect(view.hasRowView("one://two")).toBeTrue();
+    expect(view.hasRowView("one://two/three.js")).toBeTrue();
+    expect(view.hasRowView("one://two/four.js")).toBeTrue();
+    expect(view.hasRowView("one://five")).toBeFalse();
+    expect(view.hasRowView("es-search-references")).toBeFalse();
+    expect(Array.from(view.descendantFileViews()).length).toBe(2);
+  });
+
+  it("reports false after clearing all rows", () => {
+    view = new FileSystemView(
+      DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord
+    );
+
+    view.clearRowMap();
+    expect(view.hasRowView("one://two/three.js")).toBeFalse();
+    expect(view.hasRowView("one://two")).toBeFalse();
+    expect(view.hasRowView("one://")).toBeFalse();
+    expect(view.hasRowView("es-search-references/red")).toBeFalse();
+    expect(Array.from(view.descendantFileViews())).toEqual([]);
+  });
+});
