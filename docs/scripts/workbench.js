@@ -89,13 +89,7 @@ class Workbench_Base {
             tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey);
         }
         this.#fileSystemSetController.form.onsubmit = this.#onFileSetControllerSubmit.bind(this);
-        /*
-        this.#displayElement.addEventListener(
-          "classClick",
-          (event) => this.#handleClassClick(event as CustomEvent),
-          { capture: true, passive: true }
-        );
-        */
+        this.#displayElement.addEventListener("classClick", (event) => this.#handleClassClick(event), { capture: true, passive: true });
     }
     #selectOutputReportTab(tabKey, event) {
         event.preventDefault();

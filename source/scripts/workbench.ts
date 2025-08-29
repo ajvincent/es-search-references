@@ -182,13 +182,11 @@ class Workbench_Base {
 
     this.#fileSystemSetController!.form.onsubmit = this.#onFileSetControllerSubmit.bind(this);
 
-    /*
     this.#displayElement.addEventListener(
       "classClick",
       (event) => this.#handleClassClick(event as CustomEvent),
       { capture: true, passive: true }
     );
-    */
   }
 
   #selectOutputReportTab(tabKey: string, event: MouseEvent): void {
