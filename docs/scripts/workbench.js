@@ -42,23 +42,19 @@ class Workbench_Base {
     async #initialize() {
         this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
         await this.#fillFileSystemPanels();
-        /*
-        this.#codeMirrorPanels.addPanel("filesystem-controls", this.#fileSystemSetController!.view);
-        this.#codeMirrorPanels.activeViewKey = "reference-spec-filesystem";
-        */
+        this.#codeMirrorPanels.addPanel("filesystem-controls", this.#fileSystemSetController.view);
+        this.#codeMirrorPanels.activeViewKey = this.#referenceFileSystemUUID;
         this.#outputController = new OutputController;
         this.#reportSelectorController = new ReportSelectController("report-selector", this.#outputController);
         this.#lastRunSpan = document.getElementById("lastRun");
         this.#attachEvents();
+        this.#fsSelector.selectOption(this.#referenceFileSystemUUID);
     }
     async #fillFileSystemPanels() {
         this.#fileSystemSetController = new FileSystemSetController(this.#frontEnd);
         await this.#fileSystemSetController.ensureReferenceFS();
         this.#referenceFileSystemUUID = await this.#fileSystemSetController.getReferenceUUID();
         this.#fileSystemPanels = new TabPanelsView("filesystem-panels");
-        /*
-        this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView!);
-        */
         await this.#fsSelector.fillOptions(this.#frontEnd);
     }
     #getCurrentFSController() {
@@ -114,6 +110,10 @@ class Workbench_Base {
         this.#outputController?.clearResults();
     }
     #onFileSystemControlsSelect() {
+        this.#fileSystemPanels.activeViewKey = "";
+        this.#codeMirrorPanels.activeViewKey = "filesystem-controls";
+        this.#reportSelectorController.clear();
+        this.#outputController.clearResults();
     }
     //#region file system set manipulation
     async #onFileSetControllerSubmit(event) {

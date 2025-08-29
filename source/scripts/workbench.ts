@@ -21,6 +21,10 @@ import {
 } from "./tab-panels/tab-panels-view.js";
 
 import {
+  FileSystemSetView
+} from "./file-system/views/fs-set.js";
+
+import {
   SearchDriver
 } from "./search/Driver.js";
 
@@ -48,10 +52,6 @@ import type {
   FileSystemsRecords,
   UUID
 } from "./opfs/types/messages.js";
-
-import {
-  GenericPanelView
-} from "./tab-panels/panelView.js";
 
 import {
   FileSystemSelectorView
@@ -86,7 +86,7 @@ class Workbench_Base {
   #referenceFileSystemUUID?: UUID;
   #fileSystemSetController?: FileSystemSetController;
 
-  #codeMirrorPanels?: TabPanelsView<FileEditorMapView>;
+  #codeMirrorPanels?: TabPanelsView<FileEditorMapView | FileSystemSetView>;
 
   /** A container for the file system trees in the lower left corner. */
   #fileSystemPanels?: TabPanelsView<FileSystemController>;
@@ -118,10 +118,8 @@ class Workbench_Base {
     this.#codeMirrorPanels = new TabPanelsView("codemirror-panels");
     await this.#fillFileSystemPanels();
 
-    /*
     this.#codeMirrorPanels.addPanel("filesystem-controls", this.#fileSystemSetController!.view);
-    this.#codeMirrorPanels.activeViewKey = "reference-spec-filesystem";
-    */
+    this.#codeMirrorPanels.activeViewKey = this.#referenceFileSystemUUID!;
 
     this.#outputController = new OutputController;
     this.#reportSelectorController = new ReportSelectController(
@@ -130,6 +128,8 @@ class Workbench_Base {
 
     this.#lastRunSpan = document.getElementById("lastRun")!;
     this.#attachEvents();
+
+    this.#fsSelector.selectOption(this.#referenceFileSystemUUID!);
   }
 
   async #fillFileSystemPanels(): Promise<void> {
@@ -138,10 +138,6 @@ class Workbench_Base {
     this.#referenceFileSystemUUID = await this.#fileSystemSetController.getReferenceUUID();
 
     this.#fileSystemPanels = new TabPanelsView("filesystem-panels");
-    /*
-    this.#fileSystemPanels.addPanel("filesystem-controls", this.#fileSystemControlsLeftView!);
-    */
-
     await this.#fsSelector.fillOptions(this.#frontEnd);
   }
 
@@ -219,7 +215,11 @@ class Workbench_Base {
   }
 
   #onFileSystemControlsSelect(): void {
+    this.#fileSystemPanels!.activeViewKey = "";
+    this.#codeMirrorPanels!.activeViewKey = "filesystem-controls";
 
+    this.#reportSelectorController!.clear();
+    this.#outputController!.clearResults();
   }
 
   //#region file system set manipulation

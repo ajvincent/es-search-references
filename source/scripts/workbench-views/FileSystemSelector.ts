@@ -31,6 +31,11 @@ export class FileSystemSelectorView {
     this.#selectElement.onchange = this.#handleSelect.bind(this);
   }
 
+  selectOption(key: UUID) {
+    this.#selectElement.value = "fss:" + key;
+    this.#fsSelectCallback(key);
+  }
+
   clearOptions(): void
   {
     const controlsOption: HTMLOptionElement = this.#selectElement.options.namedItem(

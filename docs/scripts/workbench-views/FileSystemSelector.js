@@ -10,6 +10,10 @@ export class FileSystemSelectorView {
         this.#fsControlsCallback = fsControlsCallback;
         this.#selectElement.onchange = this.#handleSelect.bind(this);
     }
+    selectOption(key) {
+        this.#selectElement.value = "fss:" + key;
+        this.#fsSelectCallback(key);
+    }
     clearOptions() {
         const controlsOption = this.#selectElement.options.namedItem(FileSystemSelectorView.#controlsValue);
         this.#selectElement.replaceChildren(controlsOption);
