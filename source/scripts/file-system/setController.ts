@@ -8,7 +8,8 @@ import type {
 } from "../opfs/client/FrontEnd.js";
 
 import type {
-  OPFSWebFileSystemIfc
+  OPFSWebFileSystemIfc,
+  TopDirectoryRecord
 } from "../opfs/types/WebFileSystemIfc.js";
 
 import type {
@@ -87,10 +88,24 @@ export class FileSystemSetController {
     throw new Error('we should have a reference UUID by now!');
   }
 
+  public async doFileSystemClone(): Promise<void> {
+    const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
+    const newDescription: string = this.getTargetFileDescriptor();
+
+    const sourceFS: OPFSWebFileSystemIfc = await this.#fsFrontEnd.getWebFS(sourceUUID);
+    const topRecord: TopDirectoryRecord = await sourceFS.exportDirectoryRecord();
+
+    const targetUUID: UUID = await this.#fsFrontEnd.buildEmpty(newDescription);
+    const targetFS: OPFSWebFileSystemIfc = await this.#fsFrontEnd.getWebFS(targetUUID);
+    await targetFS.importDirectoryRecord(topRecord);
+
+    await this.reset();
+  }
+
   public async doFileSystemRename(): Promise<void> {
-    const sourceFileSystem = this.getSourceFileSystem()!.substring(4) as UUID;
+    const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
     const newDescription = this.getTargetFileDescriptor();
-    await this.#fsFrontEnd.setDescription(sourceFileSystem, newDescription);
+    await this.#fsFrontEnd.setDescription(sourceUUID, newDescription);
     await this.reset();
   }
 

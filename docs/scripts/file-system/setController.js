@@ -43,10 +43,20 @@ export class FileSystemSetController {
         }
         throw new Error('we should have a reference UUID by now!');
     }
-    async doFileSystemRename() {
-        const sourceFileSystem = this.getSourceFileSystem().substring(4);
+    async doFileSystemClone() {
+        const sourceUUID = this.getSourceFileSystem().substring(4);
         const newDescription = this.getTargetFileDescriptor();
-        await this.#fsFrontEnd.setDescription(sourceFileSystem, newDescription);
+        const sourceFS = await this.#fsFrontEnd.getWebFS(sourceUUID);
+        const topRecord = await sourceFS.exportDirectoryRecord();
+        const targetUUID = await this.#fsFrontEnd.buildEmpty(newDescription);
+        const targetFS = await this.#fsFrontEnd.getWebFS(targetUUID);
+        await targetFS.importDirectoryRecord(topRecord);
+        await this.reset();
+    }
+    async doFileSystemRename() {
+        const sourceUUID = this.getSourceFileSystem().substring(4);
+        const newDescription = this.getTargetFileDescriptor();
+        await this.#fsFrontEnd.setDescription(sourceUUID, newDescription);
         await this.reset();
     }
     async getFileEntries() {

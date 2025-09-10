@@ -115,14 +115,15 @@ class Workbench_Base {
         event.preventDefault();
         event.stopPropagation();
         switch (this.#fileSystemSetController.selectedOperation) {
+            case ValidFileOperations.clone: {
+                await this.#fileSystemSetController.doFileSystemClone();
+                break;
+            }
             case ValidFileOperations.rename: {
                 await this.#fileSystemSetController.doFileSystemRename();
                 break;
             }
             /*
-            case ValidFileOperations.clone:
-              await this.#doFileSystemClone();
-              break;
             case ValidFileOperations.upload:
               await this.#doFileSystemUpload();
               break;
@@ -138,20 +139,6 @@ class Workbench_Base {
                 return Promise.reject(new Error("unsupported operation"));
         }
         this.#fileSystemSetController.reset();
-    }
-    async #doFileSystemClone() {
-        /*
-        const sourceFileSystem: string = this.#fileSystemSetController!.getSourceFileSystem();
-        const targetFileSystem: string = this.#fileSystemSetController!.getTargetFileSystem();
-    
-        const sourceFS: FileSystemMap = this.#fileSystemToControllerMap.get(sourceFileSystem)!.fileMap;
-        const targetFS: FileSystemMap = sourceFS.clone(targetFileSystem);
-    
-        const option = await this.#addFileSystemOption(targetFileSystem, targetFS, false);
-        this.#insertFileSystemOption(option);
-    
-        this.#fsSelector.value = targetFileSystem;
-        */
     }
     async #doFileSystemUpload() {
         /*
