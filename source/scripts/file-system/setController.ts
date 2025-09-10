@@ -164,6 +164,14 @@ export class FileSystemSetController {
     return await ZipUtilities.buildZipFile(topRecord);
   }
 
+  async doFileSystemDelete(): Promise<void> {
+    const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
+    await this.#fsFrontEnd.getWebFS(sourceUUID);
+    await this.#fsFrontEnd.removeWebFS(sourceUUID);
+
+    await this.reset();
+  }
+
   async reset(): Promise<void> {
     this.#workbenchFileSystemSelector.clearOptions();
 

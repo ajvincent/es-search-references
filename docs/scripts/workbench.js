@@ -131,44 +131,16 @@ class Workbench_Base {
                 await this.#fileSystemSetController.doFileSystemUpload();
                 break;
             }
-            /*
             case ValidFileOperations.delete: {
-              await this.#doFileSystemDelete(false);
-              break;
+                // TODO: provide API to delete all file systems and all local storage we use!
+                // use case: hey, the reference spec filesystem is out of date.
+                await this.#fileSystemSetController.doFileSystemDelete();
+                break;
             }
-            */
             default:
                 return Promise.reject(new Error("unsupported operation"));
         }
         this.#fileSystemSetController.reset();
-    }
-    async #doFileSystemDelete(isRename) {
-        // TODO: provide API to delete all file systems and all local storage we use!
-        // use case: hey, the reference spec filesystem is out of date.
-        /*
-        const systemKey = this.#fileSystemSetController!.getSourceFileSystem();
-        if (!isRename) {
-          const ok = window.confirm(`Are you sure you want to delete the "${systemKey}" file system?  This operation is irreversible!`);
-          if (!ok)
-            return;
-        }
-    
-        const fsController: FileSystemController = this.#fileSystemToControllerMap.get(systemKey)!;
-        fsController.fileMap.clear();
-    
-        fsController.dispose();
-        this.#fileSystemToControllerMap.delete(systemKey);
-    
-        const option = this.#fsSelector.querySelector(`option[value="${systemKey}"]`)!;
-        option.remove();
-    
-        this.#codeMirrorPanels!.removePanel(systemKey);
-        this.#fileSystemPanels!.removePanel("fss:" + systemKey);
-    
-        if (!isRename) {
-          this.#fsSelector.selectedIndex = -1;
-        }
-        */
     }
     async #doFileSystemExport() {
         const blob = await this.#fileSystemSetController.getExportedFilesZip();
@@ -185,44 +157,6 @@ class Workbench_Base {
         form.onsubmit = null;
         downloadLink.href = "#";
     }
-    /*
-    async #addFileSystemOption(
-      systemKey: string,
-      fileSystem: FileSystemMap,
-      isReadOnly: boolean,
-    ): Promise<HTMLOptionElement>
-    {
-      const option: HTMLOptionElement = document.createElement("option");
-      option.value = systemKey;
-      option.append(systemKey);
-  
-      const fsDisplayElement = new FileSystemElement();
-      fsDisplayElement.id = "fss:" + systemKey;
-      this.#fileSystemPanels!.rootElement.append(fsDisplayElement);
-      const fsController = new FileSystemController(
-        systemKey, isReadOnly, fsDisplayElement, fileSystem, this.#codeMirrorPanels!.rootElement
-      );
-      this.#fileSystemPanels!.addPanel(fsDisplayElement.id, fsController);
-      this.#codeMirrorPanels!.addPanel(systemKey, fsController.editorMapView);
-  
-      this.#fileSystemToControllerMap.set(systemKey, fsController);
-      return option;
-    }
-    */
-    /*
-    #insertFileSystemOption(option: HTMLOptionElement) {
-      const targetFileSystem = option.value;
-      let referenceOption: HTMLOptionElement | null = null;
-      for (const currentOption of Array.from(this.#fsSelectElement.options).slice(2)) {
-        if (targetFileSystem.localeCompare(currentOption.text) < 0) {
-          referenceOption = currentOption;
-          break;
-        }
-      }
-  
-      this.#fsSelectElement.options.add(option, referenceOption);
-    }
-    */
     //#endregion file system set manipulation
     #handleClassClick(event) {
         const { classSpecifier, classLineNumber } = event.detail;
