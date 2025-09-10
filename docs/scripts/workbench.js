@@ -123,6 +123,9 @@ class Workbench_Base {
                 await this.#fileSystemSetController.doFileSystemRename();
                 break;
             }
+            case ValidFileOperations.export: {
+                await this.#doFileSystemExport();
+            }
             /*
             case ValidFileOperations.upload:
               await this.#doFileSystemUpload();
@@ -201,27 +204,19 @@ class Workbench_Base {
         */
     }
     async #doFileSystemExport() {
-        /*
-        const systemKey = this.#fileSystemSetController!.getSourceFileSystem();
-        const fsController: FileSystemController = this.#fileSystemToControllerMap.get(systemKey)!;
-        const blob: Blob = await this.#fileSystemSetController!.getExportedFilesZip(fsController.fileMap);
-        const url: string = URL.createObjectURL(blob);
-    
-        const { promise, resolve } = Promise.withResolvers<void>();
-        const form = document.getElementById("exportFileForm") as HTMLFormElement;
+        const blob = await this.#fileSystemSetController.getExportedFilesZip();
+        const url = URL.createObjectURL(blob);
+        const { promise, resolve } = Promise.withResolvers();
+        const form = document.getElementById("exportFileForm");
         form.onsubmit = event => resolve();
-    
-        const downloadLink = document.getElementById("downloadZipLink") as HTMLAnchorElement;
+        const downloadLink = document.getElementById("downloadZipLink");
         downloadLink.href = url;
-    
-        const dialog = document.getElementById("exportFileDialog") as HTMLDialogElement;
+        const dialog = document.getElementById("exportFileDialog");
         dialog.showModal();
         await promise;
-    
         URL.revokeObjectURL(url);
         form.onsubmit = null;
         downloadLink.href = "#";
-        */
     }
     /*
     async #addFileSystemOption(

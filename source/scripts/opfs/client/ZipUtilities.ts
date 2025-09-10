@@ -74,16 +74,16 @@ class ZipUtilitiesImpl {
     this.#recursiveArrayMap(topDir.packages, "packages", zipEntries);
     this.#recursiveArrayMap(topDir.urls, "urls", zipEntries);
 
-    const deferred = Promise.withResolvers<Uint8Array<ArrayBufferLike>>();
+    const deferred = Promise.withResolvers<Uint8Array<ArrayBuffer>>();
     const resultFn: FlateCallback = (err, zipped) => {
       if (err)
         deferred.reject(err);
       else
-        deferred.resolve(zipped);
+        deferred.resolve(zipped as Uint8Array<ArrayBuffer>);
     }
 
     zip(Object.fromEntries(zipEntries), resultFn);
-    const zipUint8: Uint8Array<ArrayBufferLike> = await deferred.promise;
+    const zipUint8: Uint8Array<ArrayBuffer> = await deferred.promise;
 
     return new File([zipUint8], "exported-files.zip", { type: "application/zip" });
   }

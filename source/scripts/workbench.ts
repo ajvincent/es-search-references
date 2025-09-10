@@ -231,6 +231,10 @@ class Workbench_Base {
         await this.#fileSystemSetController!.doFileSystemRename();
         break;
       }
+
+      case ValidFileOperations.export: {
+        await this.#doFileSystemExport();
+      }
       /*
       case ValidFileOperations.upload:
         await this.#doFileSystemUpload();
@@ -315,10 +319,7 @@ class Workbench_Base {
   }
 
   async #doFileSystemExport(): Promise<void> {
-    /*
-    const systemKey = this.#fileSystemSetController!.getSourceFileSystem();
-    const fsController: FileSystemController = this.#fileSystemToControllerMap.get(systemKey)!;
-    const blob: Blob = await this.#fileSystemSetController!.getExportedFilesZip(fsController.fileMap);
+    const blob: Blob = await this.#fileSystemSetController!.getExportedFilesZip();
     const url: string = URL.createObjectURL(blob);
 
     const { promise, resolve } = Promise.withResolvers<void>();
@@ -335,7 +336,6 @@ class Workbench_Base {
     URL.revokeObjectURL(url);
     form.onsubmit = null;
     downloadLink.href = "#";
-    */
   }
 
   /*

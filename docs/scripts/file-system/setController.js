@@ -1,9 +1,9 @@
 import { FileSystemSetView, ValidFileOperations } from "./views/fs-set.js";
 import { ReferenceSpecRecord } from "../reference-spec/WebFileSystem.js";
+import { ZipUtilities } from "../opfs/client/ZipUtilities.js";
 export { ValidFileOperations };
 export class FileSystemSetController {
     static referenceFSLabel = "Reference-spec file system";
-    static #decoder = new TextDecoder;
     #fsFrontEnd;
     view;
     #workbenchFileSystemSelector;
@@ -63,7 +63,10 @@ export class FileSystemSetController {
         throw new Error("to be re-implemented");
     }
     async getExportedFilesZip() {
-        throw new Error("to be re-implemented");
+        const sourceUUID = this.getSourceFileSystem().substring(4);
+        const sourceFS = await this.#fsFrontEnd.getWebFS(sourceUUID);
+        const topRecord = await sourceFS.exportDirectoryRecord();
+        return await ZipUtilities.buildZipFile(topRecord);
     }
     /*
     async getFileEntries(): Promise<[string, string][]> {
@@ -87,23 +90,6 @@ export class FileSystemSetController {
       return Object.entries(fileRecords).map(
         ([pathToFile, contentsArray]) => [prefix + pathToFile, FileSystemSetController.#decoder.decode(contentsArray)]
       );
-    }
-  
-    async getExportedFilesZip(fsMap: FileSystemMap): Promise<File> {
-      const exportedFiles: ExportedFileSystem = fsMap.exportAsJSON();
-  
-      const deferred = Promise.withResolvers<Uint8Array<ArrayBufferLike>>();
-      const resultFn: FlateCallback = (err, zipped) => {
-        if (err)
-          deferred.reject(err);
-        else
-          deferred.resolve(zipped);
-      }
-  
-      zip(exportedFiles, resultFn);
-  
-      const zipUint8: Uint8Array<ArrayBufferLike> = await deferred.promise;
-      return new File([zipUint8], "exported-files.zip", { type: "application/zip" });
     }
     */
     async reset() {

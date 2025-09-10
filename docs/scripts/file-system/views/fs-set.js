@@ -39,7 +39,6 @@ export class FileSystemSetView {
     displayElement;
     operationSelect;
     fileUploadPicker;
-    uploadRoot;
     sourceSelector;
     targetInput;
     submitButton;
@@ -55,7 +54,6 @@ export class FileSystemSetView {
         this.displayElement = document.getElementById("filesystem-controls-form");
         this.operationSelect = this.#getElement("filesystem-operation");
         this.fileUploadPicker = this.#getElement("file-upload-picker");
-        this.uploadRoot = this.#getElement("file-upload-root");
         this.sourceSelector = this.#getElement("file-system-source-selector");
         this.targetInput = this.#getElement("file-system-target");
         this.submitButton = this.#getElement("filesystem-submit");
@@ -101,7 +99,6 @@ export class FileSystemSetView {
             this.submitButton.disabled = true;
             const array = [
                 this.fileUploadPicker,
-                this.uploadRoot,
                 this.sourceSelector,
                 this.targetInput,
             ];

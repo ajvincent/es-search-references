@@ -54,7 +54,6 @@ export class FileSystemSetView implements BaseView {
 
   readonly operationSelect: HTMLSelectElement;
   readonly fileUploadPicker: HTMLInputElement;
-  readonly uploadRoot: HTMLInputElement;
   readonly sourceSelector: HTMLSelectElement;
   readonly targetInput: HTMLInputElement;
   readonly submitButton: HTMLButtonElement;
@@ -75,7 +74,6 @@ export class FileSystemSetView implements BaseView {
 
     this.operationSelect = this.#getElement<HTMLSelectElement>("filesystem-operation");
     this.fileUploadPicker = this.#getElement<HTMLInputElement>("file-upload-picker");
-    this.uploadRoot = this.#getElement<HTMLInputElement>("file-upload-root");
     this.sourceSelector = this.#getElement<HTMLSelectElement>("file-system-source-selector");
     this.targetInput = this.#getElement<HTMLInputElement>("file-system-target");
     this.submitButton = this.#getElement<HTMLButtonElement>("filesystem-submit");
@@ -146,7 +144,6 @@ export class FileSystemSetView implements BaseView {
 
       const array: readonly (HTMLInputElement | HTMLSelectElement)[] = [
         this.fileUploadPicker,
-        this.uploadRoot,
         this.sourceSelector,
         this.targetInput,
       ]
