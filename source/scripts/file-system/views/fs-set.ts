@@ -102,6 +102,7 @@ export class FileSystemSetView implements BaseView {
     event.stopPropagation();
     await this.updateExistingSystemSelector();
     this.#updateAllElementsVisible();
+    this.submitButton.disabled = false;
   }
 
   async updateExistingSystemSelector(): Promise<void> {

@@ -234,14 +234,14 @@ class Workbench_Base {
 
       case ValidFileOperations.export: {
         await this.#doFileSystemExport();
+        break;
+      }
+
+      case ValidFileOperations.upload: {
+        await this.#fileSystemSetController!.doFileSystemUpload();
+        break;
       }
       /*
-      case ValidFileOperations.upload:
-        await this.#doFileSystemUpload();
-        break;
-      case ValidFileOperations.export:
-        await this.#doFileSystemExport();
-        break;
       case ValidFileOperations.delete: {
         await this.#doFileSystemDelete(false);
         break;
@@ -255,38 +255,6 @@ class Workbench_Base {
     this.#fileSystemSetController!.reset();
   }
 
-  async #doFileSystemUpload(): Promise<void> {
-    /*
-    const targetFileSystem: string = this.#fileSystemSetController!.getTargetFileSystem();
-
-    const newFileEntries: [string, string][] = await this.#fileSystemSetController!.getFileEntries();
-    this.#fileSystemSetController!.form.reset();
-
-    let fs = this.#fileSystemToControllerMap.get(targetFileSystem)?.fileMap as FileSystemMap | undefined;
-    if (fs) {
-      fs.batchUpdate(() => {
-        for (const [pathToFile, contents] of newFileEntries) {
-          fs!.set(pathToFile, contents);
-        }
-      });
-    } else {
-      if (newFileEntries.every(pathAndContents => pathAndContents[0] !== "es-search-references/guest")) {
-        const guestFile = this.#fileSystemToControllerMap.get("reference-spec-filesystem")?.fileMap.get("es-search-references/guest");
-        if (!guestFile) {
-          throw new Error("no guest file?");
-        }
-        newFileEntries.push(["es-search-references/guest", guestFile]);
-      }
-
-      const fs = new FileSystemMap(targetFileSystem, newFileEntries);
-
-      const option: HTMLOptionElement = await this.#addFileSystemOption(targetFileSystem, fs, false);
-      this.#insertFileSystemOption(option);
-    }
-
-    this.#fsSelector.value = targetFileSystem;
-    */
-  }
 
   async #doFileSystemDelete(isRename: boolean): Promise<void> {
     // TODO: provide API to delete all file systems and all local storage we use!

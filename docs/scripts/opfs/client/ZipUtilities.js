@@ -21,6 +21,7 @@ class ZipUtilitiesImpl {
             packages: {},
             urls: {}
         };
+        let found = false;
         for (const [pathToFile, contents] of Object.entries(fileRecords)) {
             const parts = pathToFile.split("/");
             const leafName = parts.pop(), headName = parts.shift();
@@ -39,7 +40,10 @@ class ZipUtilitiesImpl {
                 record = record[part];
             }
             record[leafName] = _a.#decoder.decode(contents);
+            found = true;
         }
+        if (!found)
+            throw new Error("no packages or URL's found");
         return topRecord;
     }
     async buildZipFile(topDir) {

@@ -8,6 +8,7 @@ import type {
 } from "../opfs/client/FrontEnd.js";
 
 import type {
+  DirectoryRecord,
   OPFSWebFileSystemIfc,
   TopDirectoryRecord
 } from "../opfs/types/WebFileSystemIfc.js";
@@ -50,6 +51,8 @@ export class FileSystemSetController {
     this.view = new FileSystemSetView(fsFrontEnd);
 
     this.#workbenchFileSystemSelector = workbenchFileSystemSelector;
+
+    this.#attachEvents();
   }
 
   get form(): HTMLFormElement {
@@ -66,6 +69,10 @@ export class FileSystemSetController {
 
   getTargetFileDescriptor(): string {
     return this.view.targetInput.value;
+  }
+
+  #attachEvents(): void {
+    this.view.fileUploadPicker.onchange = this.#handleFileUploadPick.bind(this);
   }
 
   public async ensureReferenceFS(): Promise<void> {
@@ -112,8 +119,41 @@ export class FileSystemSetController {
     await this.reset();
   }
 
-  async getFileEntries(): Promise<[string, string][]> {
-    throw new Error("to be re-implemented");
+  public async doFileSystemUpload(): Promise<void> {
+    const topRecord = await this.getFileEntries();
+    const refsDir: DirectoryRecord = topRecord.packages["es-search-references"] = {};
+    topRecord.packages["es-search-references"].guest = refsDir.guest as string;
+
+    const newDescription: string = this.getTargetFileDescriptor();
+
+    const targetUUID: UUID = await this.#fsFrontEnd.buildEmpty(newDescription);
+    const targetFS: OPFSWebFileSystemIfc = await this.#fsFrontEnd.getWebFS(targetUUID);
+    await targetFS.importDirectoryRecord(topRecord);
+
+    await this.reset();
+  }
+
+  async #handleFileUploadPick(event: Event): Promise<void> {
+    event.preventDefault();
+    this.view.submitButton.disabled = true;
+
+    try {
+      await this.getFileEntries();
+      this.view.fileUploadPicker.setCustomValidity("");
+    }
+    catch (ex) {
+      this.view.fileUploadPicker.setCustomValidity(
+        "ZIP file is not valid for upload.  Check the contents of the ZIP file to ensure they match the specification below."
+      );
+    }
+    finally {
+      this.view.submitButton.disabled = false;
+    }
+  }
+
+  async getFileEntries(): Promise<TopDirectoryRecord> {
+    const zipFile: File = this.view.fileUploadPicker.files![0]!;
+    return await ZipUtilities.extractFromZip(zipFile);
   }
 
   async getExportedFilesZip(): Promise<File> {
@@ -123,31 +163,6 @@ export class FileSystemSetController {
 
     return await ZipUtilities.buildZipFile(topRecord);
   }
-
-  /*
-  async getFileEntries(): Promise<[string, string][]> {
-    const buffer: ArrayBuffer = await this.view.fileUploadPicker.files![0]!.arrayBuffer();
-    const firstFile = new Uint8Array(buffer);
-
-    const deferred = Promise.withResolvers<Record<string, Uint8Array>>();
-    const filter: UnzipFileFilter = file => {
-      return file.size > 0;
-    }
-    const resultFn: UnzipCallback = (err, unzipped) => {
-      if (err)
-        deferred.reject(err);
-      else
-        deferred.resolve(unzipped);
-    };
-    unzip(firstFile, { filter }, resultFn);
-    const fileRecords: Record<string, Uint8Array> = await deferred.promise;
-
-    const prefix = this.view.uploadRoot.value;
-    return Object.entries(fileRecords).map(
-      ([pathToFile, contentsArray]) => [prefix + pathToFile, FileSystemSetController.#decoder.decode(contentsArray)]
-    );
-  }
-  */
 
   async reset(): Promise<void> {
     this.#workbenchFileSystemSelector.clearOptions();

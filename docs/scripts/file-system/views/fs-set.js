@@ -73,6 +73,7 @@ export class FileSystemSetView {
         event.stopPropagation();
         await this.updateExistingSystemSelector();
         this.#updateAllElementsVisible();
+        this.submitButton.disabled = false;
     }
     async updateExistingSystemSelector() {
         this.#sourceSelectorView.clearOptions();
