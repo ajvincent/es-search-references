@@ -28,7 +28,7 @@ export class OPFSFrontEnd {
 
   #isLive = true;
   #fsManager: OPFSFileSystemManagerIfc | undefined;
-  #webFsMap: Map<string, OPFSWebFileSystemIfc> | undefined = new Map;
+  #webFsMap: Map<UUID, OPFSWebFileSystemIfc> | undefined = new Map;
 
   private constructor(
     fsManager: OPFSFileSystemManagerIfc
@@ -97,6 +97,14 @@ export class OPFSFrontEnd {
     await webFS.terminate();
     await this.#fsManager.remove(key);
     return true;
+  }
+
+  async setDescription(key: UUID, newDescription: string): Promise<void> {
+    if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
+      throw new Error("this front end is dead");
+    }
+
+    await this.#fsManager.setDescription(key, newDescription);
   }
 
   async terminate(): Promise<void>

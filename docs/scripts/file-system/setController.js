@@ -6,9 +6,11 @@ export class FileSystemSetController {
     static #decoder = new TextDecoder;
     #fsFrontEnd;
     view;
-    constructor(fsFrontEnd) {
+    #workbenchFileSystemSelector;
+    constructor(fsFrontEnd, workbenchFileSystemSelector) {
         this.#fsFrontEnd = fsFrontEnd;
         this.view = new FileSystemSetView(fsFrontEnd);
+        this.#workbenchFileSystemSelector = workbenchFileSystemSelector;
     }
     get form() {
         return this.view.displayElement;
@@ -19,7 +21,7 @@ export class FileSystemSetController {
     getSourceFileSystem() {
         return this.view.sourceSelector.value;
     }
-    getTargetFileSystem() {
+    getTargetFileDescriptor() {
         return this.view.targetInput.value;
     }
     async ensureReferenceFS() {
@@ -40,6 +42,12 @@ export class FileSystemSetController {
                 return uuid;
         }
         throw new Error('we should have a reference UUID by now!');
+    }
+    async doFileSystemRename() {
+        const sourceFileSystem = this.getSourceFileSystem().substring(4);
+        const newDescription = this.getTargetFileDescriptor();
+        await this.#fsFrontEnd.setDescription(sourceFileSystem, newDescription);
+        await this.reset();
     }
     async getFileEntries() {
         throw new Error("to be re-implemented");
@@ -88,8 +96,12 @@ export class FileSystemSetController {
       return new File([zipUint8], "exported-files.zip", { type: "application/zip" });
     }
     */
-    reset() {
-        this.view.updateExistingSystemSelector();
+    async reset() {
+        this.#workbenchFileSystemSelector.clearOptions();
+        await Promise.all([
+            this.#workbenchFileSystemSelector.fillOptions(this.#fsFrontEnd),
+            this.view.updateExistingSystemSelector(),
+        ]);
         this.form.reset();
     }
 }

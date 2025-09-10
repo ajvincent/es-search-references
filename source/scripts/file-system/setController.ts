@@ -20,6 +20,10 @@ import {
   ReferenceSpecRecord
 } from "../reference-spec/WebFileSystem.js";
 
+import {
+  FileSystemSelectorView
+} from "../workbench-views/FileSystemSelector.js";
+
 export {
   ValidFileOperations
 };
@@ -31,12 +35,17 @@ export class FileSystemSetController {
   readonly #fsFrontEnd: OPFSFrontEnd;
   readonly view: FileSystemSetView;
 
+  readonly #workbenchFileSystemSelector: FileSystemSelectorView;
+
   constructor(
-    fsFrontEnd: OPFSFrontEnd
+    fsFrontEnd: OPFSFrontEnd,
+    workbenchFileSystemSelector: FileSystemSelectorView
   )
   {
     this.#fsFrontEnd = fsFrontEnd;
     this.view = new FileSystemSetView(fsFrontEnd);
+
+    this.#workbenchFileSystemSelector = workbenchFileSystemSelector;
   }
 
   get form(): HTMLFormElement {
@@ -51,7 +60,7 @@ export class FileSystemSetController {
     return this.view.sourceSelector.value;
   }
 
-  getTargetFileSystem(): string {
+  getTargetFileDescriptor(): string {
     return this.view.targetInput.value;
   }
 
@@ -76,6 +85,13 @@ export class FileSystemSetController {
         return uuid as UUID;
     }
     throw new Error('we should have a reference UUID by now!');
+  }
+
+  public async doFileSystemRename(): Promise<void> {
+    const sourceFileSystem = this.getSourceFileSystem()!.substring(4) as UUID;
+    const newDescription = this.getTargetFileDescriptor();
+    await this.#fsFrontEnd.setDescription(sourceFileSystem, newDescription);
+    await this.reset();
   }
 
   async getFileEntries(): Promise<[string, string][]> {
@@ -128,8 +144,14 @@ export class FileSystemSetController {
   }
   */
 
-  reset(): void {
-    this.view.updateExistingSystemSelector();
+  async reset(): Promise<void> {
+    this.#workbenchFileSystemSelector.clearOptions();
+
+    await Promise.all([
+      this.#workbenchFileSystemSelector.fillOptions(this.#fsFrontEnd),
+      this.view.updateExistingSystemSelector(),
+    ]);
+
     this.form.reset();
   }
 }

@@ -18,6 +18,8 @@ export class FileSystemSelectorView {
   readonly #fsSelectCallback: (key: UUID) => void;
   readonly #fsControlsCallback: () => void;
 
+  readonly #optionsMap = new Map<string, HTMLOptionElement>;
+
   constructor(
     selectElement: HTMLSelectElement,
     fsSelectCallback: (key: UUID) => void,
@@ -31,6 +33,10 @@ export class FileSystemSelectorView {
     this.#selectElement.onchange = this.#handleSelect.bind(this);
   }
 
+  get currentValue(): string {
+    return this.#selectElement.value;
+  }
+
   selectOption(key: UUID) {
     this.#selectElement.value = "fss:" + key;
     this.#fsSelectCallback(key);
@@ -42,6 +48,7 @@ export class FileSystemSelectorView {
       FileSystemSelectorView.#controlsValue
     )!;
     this.#selectElement.replaceChildren(controlsOption);
+    this.#optionsMap.clear();
   }
 
   async fillOptions(
@@ -52,11 +59,13 @@ export class FileSystemSelectorView {
 
     const options: HTMLOptionElement[] = [];
     let refSpecOption: HTMLOptionElement;
-    for (const [systemKey, fileSystem] of Object.entries(fileSystems) as [UUID, string][]) {
+    const systemIterator = Object.entries(fileSystems) as [UUID, string][];
+    for (const [systemKey, fileSystemDescriptor] of systemIterator) {
       const option: HTMLOptionElement = document.createElement("option");
       option.value = "fss:" + systemKey;
-      option.append(fileSystem);
-      if (fileSystem === FileSystemSetController.referenceFSLabel) {
+      option.append(fileSystemDescriptor);
+      this.#optionsMap.set(fileSystemDescriptor, option);
+      if (fileSystemDescriptor === FileSystemSetController.referenceFSLabel) {
         refSpecOption = option;
       }
       else {
@@ -69,6 +78,24 @@ export class FileSystemSelectorView {
       this.#selectElement.append(...options);
     }
     this.#selectElement.prepend(refSpecOption!);
+  }
+
+  hasOptionByDescription(
+    description: string
+  ): boolean
+  {
+    return this.#optionsMap.has(description);
+  }
+
+  hideOptionByDescription(
+    description: string
+  ): void
+  {
+    const option = this.#optionsMap.get(description);
+    if (option) {
+      option.remove();
+      this.#optionsMap.delete(description);
+    }
   }
 
   #handleSelect(event: Event): void {

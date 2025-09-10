@@ -50,6 +50,12 @@ export class OPFSFrontEnd {
         await this.#fsManager.remove(key);
         return true;
     }
+    async setDescription(key, newDescription) {
+        if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
+            throw new Error("this front end is dead");
+        }
+        await this.#fsManager.setDescription(key, newDescription);
+    }
     async terminate() {
         if (!this.#isLive || !this.#fsManager || !this.#webFsMap) {
             throw new Error("this front end is dead");

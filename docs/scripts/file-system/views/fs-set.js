@@ -1,3 +1,5 @@
+var _a;
+import { FileSystemSelectorView } from "../../workbench-views/FileSystemSelector.js";
 export var ValidFileOperations;
 (function (ValidFileOperations) {
     ValidFileOperations["clone"] = "clone";
@@ -9,14 +11,31 @@ export var ValidFileOperations;
 })(ValidFileOperations || (ValidFileOperations = {}));
 ;
 export class FileSystemSetView {
-    static #createOption(keyAndLabel) {
-        const [fsKey, label] = keyAndLabel;
-        const option = document.createElement("option");
-        option.value = fsKey;
-        option.append(label);
-        return option;
+    // copied from FileSystemSetController
+    static #referenceFSLabel = "Reference-spec file system";
+    static #controlsLabel = "File system controls";
+    static #updateElementVisible(elem, isSupported) {
+        if (isSupported) {
+            elem.classList.remove("hidden");
+            elem.previousElementSibling.classList.remove("hidden");
+            elem.disabled = false;
+            elem.required = true;
+        }
+        else {
+            elem.classList.add("hidden");
+            elem.previousElementSibling.classList.add("hidden");
+            elem.disabled = true;
+            elem.required = false;
+        }
+        if (elem instanceof HTMLInputElement) {
+            elem.value = "";
+        }
+        else {
+            elem.selectedIndex = -1;
+        }
     }
     #fsFrontEnd;
+    #sourceSelectorView;
     displayElement;
     operationSelect;
     fileUploadPicker;
@@ -40,6 +59,8 @@ export class FileSystemSetView {
         this.sourceSelector = this.#getElement("file-system-source-selector");
         this.targetInput = this.#getElement("file-system-target");
         this.submitButton = this.#getElement("filesystem-submit");
+        this.#sourceSelectorView = new FileSystemSelectorView(this.sourceSelector, (uuid) => {
+        }, () => null);
         this.operationSelect.onchange = this.#handleOperationSelect.bind(this);
         this.targetInput.onchange = this.#customValidateTarget.bind(this);
     }
@@ -50,20 +71,17 @@ export class FileSystemSetView {
         this.updateExistingSystemSelector();
     }
     ;
-    #handleOperationSelect(event) {
+    async #handleOperationSelect(event) {
         event.stopPropagation();
-        this.updateExistingSystemSelector();
-        this.#updateElementsVisible();
+        await this.updateExistingSystemSelector();
+        this.#updateAllElementsVisible();
     }
     async updateExistingSystemSelector() {
-        const currentSystems = await this.#fsFrontEnd.getAvailableSystems();
-        const options = Object.entries(currentSystems).map(FileSystemSetView.#createOption);
-        if (this.operationSelect.value !== "rename" && this.operationSelect.value !== "delete") {
-            /*
-            options.unshift(FileSystemSetView.#referenceFileOption);
-            */
+        this.#sourceSelectorView.clearOptions();
+        await this.#sourceSelectorView.fillOptions(this.#fsFrontEnd);
+        if (this.operationSelect.value === "rename" || this.operationSelect.value === "delete") {
+            this.#sourceSelectorView.hideOptionByDescription(_a.#referenceFSLabel);
         }
-        this.sourceSelector.replaceChildren(...options);
     }
     #getElement(id) {
         const elem = this.displayElement.elements.namedItem(id);
@@ -77,7 +95,7 @@ export class FileSystemSetView {
         }
         return elem;
     }
-    #updateElementsVisible() {
+    #updateAllElementsVisible() {
         const { selectedOperation } = this;
         if (!selectedOperation) {
             this.submitButton.disabled = true;
@@ -88,35 +106,15 @@ export class FileSystemSetView {
                 this.targetInput,
             ];
             for (const elem of array) {
-                this.#updateElemVisible(elem, false);
+                _a.#updateElementVisible(elem, false);
             }
             return;
         }
         const innerMap = this.#opToElementsMap.get(selectedOperation);
         for (const [elem, isSupported] of innerMap) {
-            this.#updateElemVisible(elem, isSupported);
+            _a.#updateElementVisible(elem, isSupported);
         }
         this.submitButton.disabled = false;
-    }
-    #updateElemVisible(elem, isSupported) {
-        if (isSupported) {
-            elem.classList.remove("hidden");
-            elem.previousElementSibling.classList.remove("hidden");
-            elem.disabled = false;
-            elem.required = true;
-        }
-        else {
-            elem.classList.add("hidden");
-            elem.previousElementSibling.classList.add("hidden");
-            elem.disabled = true;
-            elem.required = false;
-        }
-        if (elem instanceof HTMLInputElement) {
-            elem.value = "";
-        }
-        else {
-            elem.selectedIndex = -1;
-        }
     }
     get selectedOperation() {
         const value = this.operationSelect.value;
@@ -126,11 +124,15 @@ export class FileSystemSetView {
     }
     #customValidateTarget(event) {
         const { value } = this.targetInput;
-        if (value === "reference-spec-filesystem" || value === "File system controls") {
+        if (value === _a.#referenceFSLabel || value === _a.#controlsLabel) {
             this.targetInput.setCustomValidity("This file system name is reserved.");
+        }
+        else if (this.#sourceSelectorView.hasOptionByDescription(value)) {
+            this.targetInput.setCustomValidity("This file system description is in use.");
         }
         else {
             this.targetInput.setCustomValidity("");
         }
     }
 }
+_a = FileSystemSetView;

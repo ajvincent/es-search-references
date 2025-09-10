@@ -76,13 +76,9 @@ class Workbench_Base {
 
   readonly #displayElement: HTMLDivElement;
 
-  readonly #fsSelectElement: HTMLSelectElement;
   readonly #fsSelector: FileSystemSelectorView;
   readonly #fileSystemToControllerMap = new Map<string, FileSystemController>;
 
-  /*
-  #fileSystemControlsLeftView?: GenericPanelView;
-  */
   #referenceFileSystemUUID?: UUID;
   #fileSystemSetController?: FileSystemSetController;
 
@@ -98,9 +94,7 @@ class Workbench_Base {
   )
   {
     this.#frontEnd = frontEnd;
-
     this.#displayElement = document.getElementById("workbench") as HTMLDivElement;
-    this.#fsSelectElement = document.getElementById("workspace-selector") as HTMLSelectElement;
 
     this.#fsSelector = new FileSystemSelectorView(
       document.getElementById("workspace-selector") as HTMLSelectElement,
@@ -133,7 +127,7 @@ class Workbench_Base {
   }
 
   async #fillFileSystemPanels(): Promise<void> {
-    this.#fileSystemSetController = new FileSystemSetController(this.#frontEnd);
+    this.#fileSystemSetController = new FileSystemSetController(this.#frontEnd, this.#fsSelector);
     await this.#fileSystemSetController.ensureReferenceFS();
     this.#referenceFileSystemUUID = await this.#fileSystemSetController.getReferenceUUID();
 
@@ -142,7 +136,7 @@ class Workbench_Base {
   }
 
   #getCurrentFSController(): FileSystemController | undefined {
-    return this.#fileSystemToControllerMap.get(this.#fsSelectElement.value);
+    return this.#fileSystemToControllerMap.get(this.#fsSelector.currentValue);
   }
 
   async #runSearches(event: MouseEvent): Promise<void> {
@@ -228,17 +222,17 @@ class Workbench_Base {
     event.stopPropagation();
 
     switch (this.#fileSystemSetController!.selectedOperation) {
+      case ValidFileOperations.rename: {
+        await this.#fileSystemSetController!.doFileSystemRename();
+        break;
+      }
+      /*
       case ValidFileOperations.clone:
         await this.#doFileSystemClone();
         break;
       case ValidFileOperations.upload:
         await this.#doFileSystemUpload();
         break;
-      case ValidFileOperations.rename: {
-        await this.#doFileSystemClone();
-        await this.#doFileSystemDelete(true);
-        break;
-      }
       case ValidFileOperations.export:
         await this.#doFileSystemExport();
         break;
@@ -246,6 +240,7 @@ class Workbench_Base {
         await this.#doFileSystemDelete(false);
         break;
       }
+      */
 
       default:
         return Promise.reject(new Error("unsupported operation"));
@@ -381,6 +376,7 @@ class Workbench_Base {
   }
   */
 
+  /*
   #insertFileSystemOption(option: HTMLOptionElement) {
     const targetFileSystem = option.value;
     let referenceOption: HTMLOptionElement | null = null;
@@ -393,6 +389,7 @@ class Workbench_Base {
 
     this.#fsSelectElement.options.add(option, referenceOption);
   }
+  */
   //#endregion file system set manipulation
 
   #handleClassClick(event: CustomEvent): void {
@@ -401,8 +398,7 @@ class Workbench_Base {
       classLineNumber
     } = event.detail as ClassClickDetails;
 
-    const currentFS: FileSystemController = this.#fileSystemToControllerMap.get(this.#fsSelectElement.value)!;
-    currentFS.showFileAndLineNumber(classSpecifier, classLineNumber);
+    this.#getCurrentFSController()!.showFileAndLineNumber(classSpecifier, classLineNumber);
   }
 }
 
