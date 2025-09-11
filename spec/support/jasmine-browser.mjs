@@ -8,14 +8,19 @@ export default {
     "docs/tests/jasmine/**/*.js"
   ],
   helpers: [
-    "docs/tests/jasmine/helpers/**/*.js"
+    "docs/tests/jasmine/helpers/**/*.js",
+    "docs/tests/jasmine/fixtures/**/*.js",
+  ],
+  cssFiles: [
+    "css/tab-panels.css",
+    "css/tree.css",
   ],
   esmFilenameExtension: ".js",
   // Set to true if you need to load module src files instead of loading via the spec files.
   modulesWithSideEffectsInSrcFiles: false,
   // Allows the use of top-level await in src/spec/helper files. This is off by
   // default because it makes files load more slowly.
-  enableTopLevelAwait: false,
+  enableTopLevelAwait: true,
   env: {
     stopSpecOnExpectationFailure: false,
     stopOnSpecFailure: false,

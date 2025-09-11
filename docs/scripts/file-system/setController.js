@@ -1,9 +1,20 @@
+//#region preamble
 import { FileSystemSetView, ValidFileOperations } from "./views/fs-set.js";
-import { unzip, zip } from "../../lib/packages/fflate.js";
+import { ReferenceSpecRecord } from "../reference-spec/WebFileSystem.js";
+import { ZipUtilities } from "../opfs/client/ZipUtilities.js";
+//#endregion preamble
 export { ValidFileOperations };
 export class FileSystemSetController {
-    static #decoder = new TextDecoder;
-    view = new FileSystemSetView();
+    static referenceFSLabel = "Reference-spec file system";
+    #fsFrontEnd;
+    view;
+    #workbenchFileSystemSelector;
+    constructor(fsFrontEnd, workbenchFileSystemSelector) {
+        this.#fsFrontEnd = fsFrontEnd;
+        this.view = new FileSystemSetView(fsFrontEnd);
+        this.#workbenchFileSystemSelector = workbenchFileSystemSelector;
+        this.#attachEvents();
+    }
     get form() {
         return this.view.displayElement;
     }
@@ -13,42 +24,93 @@ export class FileSystemSetController {
     getSourceFileSystem() {
         return this.view.sourceSelector.value;
     }
-    getTargetFileSystem() {
+    getTargetFileDescriptor() {
         return this.view.targetInput.value;
     }
+    #attachEvents() {
+        this.view.fileUploadPicker.onchange = this.#handleFileUploadPick.bind(this);
+    }
+    async ensureReferenceFS() {
+        const currentFileSystems = await this.#fsFrontEnd.getAvailableSystems();
+        const descriptions = Object.values(currentFileSystems);
+        for (const desc of descriptions) {
+            if (desc === FileSystemSetController.referenceFSLabel)
+                return;
+        }
+        const uuid = await this.#fsFrontEnd.buildEmpty(FileSystemSetController.referenceFSLabel);
+        const webFS = await this.#fsFrontEnd.getWebFS(uuid);
+        await webFS.importDirectoryRecord(ReferenceSpecRecord);
+    }
+    async getReferenceUUID() {
+        const currentFileSystems = await this.#fsFrontEnd.getAvailableSystems();
+        for (const [uuid, desc] of Object.entries(currentFileSystems)) {
+            if (desc === FileSystemSetController.referenceFSLabel)
+                return uuid;
+        }
+        throw new Error('we should have a reference UUID by now!');
+    }
+    async doFileSystemClone() {
+        const sourceUUID = this.getSourceFileSystem().substring(4);
+        const newDescription = this.getTargetFileDescriptor();
+        const sourceFS = await this.#fsFrontEnd.getWebFS(sourceUUID);
+        const topRecord = await sourceFS.exportDirectoryRecord();
+        const targetUUID = await this.#fsFrontEnd.buildEmpty(newDescription);
+        const targetFS = await this.#fsFrontEnd.getWebFS(targetUUID);
+        await targetFS.importDirectoryRecord(topRecord);
+        await this.reset();
+    }
+    async doFileSystemRename() {
+        const sourceUUID = this.getSourceFileSystem().substring(4);
+        const newDescription = this.getTargetFileDescriptor();
+        await this.#fsFrontEnd.setDescription(sourceUUID, newDescription);
+        await this.reset();
+    }
+    async doFileSystemUpload() {
+        const topRecord = await this.getFileEntries();
+        const refsDir = topRecord.packages["es-search-references"] = {};
+        topRecord.packages["es-search-references"].guest = refsDir.guest;
+        const newDescription = this.getTargetFileDescriptor();
+        const targetUUID = await this.#fsFrontEnd.buildEmpty(newDescription);
+        const targetFS = await this.#fsFrontEnd.getWebFS(targetUUID);
+        await targetFS.importDirectoryRecord(topRecord);
+        await this.reset();
+    }
+    async #handleFileUploadPick(event) {
+        event.preventDefault();
+        this.view.submitButton.disabled = true;
+        try {
+            await this.getFileEntries();
+            this.view.fileUploadPicker.setCustomValidity("");
+        }
+        catch (ex) {
+            this.view.fileUploadPicker.setCustomValidity("ZIP file is not valid for upload.  Check the contents of the ZIP file to ensure they match the specification below.");
+        }
+        finally {
+            this.view.submitButton.disabled = false;
+        }
+    }
     async getFileEntries() {
-        const buffer = await this.view.fileUploadPicker.files[0].arrayBuffer();
-        const firstFile = new Uint8Array(buffer);
-        const deferred = Promise.withResolvers();
-        const filter = file => {
-            return file.size > 0;
-        };
-        const resultFn = (err, unzipped) => {
-            if (err)
-                deferred.reject(err);
-            else
-                deferred.resolve(unzipped);
-        };
-        unzip(firstFile, { filter }, resultFn);
-        const fileRecords = await deferred.promise;
-        const prefix = this.view.uploadRoot.value;
-        return Object.entries(fileRecords).map(([pathToFile, contentsArray]) => [prefix + pathToFile, FileSystemSetController.#decoder.decode(contentsArray)]);
+        const zipFile = this.view.fileUploadPicker.files[0];
+        return await ZipUtilities.extractFromZip(zipFile);
     }
-    async getExportedFilesZip(fsMap) {
-        const exportedFiles = fsMap.exportAsJSON();
-        const deferred = Promise.withResolvers();
-        const resultFn = (err, zipped) => {
-            if (err)
-                deferred.reject(err);
-            else
-                deferred.resolve(zipped);
-        };
-        zip(exportedFiles, resultFn);
-        const zipUint8 = await deferred.promise;
-        return new File([zipUint8], "exported-files.zip", { type: "application/zip" });
+    async getExportedFilesZip() {
+        const sourceUUID = this.getSourceFileSystem().substring(4);
+        const sourceFS = await this.#fsFrontEnd.getWebFS(sourceUUID);
+        const topRecord = await sourceFS.exportDirectoryRecord();
+        return await ZipUtilities.buildZipFile(topRecord);
     }
-    reset() {
-        this.view.updateExistingSystemSelector();
+    async doFileSystemDelete() {
+        const sourceUUID = this.getSourceFileSystem().substring(4);
+        await this.#fsFrontEnd.getWebFS(sourceUUID);
+        await this.#fsFrontEnd.removeWebFS(sourceUUID);
+        await this.reset();
+    }
+    async reset() {
+        this.#workbenchFileSystemSelector.clearOptions();
+        await Promise.all([
+            this.#workbenchFileSystemSelector.fillOptions(this.#fsFrontEnd),
+            this.view.updateExistingSystemSelector(),
+        ]);
         this.form.reset();
     }
 }

@@ -23,6 +23,8 @@ export abstract class TreeRowView {
     this.rowElement = new TreeRowElement(this.depth, this.isCollapsible);
   }
 
+  protected abstract getCellElements(): HTMLElement[];
+
   public get primaryLabel(): string {
     return this.#primaryLabel;
   }
@@ -49,6 +51,11 @@ export abstract class TreeRowView {
     label.classList.add("indent");
     label.append(this.#primaryLabel);
     this.#primaryLabelElement = label;
+
+    if (this.isCollapsible) {
+      label.onclick = event => this.#handleLabelClick(event);
+    }
+
     return label;
   }
 
@@ -100,8 +107,6 @@ export abstract class TreeRowView {
     }
   }
 
-  protected abstract getCellElements(): HTMLElement[];
-
   public prependRow(rowView: TreeRowView): void {
     this.rowElement!.insertRow(rowView.rowElement!, this.#childRowViews[0]?.rowElement);
     this.#childRowViews.unshift(rowView);
@@ -151,5 +156,11 @@ export abstract class TreeRowView {
 
   public toggleCollapsed(): void {
     this.rowElement!.toggleCollapsed();
+  }
+
+  #handleLabelClick(event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.toggleCollapsed();
   }
 }

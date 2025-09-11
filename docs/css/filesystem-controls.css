@@ -7,3 +7,10 @@
 input[list="file-systems-list"] {
   width: 200px;
 }
+
+#file-system-details-grid {
+  display: grid;
+  grid-template-columns: auto auto;
+  max-width: 40%;
+  row-gap: 5px;
+}

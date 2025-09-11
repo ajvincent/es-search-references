@@ -1,4 +1,6 @@
-import { BaseDirectoryRowView } from "./base-directory-row.js";
+import {
+  BaseDirectoryRowView
+} from "./base-directory-row.js";
 
 export class DirectoryRowView extends BaseDirectoryRowView {
   protected getCellElements(): HTMLElement[] {

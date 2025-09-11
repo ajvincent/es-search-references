@@ -1,5 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import type {
+  Dirent
+} from "node:fs";
 
 import {
   dest,
@@ -15,16 +18,17 @@ import {
 } from "./build-utilities/dist/source/InvokeTSC.js";
 
 import {
-  PromiseAllParallel,
-} from "./build-utilities/dist/source/PromiseTypes.js";
-
-import {
   projectRoot
 } from "./build-utilities/dist/source/constants.js";
 
 import {
   asyncFork
 } from "./build-utilities/dist/source/childProcess.js";
+
+import type {
+  TopDirectoryRecord,
+  DirectoryRecord
+} from "./source/scripts/opfs/types/WebFileSystemIfc.js";
 
 async function buildLocalhost(): Promise<void> {
   await InvokeTSC(path.join(projectRoot, "tsconfig-localhost.json"), []);
@@ -65,16 +69,7 @@ function installSearchReferences_d_ts() {
 }
 
 async function installReferenceSpecs(): Promise<void> {
-  const files: string[] = (await fs.readdir(path.join(projectRoot, "dist"), { recursive: true })).filter(
-    f => (f.startsWith("fixtures") || f.startsWith("reference-spec")) && f.endsWith(".js")
-  );
-
-  const fileEntries: [string, string][] = await PromiseAllParallel(files, async f => [
-    "virtual://home/" + f, await fs.readFile(path.join(projectRoot, "dist", f), { encoding: "utf-8"})
-  ]);
-  fileEntries.unshift([
-    `es-search-references/guest`,
-    `
+  const guestContents = `
 /*
 declare function searchReferences(
   this: void,
@@ -85,21 +80,75 @@ declare function searchReferences(
 ): void;
 */
 export {};
-    `.trim() + "\n"
-  ])
+  `.trim() + "\n";
 
-  const serialized = JSON.stringify(fileEntries);
-  const moduleSource = `
-import {
-  FileSystemMap
-} from "../storage/FileSystemMap.js";
-export const ReferenceSpecFileMap = new FileSystemMap("reference-spec-filesystem", ${serialized});
-`.trim();
+  const topDir = {
+    packages: {
+      "es-search-references": {
+        "guest": guestContents,
+      }
+    },
+    urls: {
+      "virtual": {
+        "home": {
+          "fixtures": {
+          },
+          "reference-spec": {
+          },
+        },
+      },
+    },
+  } as TopDirectoryRecord;
+
+  async function addDirectory(
+    dirObject: DirectoryRecord,
+    absolutePathToDirectory: string
+  ): Promise<void>
+  {
+    const entries: Dirent[] = await fs.readdir(
+      absolutePathToDirectory,
+      { encoding: "utf-8", withFileTypes: true }
+    );
+    let promises = new Set<Promise<void>>();
+
+    for (const entry of entries) {
+      const { name } = entry;
+      const fullPath = path.join(absolutePathToDirectory, name);
+      if (entry.isDirectory()) {
+        const subDirObject: DirectoryRecord = {};
+        dirObject[name] = subDirObject;
+        promises.add(addDirectory(subDirObject, fullPath));
+      } else if (entry.isFile()) {
+        let contents = await fs.readFile(fullPath, { encoding: "utf-8" });
+        dirObject[name] = contents;
+      }
+    }
+    await Promise.all(promises);
+  }
+
+  await Promise.all([
+    addDirectory(
+      (topDir.urls.virtual.home as DirectoryRecord)["fixtures"] as DirectoryRecord,
+      path.join(projectRoot, "dist/fixtures")
+    ),
+
+    addDirectory(
+      (topDir.urls.virtual.home as DirectoryRecord)["reference-spec"] as DirectoryRecord,
+      path.join(projectRoot, "dist/reference-spec")
+    ),
+  ]);
+
+  const sourceCode = `
+const ReferenceSpecRecord = ${JSON.stringify(topDir, null, 2)};
+export {
+  ReferenceSpecRecord
+}
+  `.trim() + "\n";
 
   await fs.writeFile(
-    path.join(projectRoot, "docs/scripts/reference-spec/FileMap.js"),
-    moduleSource,
-    { encoding: "utf-8"}
+    path.join(projectRoot, "docs/scripts/reference-spec/WebFileSystem.js"),
+    sourceCode,
+    { encoding: "utf-8" }
   );
 }
 

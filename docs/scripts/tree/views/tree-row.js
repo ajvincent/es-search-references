@@ -37,6 +37,9 @@ export class TreeRowView {
         label.classList.add("indent");
         label.append(this.#primaryLabel);
         this.#primaryLabelElement = label;
+        if (this.isCollapsible) {
+            label.onclick = event => this.#handleLabelClick(event);
+        }
         return label;
     }
     /**
@@ -118,5 +121,10 @@ export class TreeRowView {
     }
     toggleCollapsed() {
         this.rowElement.toggleCollapsed();
+    }
+    #handleLabelClick(event) {
+        event.preventDefault();
+        event.stopPropagation();
+        this.toggleCollapsed();
     }
 }

@@ -8,9 +8,13 @@ import { FileSystemView } from "./views/file-system.js";
 //#endregion preamble
 void (FileSystemElement); // force the custom element upgrade
 export class FileSystemController {
+    static async build(rootId, isReadonly, fileSystemElement, codeMirrorPanelsElement, webFS) {
+        const index = await webFS.getIndex();
+        return new FileSystemController(rootId, isReadonly, fileSystemElement, codeMirrorPanelsElement, webFS, index);
+    }
     isReadOnly;
     displayElement;
-    fileMap;
+    #webFS;
     #filesCheckedSet = new Set;
     filesCheckedSet = this.#filesCheckedSet;
     #fileToRowMap = new Map;
@@ -18,15 +22,15 @@ export class FileSystemController {
     editorMapView;
     #fsContextMenu;
     #directoriesSet = new Set;
-    constructor(rootId, isReadonly, fileSystemElement, fileMap, codeMirrorPanelsElement) {
+    constructor(rootId, isReadonly, fileSystemElement, codeMirrorPanelsElement, webFS, index) {
         this.displayElement = fileSystemElement;
         this.isReadOnly = isReadonly;
-        this.fileMap = fileMap;
-        this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows);
-        for (const key of this.fileMap.keys()) {
-            this.#addFileKey(key);
+        this.#webFS = webFS;
+        this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows, index);
+        for (const [fullPath, fileView] of this.#fileSystemView.descendantFileViews()) {
+            this.#addFileEventHandlers(fullPath, fileView);
         }
-        this.editorMapView = new FileEditorMapView(fileMap, rootId, isReadonly, codeMirrorPanelsElement);
+        this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS);
         this.#fsContextMenu = new FileSystemContextMenu(this);
         void this.#fsContextMenu;
     }
@@ -42,25 +46,41 @@ export class FileSystemController {
         else
             this.#filesCheckedSet.delete(pathToFile);
     }
-    #addFileKey(key) {
-        const view = this.#fileSystemView.addFileKey(key, this.#directoriesSet);
-        this.#fileToRowMap.set(key, view);
+    #addFileEventHandlers(fullPath, view) {
+        this.#fileToRowMap.set(fullPath, view);
         view.checkboxElement.onclick = (ev) => {
-            this.#fileCheckToggled(key, view.checkboxElement.checked);
+            this.#fileCheckToggled(fullPath, view.checkboxElement.checked);
         };
         view.radioElement.onclick = (ev) => {
-            this.editorMapView.selectFile(key);
+            this.#selectFile(fullPath, ev);
         };
         view.rowElement.onclick = (ev) => {
             ev.stopPropagation();
         };
     }
+    async #selectFile(fullPath, event) {
+        if (event) {
+            event.stopPropagation();
+        }
+        await this.editorMapView.updateSelectedFile();
+        if (!this.editorMapView.hasEditorForPath(fullPath)) {
+            await this.editorMapView.addEditorForPath(fullPath);
+        }
+        this.editorMapView.selectFile(fullPath);
+    }
+    async getWebFilesMap() {
+        const record = await this.#webFS.getWebFilesRecord();
+        return new Map(Object.entries(record));
+    }
+    getWebFilesIndex() {
+        return this.#webFS.getIndex();
+    }
     showFileAndLineNumber(specifier, lineNumber) {
         this.#fileSystemView.showFile(specifier);
         this.editorMapView.scrollToLine(lineNumber);
     }
-    updateFileMap() {
-        this.editorMapView.updateFileMap();
+    async updateSelectedFile() {
+        return this.editorMapView.updateSelectedFile();
     }
     // FileSystemControllerIfc
     getTreeRowsElement() {
@@ -72,29 +92,39 @@ export class FileSystemController {
     }
     // FileSystemControllerIfc
     async startAddFile(pathToDirectory) {
+        /*
         const parentRowView = this.#fileSystemView.getRowView(pathToDirectory);
         if (parentRowView.rowType !== "directory") {
-            throw new Error("row type must be a directory: " + pathToDirectory);
+          throw new Error("row type must be a directory: " + pathToDirectory);
         }
+    
         const newRowView = new FileRowView(parentRowView.depth + 1, false, "", parentRowView + "/");
         parentRowView.prependRow(newRowView);
-        let { promise, resolve } = Promise.withResolvers();
+    
+        let { promise, resolve } = Promise.withResolvers<string | null>();
         promise = promise.finally(() => parentRowView.removeRow(newRowView));
-        const localPath = await newRowView.editLabel(promise);
+        const localPath: string | null = await newRowView.editLabel(promise);
+    
         if (!localPath) {
-            resolve(null);
-            return;
+          resolve(null);
+          return;
         }
+    
         if (!this.#isValidNewFileName(parentRowView.fullPath, localPath, true)) {
-            resolve(null);
-            return;
+          resolve(null);
+          return;
         }
+    
         const fullPath = parentRowView.fullPath + "/" + localPath;
+    
         this.fileMap.set(fullPath, "");
         this.#addFileKey(fullPath);
-        this.editorMapView.addEditorForPath(fullPath);
+        await this.editorMapView.addEditorForPath(fullPath);
+    
         this.#fileSystemView.showFile(fullPath);
         resolve(null);
+        */
+        return Promise.reject(new Error("this is being rewritten"));
     }
     #isValidNewFileName(parentPath, localPath, isNewFile) {
         if (localPath === "" || localPath.startsWith("./") || localPath.startsWith("../")) {

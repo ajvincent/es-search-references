@@ -1,10 +1,14 @@
-import {
-  FileSystemMap
-} from "../../storage/FileSystemMap.js";
+import type {
+  OPFSFrontEnd
+} from "../../opfs/client/FrontEnd.js";
 
 import {
   BaseView
 } from "../../tab-panels/tab-panels-view.js";
+
+import {
+  FileSystemSelectorView
+} from "../../workbench-views/FileSystemSelector.js";
 
 export enum ValidFileOperations {
   clone = "clone",
@@ -16,22 +20,40 @@ export enum ValidFileOperations {
 };
 
 export class FileSystemSetView implements BaseView {
-  static #createOption(value: string): HTMLOptionElement {
-    const option = document.createElement("option");
-    option.value = value;
-    option.append(value);
-    return option;
+  // copied from FileSystemSetController
+  static readonly #referenceFSLabel = "Reference-spec file system";
+
+  static readonly #controlsLabel = "File system controls";
+
+  static #updateElementVisible(elem: HTMLInputElement | HTMLSelectElement, isSupported: boolean): void {
+    if (isSupported) {
+      elem.classList.remove("hidden");
+      elem.previousElementSibling!.classList.remove("hidden");
+      elem.disabled = false;
+      elem.required = true;
+    }
+    else {
+      elem.classList.add("hidden");
+      elem.previousElementSibling!.classList.add("hidden");
+      elem.disabled = true;
+      elem.required = false;
+    }
+
+    if (elem instanceof HTMLInputElement) {
+      elem.value = "";
+    }
+    else {
+      elem.selectedIndex = -1;
+    }
   }
 
-  static readonly #referenceFileOption = FileSystemSetView.#createOption(
-    "reference-spec-filesystem"
-  );
+  readonly #fsFrontEnd: OPFSFrontEnd;
+  readonly #sourceSelectorView: FileSystemSelectorView;
 
   readonly displayElement: HTMLFormElement;
 
   readonly operationSelect: HTMLSelectElement;
   readonly fileUploadPicker: HTMLInputElement;
-  readonly uploadRoot: HTMLInputElement;
   readonly sourceSelector: HTMLSelectElement;
   readonly targetInput: HTMLInputElement;
   readonly submitButton: HTMLButtonElement;
@@ -44,15 +66,25 @@ export class FileSystemSetView implements BaseView {
     [ValidFileOperations.delete, new Map],
   ]);
 
-  constructor() {
+  constructor(fsFrontEnd: OPFSFrontEnd)
+  {
+    this.#fsFrontEnd = fsFrontEnd;
+
     this.displayElement = document.getElementById("filesystem-controls-form") as HTMLFormElement;
 
     this.operationSelect = this.#getElement<HTMLSelectElement>("filesystem-operation");
     this.fileUploadPicker = this.#getElement<HTMLInputElement>("file-upload-picker");
-    this.uploadRoot = this.#getElement<HTMLInputElement>("file-upload-root");
     this.sourceSelector = this.#getElement<HTMLSelectElement>("file-system-source-selector");
     this.targetInput = this.#getElement<HTMLInputElement>("file-system-target");
     this.submitButton = this.#getElement<HTMLButtonElement>("filesystem-submit");
+
+    this.#sourceSelectorView = new FileSystemSelectorView(
+      this.sourceSelector,
+      (uuid: string) => {
+
+      },
+      () => null
+    );
 
     this.operationSelect.onchange = this.#handleOperationSelect.bind(this);
     this.targetInput.onchange = this.#customValidateTarget.bind(this);
@@ -66,19 +98,20 @@ export class FileSystemSetView implements BaseView {
     this.updateExistingSystemSelector();
   };
 
-  #handleOperationSelect(event: Event): void {
+  async #handleOperationSelect(event: Event): Promise<void> {
     event.stopPropagation();
-    this.updateExistingSystemSelector();
-    this.#updateElementsVisible();
+    await this.updateExistingSystemSelector();
+    this.#updateAllElementsVisible();
+    this.submitButton.disabled = false;
   }
 
-  updateExistingSystemSelector(): void {
-    const currentSystems: readonly string[] = FileSystemMap.allKeys();
-    const options: HTMLOptionElement[] = currentSystems.map(FileSystemSetView.#createOption);
-    if (this.operationSelect.value !== "rename" && this.operationSelect.value !== "delete") {
-      options.unshift(FileSystemSetView.#referenceFileOption);
+  async updateExistingSystemSelector(): Promise<void> {
+    this.#sourceSelectorView.clearOptions();
+    await this.#sourceSelectorView.fillOptions(this.#fsFrontEnd);
+
+    if (this.operationSelect.value === "rename" || this.operationSelect.value === "delete") {
+      this.#sourceSelectorView.hideOptionByDescription(FileSystemSetView.#referenceFSLabel);
     }
-    this.sourceSelector.replaceChildren(...options);
   }
 
   #getElement<
@@ -105,49 +138,28 @@ export class FileSystemSetView implements BaseView {
     return elem;
   }
 
-  #updateElementsVisible(): void {
+  #updateAllElementsVisible(): void {
     const { selectedOperation } = this;
     if (!selectedOperation) {
       this.submitButton.disabled = true;
 
       const array: readonly (HTMLInputElement | HTMLSelectElement)[] = [
         this.fileUploadPicker,
-        this.uploadRoot,
         this.sourceSelector,
         this.targetInput,
       ]
       for (const elem of array) {
-        this.#updateElemVisible(elem, false);
+        FileSystemSetView.#updateElementVisible(elem, false);
       }
       return;
     }
 
     const innerMap = this.#opToElementsMap.get(selectedOperation)!;
     for (const [elem, isSupported] of innerMap) {
-      this.#updateElemVisible(elem, isSupported);
+      FileSystemSetView.#updateElementVisible(elem, isSupported);
     }
 
     this.submitButton.disabled = false;
-  }
-
-  #updateElemVisible(elem: HTMLInputElement | HTMLSelectElement, isSupported: boolean): void {
-    if (isSupported) {
-      elem.classList.remove("hidden");
-      elem.previousElementSibling!.classList.remove("hidden");
-      elem.disabled = false;
-      elem.required = true;
-    } else {
-      elem.classList.add("hidden");
-      elem.previousElementSibling!.classList.add("hidden");
-      elem.disabled = true;
-      elem.required = false;
-    }
-
-    if (elem instanceof HTMLInputElement) {
-      elem.value = "";
-    } else {
-      elem.selectedIndex = -1;
-    }
   }
 
   get selectedOperation(): ValidFileOperations | undefined {
@@ -159,9 +171,13 @@ export class FileSystemSetView implements BaseView {
 
   #customValidateTarget(event: Event): void {
     const { value } = this.targetInput;
-    if (value === "reference-spec-filesystem" || value === "File system controls") {
+    if (value === FileSystemSetView.#referenceFSLabel || value === FileSystemSetView.#controlsLabel) {
       this.targetInput.setCustomValidity("This file system name is reserved.");
-    } else {
+    }
+    else if (this.#sourceSelectorView.hasOptionByDescription(value)) {
+      this.targetInput.setCustomValidity("This file system description is in use.");
+    }
+    else {
       this.targetInput.setCustomValidity("");
     }
   }

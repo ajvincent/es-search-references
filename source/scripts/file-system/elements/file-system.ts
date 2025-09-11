@@ -1,5 +1,8 @@
 export class FileSystemElement extends HTMLElement {
-  static readonly #template: DocumentFragment = (document.getElementById("shadow-filesystem-base") as HTMLTemplateElement).content;
+  static readonly #template: DocumentFragment = (
+    document.getElementById("shadow-filesystem-base") as HTMLTemplateElement
+  ).content;
+
   #shadowRoot?: ShadowRoot;
 
   public treeRows: HTMLElement | null = null;

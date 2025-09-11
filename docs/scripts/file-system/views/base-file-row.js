@@ -1,7 +1,7 @@
 import { TreeRowView } from "../../tree/views/tree-row.js";
 export class BaseFileRowView extends TreeRowView {
-    fullPath;
     rowType = "file";
+    fullPath;
     constructor(depth, isCollapsible, label, fullPath) {
         super(depth, isCollapsible, label);
         this.fullPath = fullPath;

@@ -158,6 +158,7 @@ class SVGGraphNodeView {
     [JSGraphConstants.BuiltInJSTypeName.SetIterator, ["\u23ef", true]],
     [JSGraphConstants.BuiltInJSTypeName.IteratorHelper, ["\u23ef", true]],
     [JSGraphConstants.BuiltInJSTypeName.WeakRef, ["\u2192", false]],
+    [JSGraphConstants.BuiltInJSTypeName.Symbol, ["\u24e2", true]],
     [JSGraphConstants.BuiltInJSTypeName.FinalizationRegistry, ["\u267b", false]],
   ]);
 
