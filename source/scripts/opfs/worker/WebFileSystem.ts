@@ -1,8 +1,10 @@
-import { dir } from "console";
 import {
   AwaitedMap
 } from "../../utilities/AwaitedMap.js";
-import { FileSystemClipboardIfc } from "../types/FileSystemClipboardIfc.js";
+
+import type {
+  FileSystemClipboardIfc
+} from "../types/FileSystemClipboardIfc.js";
 
 import type {
   DirectoryRecord,

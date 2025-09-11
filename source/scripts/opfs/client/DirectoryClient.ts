@@ -51,24 +51,24 @@ export class DirectoryClient<Type>
   }
 
   protected [REQUEST_ASYNC_METHOD]<ServiceName extends keyof Type>(
-      serviceName: ServiceName,
-      parameters: WorkerUnionExtract<Type, RequestMessageUnion<Type>, ServiceName>["parameters"]
-    ): Promise<WorkerUnionExtract<Type, FulfillMessageUnion<Type>, ServiceName>["result"]>
-    {
-      // @ts-expect-error
-      const message: WorkerUnionExtract<Type, RequestMessageUnion<Type>, typeof serviceName> = {
-        serviceName,
-        uuid: window.crypto.randomUUID(),
-        parameters,
-      };
+    serviceName: ServiceName,
+    parameters: WorkerUnionExtract<Type, RequestMessageUnion<Type>, ServiceName>["parameters"]
+  ): Promise<WorkerUnionExtract<Type, FulfillMessageUnion<Type>, ServiceName>["result"]>
+  {
+    // @ts-expect-error
+    const message: WorkerUnionExtract<Type, RequestMessageUnion<Type>, typeof serviceName> = {
+      serviceName,
+      uuid: window.crypto.randomUUID(),
+      parameters,
+    };
 
-      const { promise, resolve, reject } = Promise.withResolvers<
-        WorkerUnionExtract<Type, FulfillMessageUnion<Type>, ServiceName>["result"]
-      >();
-      this.#uuidToResolversMap.set(message.uuid, { resolve, reject });
-      this.#worker.postMessage(message);
-      return promise;
-    }
+    const { promise, resolve, reject } = Promise.withResolvers<
+      WorkerUnionExtract<Type, FulfillMessageUnion<Type>, ServiceName>["result"]
+    >();
+    this.#uuidToResolversMap.set(message.uuid, { resolve, reject });
+    this.#worker.postMessage(message);
+    return promise;
+  }
 
   #processResponse(
     message: FulfillMessageUnion<Type> | RejectMessageUnion<Type>

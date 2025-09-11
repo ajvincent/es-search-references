@@ -3,6 +3,18 @@ import type {
 } from "../../lib/packages/dagre-imports.js";
 
 import {
+  runSearchesInGuestEngine,
+} from "../../lib/packages/runSearchesInGuestEngine.js";
+
+import {
+  AwaitedMap
+} from "../utilities/AwaitedMap.js";
+
+import {
+  DefaultMap
+} from "./DefaultMap.js";
+
+import {
   SearchLogsConfiguration,
 } from "./LoggingConfiguration.js";
 
@@ -13,18 +25,6 @@ import {
 import {
   WebGuestRealmInputs
 } from "./WebGuestRealmInputs.js";
-
-import {
-  runSearchesInGuestEngine,
-} from "../../lib/packages/runSearchesInGuestEngine.js";
-
-import {
-  AwaitedMap
-} from "./AwaitedMap.js";
-
-import {
-  DefaultMap
-} from "./DefaultMap.js";
 
 export class SearchDriver {
   #fileMap: ReadonlyMap<string, string>;

@@ -46,13 +46,14 @@ export class DirectoryWorker<Type> {
       if (!(requestMessage.serviceName in this)) {
         throw new Error("service name not found: " + requestMessage.serviceName);
       }
-      // @ts-expect-error
+      // @ts-expect-error assume the service exists
       if (typeof this[requestMessage.serviceName] !== "function") {
         throw new Error("service is not a method: " + requestMessage.serviceName);
       }
 
-      // @ts-expect-error
+      // @ts-expect-error assume the service exists
       const result = await this[requestMessage.serviceName](...requestMessage.parameters);
+
       // @ts-expect-error merging the types back together is troublesome, but this works for each type... I think
       const fulfilledMessage: FulfillMessageUnion<Type> = {
         serviceName: requestMessage.serviceName,

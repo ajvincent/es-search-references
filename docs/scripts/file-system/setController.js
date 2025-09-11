@@ -1,6 +1,8 @@
+//#region preamble
 import { FileSystemSetView, ValidFileOperations } from "./views/fs-set.js";
 import { ReferenceSpecRecord } from "../reference-spec/WebFileSystem.js";
 import { ZipUtilities } from "../opfs/client/ZipUtilities.js";
+//#endregion preamble
 export { ValidFileOperations };
 export class FileSystemSetController {
     static referenceFSLabel = "Reference-spec file system";

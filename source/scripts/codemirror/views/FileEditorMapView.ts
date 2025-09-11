@@ -1,4 +1,7 @@
-import { OPFSWebFileSystemIfc } from "scripts/opfs/types/WebFileSystemIfc.js";
+import type {
+  OPFSWebFileSystemIfc
+} from "../../opfs/types/WebFileSystemIfc.js";
+
 import {
   type BaseView,
   TabPanelsView

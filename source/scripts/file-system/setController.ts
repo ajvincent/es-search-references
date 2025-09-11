@@ -1,3 +1,4 @@
+//#region preamble
 import {
   FileSystemSetView,
   ValidFileOperations
@@ -29,6 +30,7 @@ import {
 import {
   ZipUtilities
 } from "../opfs/client/ZipUtilities.js";
+//#endregion preamble
 
 export {
   ValidFileOperations
