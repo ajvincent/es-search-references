@@ -100,6 +100,10 @@ export class FileSystemSetController {
     throw new Error('we should have a reference UUID by now!');
   }
 
+  public async doFileSystemBuild(): Promise<void> {
+    await this.#uploadTopDirectory({ packages: {}, urls: {} });
+  }
+
   public async doFileSystemClone(): Promise<void> {
     const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
     const newDescription: string = this.getTargetFileDescriptor();
@@ -110,32 +114,38 @@ export class FileSystemSetController {
     const targetUUID: UUID = await this.#fsFrontEnd.buildEmpty(newDescription);
     const targetFS: OPFSWebFileSystemIfc = await this.#fsFrontEnd.getWebFS(targetUUID);
     await targetFS.importDirectoryRecord(topRecord);
-
-    await this.reset();
   }
 
   public async doFileSystemRename(): Promise<void> {
     const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
     const newDescription = this.getTargetFileDescriptor();
     await this.#fsFrontEnd.setDescription(sourceUUID, newDescription);
-    await this.reset();
   }
 
   public async doFileSystemUpload(): Promise<void> {
     const topRecord = await this.getFileEntries();
-    const refsDir: DirectoryRecord = topRecord.packages["es-search-references"] = {};
-    topRecord.packages["es-search-references"].guest = refsDir.guest as string;
+    await this.#uploadTopDirectory(topRecord);
+  }
+
+  async #uploadTopDirectory(
+    topRecord: TopDirectoryRecord
+  ): Promise<void>
+  {
+    const refsDir: DirectoryRecord = ReferenceSpecRecord.packages["es-search-references"] as DirectoryRecord;
+    topRecord.packages["es-search-references"] ??= {};
+    (topRecord.packages["es-search-references"] as DirectoryRecord).guest = refsDir.guest;
 
     const newDescription: string = this.getTargetFileDescriptor();
 
     const targetUUID: UUID = await this.#fsFrontEnd.buildEmpty(newDescription);
     const targetFS: OPFSWebFileSystemIfc = await this.#fsFrontEnd.getWebFS(targetUUID);
     await targetFS.importDirectoryRecord(topRecord);
-
-    await this.reset();
   }
 
-  async #handleFileUploadPick(event: Event): Promise<void> {
+  async #handleFileUploadPick(
+    event: Event
+  ): Promise<void>
+  {
     event.preventDefault();
     this.view.submitButton.disabled = true;
 
@@ -170,8 +180,6 @@ export class FileSystemSetController {
     const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
     await this.#fsFrontEnd.getWebFS(sourceUUID);
     await this.#fsFrontEnd.removeWebFS(sourceUUID);
-
-    await this.reset();
   }
 
   async reset(): Promise<void> {

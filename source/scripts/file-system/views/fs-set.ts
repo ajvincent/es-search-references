@@ -11,6 +11,7 @@ import {
 } from "../../workbench-views/FileSystemSelector.js";
 
 export enum ValidFileOperations {
+  build = "build",
   clone = "clone",
   upload = "upload",
   rename = "rename",
@@ -59,6 +60,7 @@ export class FileSystemSetView implements BaseView {
   readonly submitButton: HTMLButtonElement;
 
   readonly #opToElementsMap = new Map<ValidFileOperations, Map<HTMLInputElement | HTMLSelectElement, boolean>>([
+    [ValidFileOperations.build, new Map],
     [ValidFileOperations.clone, new Map],
     [ValidFileOperations.upload, new Map],
     [ValidFileOperations.rename, new Map],

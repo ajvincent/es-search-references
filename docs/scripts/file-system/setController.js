@@ -49,6 +49,9 @@ export class FileSystemSetController {
         }
         throw new Error('we should have a reference UUID by now!');
     }
+    async doFileSystemBuild() {
+        await this.#uploadTopDirectory({ packages: {}, urls: {} });
+    }
     async doFileSystemClone() {
         const sourceUUID = this.getSourceFileSystem().substring(4);
         const newDescription = this.getTargetFileDescriptor();
@@ -57,23 +60,24 @@ export class FileSystemSetController {
         const targetUUID = await this.#fsFrontEnd.buildEmpty(newDescription);
         const targetFS = await this.#fsFrontEnd.getWebFS(targetUUID);
         await targetFS.importDirectoryRecord(topRecord);
-        await this.reset();
     }
     async doFileSystemRename() {
         const sourceUUID = this.getSourceFileSystem().substring(4);
         const newDescription = this.getTargetFileDescriptor();
         await this.#fsFrontEnd.setDescription(sourceUUID, newDescription);
-        await this.reset();
     }
     async doFileSystemUpload() {
         const topRecord = await this.getFileEntries();
-        const refsDir = topRecord.packages["es-search-references"] = {};
+        await this.#uploadTopDirectory(topRecord);
+    }
+    async #uploadTopDirectory(topRecord) {
+        const refsDir = ReferenceSpecRecord.packages["es-search-references"];
+        topRecord.packages["es-search-references"] ??= {};
         topRecord.packages["es-search-references"].guest = refsDir.guest;
         const newDescription = this.getTargetFileDescriptor();
         const targetUUID = await this.#fsFrontEnd.buildEmpty(newDescription);
         const targetFS = await this.#fsFrontEnd.getWebFS(targetUUID);
         await targetFS.importDirectoryRecord(topRecord);
-        await this.reset();
     }
     async #handleFileUploadPick(event) {
         event.preventDefault();
@@ -103,7 +107,6 @@ export class FileSystemSetController {
         const sourceUUID = this.getSourceFileSystem().substring(4);
         await this.#fsFrontEnd.getWebFS(sourceUUID);
         await this.#fsFrontEnd.removeWebFS(sourceUUID);
-        await this.reset();
     }
     async reset() {
         this.#workbenchFileSystemSelector.clearOptions();

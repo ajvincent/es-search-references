@@ -76,6 +76,7 @@
           <label for="filesystem-operation">Operation</label>
           <select id="filesystem-operation" required>
             <option value="" selected></option>
+            <option value="build">Build</option>
             <option value="clone">Clone</option>
             <option value="upload">Upload</option>
             <option value="rename">Rename</option>
@@ -90,7 +91,7 @@
           <input id="file-upload-picker" type="file" accept=".zip" class="hidden" data-supported="upload">
 
           <label for="file-system-target" class="hidden">New system key:</label>
-          <input id="file-system-target" size="20" class="hidden" data-supported="clone,rename,upload">
+          <input id="file-system-target" size="20" class="hidden" data-supported="build,clone,rename,upload">
 
           <span><!-- empty on purpose --></span>
           <button id="filesystem-submit" type="submit" disabled>Execute</button>

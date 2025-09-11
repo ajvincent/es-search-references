@@ -222,6 +222,11 @@ class Workbench_Base {
     event.stopPropagation();
 
     switch (this.#fileSystemSetController!.selectedOperation) {
+      case ValidFileOperations.build: {
+        await this.#fileSystemSetController!.doFileSystemBuild();
+        break;
+      }
+
       case ValidFileOperations.clone: {
         await this.#fileSystemSetController!.doFileSystemClone();
         break;
@@ -253,7 +258,7 @@ class Workbench_Base {
         return Promise.reject(new Error("unsupported operation"));
     }
 
-    this.#fileSystemSetController!.reset();
+    await this.#fileSystemSetController!.reset();
   }
 
   async #doFileSystemExport(): Promise<void> {

@@ -2,6 +2,7 @@ var _a;
 import { FileSystemSelectorView } from "../../workbench-views/FileSystemSelector.js";
 export var ValidFileOperations;
 (function (ValidFileOperations) {
+    ValidFileOperations["build"] = "build";
     ValidFileOperations["clone"] = "clone";
     ValidFileOperations["upload"] = "upload";
     ValidFileOperations["rename"] = "rename";
@@ -43,6 +44,7 @@ export class FileSystemSetView {
     targetInput;
     submitButton;
     #opToElementsMap = new Map([
+        [ValidFileOperations.build, new Map],
         [ValidFileOperations.clone, new Map],
         [ValidFileOperations.upload, new Map],
         [ValidFileOperations.rename, new Map],
