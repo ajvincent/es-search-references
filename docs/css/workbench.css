@@ -53,8 +53,7 @@ report-selector {
   min-height: 450px;
 }
 
-report-selector, file-system, #filesystem-panels > * {
-  width: 100%;
+report-selector, file-system {
   height: 100%;
   background-color: #000066;
   color: #ffff00;
@@ -87,6 +86,7 @@ report-selector, file-system, #filesystem-panels > * {
 }
 
 file-system {
+  display: block;
   grid-row: 4;
 }
 
