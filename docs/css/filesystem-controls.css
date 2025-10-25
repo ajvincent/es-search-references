@@ -14,3 +14,7 @@ input[list="file-systems-list"] {
   max-width: 40%;
   row-gap: 5px;
 }
+
+form.is-protocol input-field::after {
+  content: "://";
+}

@@ -216,6 +216,15 @@
     </div>
   </template>
 
+  <template id="addFile-contextsubmenu">
+    <form name="addFile">
+      <input-field>
+        <input type="text" name="newFilePath" size="10" pattern="[A-Za-z]\w*" data-extensionpattern="(\.[A-Za-z]\w*)*">
+      </input-field>
+      <button type="submit" name="submitButton">Add</button>
+    </form>
+  </template>
+
   <script type="module" src="./scripts/workbench.js"></script>
 </body>
 </html>

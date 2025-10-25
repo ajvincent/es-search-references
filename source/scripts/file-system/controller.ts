@@ -78,8 +78,6 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   readonly editorMapView: FileEditorMapView;
   readonly #fsContextMenu: FileSystemContextMenu;
 
-  readonly #directoriesSet = new Set<string>;
-
   private constructor(
     rootId: string,
     isReadonly: boolean,
@@ -185,13 +183,14 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     return false;
   }
 
-  showFSContextMenu(
+  async showFSContextMenu(
     event: MouseEvent,
     pathToFile: string,
     isDirectory: boolean
-  ): void
+  ): Promise<void>
   {
     event.stopPropagation();
+
     this.#fsContextMenu.show(event, pathToFile, isDirectory);
   }
 

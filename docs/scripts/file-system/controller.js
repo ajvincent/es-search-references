@@ -21,7 +21,6 @@ export class FileSystemController {
     #fileSystemView;
     editorMapView;
     #fsContextMenu;
-    #directoriesSet = new Set;
     constructor(rootId, isReadonly, fileSystemElement, codeMirrorPanelsElement, webFS, index) {
         this.displayElement = fileSystemElement;
         this.isReadOnly = isReadonly;
@@ -89,7 +88,7 @@ export class FileSystemController {
     get clipBoardHasCopy() {
         return false;
     }
-    showFSContextMenu(event, pathToFile, isDirectory) {
+    async showFSContextMenu(event, pathToFile, isDirectory) {
         event.stopPropagation();
         this.#fsContextMenu.show(event, pathToFile, isDirectory);
     }
