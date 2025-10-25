@@ -26,13 +26,12 @@ export class FileSystemController {
         this.displayElement = fileSystemElement;
         this.isReadOnly = isReadonly;
         this.#webFS = webFS;
-        this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows, index);
+        this.#fsContextMenu = new FileSystemContextMenu(this);
+        this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows, index, undefined, this);
         for (const [fullPath, fileView] of this.#fileSystemView.descendantFileViews()) {
             this.#addFileEventHandlers(fullPath, fileView);
         }
         this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS);
-        this.#fsContextMenu = new FileSystemContextMenu(this);
-        void this.#fsContextMenu;
     }
     dispose() {
         this.displayElement.remove();
@@ -89,6 +88,10 @@ export class FileSystemController {
     // FileSystemControllerIfc
     get clipBoardHasCopy() {
         return false;
+    }
+    showFSContextMenu(event, pathToFile, isDirectory) {
+        event.stopPropagation();
+        this.#fsContextMenu.show(event, pathToFile, isDirectory);
     }
     // FileSystemControllerIfc
     async startAddFile(pathToDirectory) {

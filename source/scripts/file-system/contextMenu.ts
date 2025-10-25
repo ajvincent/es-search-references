@@ -9,8 +9,8 @@ import type {
 } from "../../lib/packages/ctxmenu.js";
 
 import type {
-  FileSystemControllerIfc
-} from "./controller.js";
+  FSControllerCallbacksIfc
+} from "./types/FSControllerCallbacksIfc.js";
 
 export class FileSystemContextMenu {
   static readonly #CAPTURE_PASSIVE = Object.freeze({
@@ -22,11 +22,11 @@ export class FileSystemContextMenu {
     isDivider: true
   };
 
-  readonly #controller: FileSystemControllerIfc;
+  readonly #controller: FSControllerCallbacksIfc;
   #fullPath = "";
   readonly #menuDefinition: CTXMenu;
 
-  constructor(controller: FileSystemControllerIfc) {
+  constructor(controller: FSControllerCallbacksIfc) {
     this.#controller = controller;
     this.#fullPath = "";
 
@@ -45,10 +45,6 @@ export class FileSystemContextMenu {
 
     const treeRows: HTMLElement = this.#controller.getTreeRowsElement();
     treeRows.addEventListener(
-      "contextmenu",
-      event => this.#showContextMenu(event)
-    );
-    treeRows.addEventListener(
       "click",
       event => this.#hideContextMenus(event),
       FileSystemContextMenu.#CAPTURE_PASSIVE
@@ -63,8 +59,10 @@ export class FileSystemContextMenu {
     text: "Add File",
     disabled: true,
     action: (ev) => {
+      /*
       this.#controller.startAddFile(this.#fullPath!);
       this.#fullPath = "";
+      */
     },
   }
 
@@ -111,21 +109,14 @@ export class FileSystemContextMenu {
     onHide: () => this.#hideContextMenus(),
   }
 
-  #showContextMenu(event: MouseEvent): void {
-    event.stopPropagation();
-
-    let target = event!.target as HTMLElement;
-    while (!target.dataset.fullpath) {
-      target = target.parentElement!;
-    }
-    this.#fullPath = target.dataset.fullpath;
-    if (this.#fullPath.endsWith(":/"))
-      this.#headerItem.text = this.#fullPath + "/";
+  show(event: MouseEvent, pathToFile: string, isDirectory: boolean): void {
+    this.#fullPath = pathToFile;
+    if (this.#fullPath.endsWith("://"))
+      this.#headerItem.text = this.#fullPath;
     else
       this.#headerItem.text = this.#fullPath.replace(/^.*\//g, "");
 
     const { isReadOnly, clipBoardHasCopy } = this.#controller;
-    const isDirectory = Boolean(target.dataset.isdirectory);
     this.#addFileItem.disabled = isReadOnly || !isDirectory;
     this.#cutItem.disabled = isReadOnly;
     this.#pasteItem.disabled = isReadOnly || !clipBoardHasCopy;

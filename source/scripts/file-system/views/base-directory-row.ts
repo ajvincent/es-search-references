@@ -2,15 +2,31 @@ import {
   TreeRowView
 } from "../../tree/views/tree-row.js";
 
+import type {
+  FSControllerCallbacksIfc
+} from "../types/FSControllerCallbacksIfc.js";
+
 export class BaseDirectoryRowView extends TreeRowView {
   public readonly rowType = "directory";
   public readonly fullPath: string;
 
-  constructor(depth: number, primaryLabel: string, fullPath: string) {
+  constructor(
+    depth: number,
+    primaryLabel: string,
+    fullPath: string,
+    fsControllerCallbacks: FSControllerCallbacksIfc | undefined)
+  {
     super(depth, depth > 0, primaryLabel);
     this.fullPath = fullPath;
     this.rowElement.dataset.fullpath = fullPath;
     this.rowElement.dataset.isdirectory = "true";
+
+    if (fsControllerCallbacks) {
+      this.rowElement.addEventListener(
+        "contextmenu",
+        event => fsControllerCallbacks.showFSContextMenu(event, fullPath, true)
+      );
+    }
 
     this.addCells();
   }

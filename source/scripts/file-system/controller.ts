@@ -24,6 +24,10 @@ import {
   FileSystemElement
 } from "./elements/file-system.js";
 
+import type {
+  FSControllerCallbacksIfc
+} from "./types/FSControllerCallbacksIfc.js";
+
 import {
   FileRowView
 } from "./views/file-row.js";
@@ -39,16 +43,7 @@ import {
 
 void(FileSystemElement); // force the custom element upgrade
 
-/* This is for the context menu. */
-export interface FileSystemControllerIfc {
-  getTreeRowsElement(): HTMLElement;
-  readonly isReadOnly: boolean;
-  readonly clipBoardHasCopy: boolean;
-
-  startAddFile(pathToDirectory: string): void;
-}
-
-export class FileSystemController implements BaseView, FileSystemControllerIfc {
+export class FileSystemController implements BaseView, FSControllerCallbacksIfc {
   public static async build(
     rootId: string,
     isReadonly: boolean,
@@ -98,15 +93,16 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
     this.isReadOnly = isReadonly;
     this.#webFS = webFS;
 
-    this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows!, index);
+    this.#fsContextMenu = new FileSystemContextMenu(this);
+
+    this.#fileSystemView = new FileSystemView(
+      DirectoryRowView, FileRowView, false, this.displayElement.treeRows!, index, undefined, this
+    );
     for (const [fullPath, fileView] of this.#fileSystemView.descendantFileViews()) {
-      this.#addFileEventHandlers(fullPath, fileView)
+      this.#addFileEventHandlers(fullPath, fileView);
     }
 
     this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS);
-
-    this.#fsContextMenu = new FileSystemContextMenu(this);
-    void this.#fsContextMenu;
   }
 
   dispose(): void {
@@ -187,6 +183,16 @@ export class FileSystemController implements BaseView, FileSystemControllerIfc {
   // FileSystemControllerIfc
   get clipBoardHasCopy(): boolean {
     return false;
+  }
+
+  showFSContextMenu(
+    event: MouseEvent,
+    pathToFile: string,
+    isDirectory: boolean
+  ): void
+  {
+    event.stopPropagation();
+    this.#fsContextMenu.show(event, pathToFile, isDirectory);
   }
 
   // FileSystemControllerIfc

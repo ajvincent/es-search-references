@@ -26,7 +26,6 @@ export class FileSystemContextMenu {
             this.#deleteItem,
         ];
         const treeRows = this.#controller.getTreeRowsElement();
-        treeRows.addEventListener("contextmenu", event => this.#showContextMenu(event));
         treeRows.addEventListener("click", event => this.#hideContextMenus(event), FileSystemContextMenu.#CAPTURE_PASSIVE);
     }
     #headerItem = {
@@ -36,8 +35,10 @@ export class FileSystemContextMenu {
         text: "Add File",
         disabled: true,
         action: (ev) => {
-            this.#controller.startAddFile(this.#fullPath);
+            /*
+            this.#controller.startAddFile(this.#fullPath!);
             this.#fullPath = "";
+            */
         },
     };
     #cutItem = {
@@ -77,19 +78,13 @@ export class FileSystemContextMenu {
     #contextMenuConfig = {
         onHide: () => this.#hideContextMenus(),
     };
-    #showContextMenu(event) {
-        event.stopPropagation();
-        let target = event.target;
-        while (!target.dataset.fullpath) {
-            target = target.parentElement;
-        }
-        this.#fullPath = target.dataset.fullpath;
-        if (this.#fullPath.endsWith(":/"))
-            this.#headerItem.text = this.#fullPath + "/";
+    show(event, pathToFile, isDirectory) {
+        this.#fullPath = pathToFile;
+        if (this.#fullPath.endsWith("://"))
+            this.#headerItem.text = this.#fullPath;
         else
             this.#headerItem.text = this.#fullPath.replace(/^.*\//g, "");
         const { isReadOnly, clipBoardHasCopy } = this.#controller;
-        const isDirectory = Boolean(target.dataset.isdirectory);
         this.#addFileItem.disabled = isReadOnly || !isDirectory;
         this.#cutItem.disabled = isReadOnly;
         this.#pasteItem.disabled = isReadOnly || !clipBoardHasCopy;

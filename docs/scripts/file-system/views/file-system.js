@@ -5,12 +5,14 @@ export class FileSystemView {
     #DirectoryViewClass;
     #FileViewClass;
     #fileFilter;
-    constructor(DirectoryViewClass, FileViewClass, isFileCollapsible, treeRowsElement, initialIndex, fileFilter) {
+    #controllerCallbacks;
+    constructor(DirectoryViewClass, FileViewClass, isFileCollapsible, treeRowsElement, initialIndex, fileFilter, controllerCallbacks) {
         this.#DirectoryViewClass = DirectoryViewClass;
         this.#FileViewClass = FileViewClass;
         this.#isFileCollapsible = isFileCollapsible;
         this.#treeRowsElement = treeRowsElement;
         this.#fileFilter = fileFilter;
+        this.#controllerCallbacks = controllerCallbacks;
         this.#fillDirectoryView(initialIndex, null);
     }
     hasRowView(key) {
@@ -46,11 +48,11 @@ export class FileSystemView {
             let view;
             let mustShowDir;
             if (typeof contentsOrRecord === "string") {
-                view = new this.#FileViewClass(depth, this.#isFileCollapsible, key, fullPath);
+                view = new this.#FileViewClass(depth, this.#isFileCollapsible, key, fullPath, this.#controllerCallbacks);
                 mustShowDir = !this.#fileFilter || this.#fileFilter(fullPath);
             }
             else {
-                view = new this.#DirectoryViewClass(depth, key, fullPath);
+                view = new this.#DirectoryViewClass(depth, key, fullPath, this.#controllerCallbacks);
                 mustShowDir = this.#fillDirectoryView(contentsOrRecord, view);
             }
             if (mustShowDir) {

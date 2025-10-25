@@ -7,6 +7,10 @@ import type {
 } from "../../opfs/types/WebFileSystemIfc.js";
 
 import type {
+  FSControllerCallbacksIfc
+} from "../types/FSControllerCallbacksIfc.js";
+
+import type {
   BaseDirectoryRowView,
 } from "./base-directory-row.js";
 
@@ -15,10 +19,10 @@ import type {
 } from "./base-file-row.js";
 
 type DirectoryArguments = [
-  depth: number, primaryLabel: string, fullPath: string
+  depth: number, primaryLabel: string, fullPath: string, fsController?: FSControllerCallbacksIfc
 ];
 type FileArguments = [
-  depth: number, isCollapsible: boolean, label: string, fullPath: string
+  depth: number, isCollapsible: boolean, label: string, fullPath: string, fsController?: FSControllerCallbacksIfc
 ];
 
 export class FileSystemView<
@@ -34,6 +38,7 @@ export class FileSystemView<
   readonly #FileViewClass: Class<FileView, FileArguments>;
 
   readonly #fileFilter?: (fullPath: string) => boolean;
+  readonly #controllerCallbacks?: FSControllerCallbacksIfc;
 
   constructor(
     DirectoryViewClass: Class<DirectoryView, DirectoryArguments>,
@@ -42,6 +47,7 @@ export class FileSystemView<
     treeRowsElement: HTMLElement,
     initialIndex: DirectoryRecord,
     fileFilter?: (fullPath: string) => boolean,
+    controllerCallbacks?: FSControllerCallbacksIfc,
   )
   {
     this.#DirectoryViewClass = DirectoryViewClass;
@@ -49,6 +55,7 @@ export class FileSystemView<
     this.#isFileCollapsible = isFileCollapsible;
     this.#treeRowsElement = treeRowsElement;
     this.#fileFilter = fileFilter;
+    this.#controllerCallbacks = controllerCallbacks;
 
     this.#fillDirectoryView(initialIndex, null);
   }
@@ -93,10 +100,10 @@ export class FileSystemView<
       let view: FileView | DirectoryView;
       let mustShowDir: boolean;
       if (typeof contentsOrRecord === "string") {
-        view = new this.#FileViewClass(depth, this.#isFileCollapsible, key, fullPath);
+        view = new this.#FileViewClass(depth, this.#isFileCollapsible, key, fullPath, this.#controllerCallbacks);
         mustShowDir = !this.#fileFilter || this.#fileFilter(fullPath);
       } else {
-        view = new this.#DirectoryViewClass(depth, key, fullPath);
+        view = new this.#DirectoryViewClass(depth, key, fullPath, this.#controllerCallbacks);
         mustShowDir = this.#fillDirectoryView(contentsOrRecord, view);
       }
 

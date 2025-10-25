@@ -2,11 +2,14 @@ import { TreeRowView } from "../../tree/views/tree-row.js";
 export class BaseFileRowView extends TreeRowView {
     rowType = "file";
     fullPath;
-    constructor(depth, isCollapsible, label, fullPath) {
+    constructor(depth, isCollapsible, label, fullPath, fsControllerCallbacks) {
         super(depth, isCollapsible, label);
         this.fullPath = fullPath;
         this.rowElement.dataset.fullpath = fullPath;
         this.addCells();
+        if (fsControllerCallbacks) {
+            this.rowElement.addEventListener("contextmenu", event => fsControllerCallbacks.showFSContextMenu(event, fullPath, false));
+        }
     }
     getCellElements() {
         return [
