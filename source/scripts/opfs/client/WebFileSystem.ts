@@ -59,6 +59,14 @@ implements OPFSWebFileSystemIfc
     return this[REQUEST_ASYNC_METHOD]("removeEntryDeep", [pathToEntry]);
   }
 
+  listDirectoryMembers(pathToDir: string): Promise<string[]> {
+    return this[REQUEST_ASYNC_METHOD]("listDirectoryMembers", [pathToDir]);
+  }
+
+  listProtocols(): Promise<string[]> {
+    return this[REQUEST_ASYNC_METHOD]("listProtocols", []);
+  }
+
   getClipboardIndex(): Promise<DirectoryRecord> {
     return this[REQUEST_ASYNC_METHOD]("getClipboardIndex", []);
   }

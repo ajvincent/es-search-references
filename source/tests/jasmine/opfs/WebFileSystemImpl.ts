@@ -71,7 +71,6 @@ describe("OPFS/WebFileSystem", () => {
 
     // We expect the file system to present the keys in order.
     expect(Object.keys(index["one://"])).toEqual(["five", "two"]);
-
     await WFS.terminate();
   });
 
@@ -81,6 +80,26 @@ describe("OPFS/WebFileSystem", () => {
       getResolvedTempDirPath("opfs_WebFileSystem/emptyClipboard")
     );
     await WFS.importDirectoryRecord(mockDirectories);
+
+    {
+      const dirContents = await WFS.listDirectoryMembers("one://");
+      expect(dirContents).toEqual(["five", "two"]);
+    }
+
+    {
+      const dirContents = await WFS.listDirectoryMembers("one://two");
+      expect(dirContents).toEqual(["four.js", "three.js"]);
+    }
+
+    {
+      const dirContents = await WFS.listDirectoryMembers("");
+      expect(dirContents).toEqual(["es-search-references"]);
+    }
+
+    {
+      const dirContents = await WFS.listProtocols();
+      expect(dirContents).toEqual(["one://", "seven://"]);
+    }
 
     await expectAsync(
       WFS.readFileDeep("es-search-references/red")

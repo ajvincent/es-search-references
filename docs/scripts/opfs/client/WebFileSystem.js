@@ -28,6 +28,12 @@ export class OPFSWebFileSystemClientImpl extends DirectoryClient {
     removeEntryDeep(pathToEntry) {
         return this[REQUEST_ASYNC_METHOD]("removeEntryDeep", [pathToEntry]);
     }
+    listDirectoryMembers(pathToDir) {
+        return this[REQUEST_ASYNC_METHOD]("listDirectoryMembers", [pathToDir]);
+    }
+    listProtocols() {
+        return this[REQUEST_ASYNC_METHOD]("listProtocols", []);
+    }
     getClipboardIndex() {
         return this[REQUEST_ASYNC_METHOD]("getClipboardIndex", []);
     }

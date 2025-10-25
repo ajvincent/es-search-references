@@ -64,6 +64,8 @@ implements OPFSWebFileSystemIfc
       return [protocol + "//", hostname, ...pathname.substring(1).split("/")].filter(Boolean);
     }
 
+    if (pathToEntry == "")
+      return [];
     return pathToEntry.split("/");
   }
 
@@ -286,6 +288,25 @@ implements OPFSWebFileSystemIfc
     );
 
     return dirHandle.removeEntry(leafName, { recursive: true });
+  }
+
+  async listDirectoryMembers(pathToDir: string): Promise<string[]> {
+    const pathSequence = OPFSWebFileSystemWorker.#getPathSequence(pathToDir);
+    const dirHandle: FileSystemDirectoryHandle = await OPFSWebFileSystemWorker.#getDirectoryDeep(
+      URL.canParse(pathToDir) ? this.#urlsDir : this.#packagesDir,
+      pathSequence,
+      false
+    );
+
+    const keys: string[] = await Array.fromAsync(dirHandle.keys());
+    keys.sort();
+    return keys;
+  }
+
+  async listProtocols(): Promise<string[]> {
+    const keys: string[] = await Array.fromAsync(this.#urlsDir.keys());
+    keys.sort();
+    return keys;
   }
 
   // OPFSWebFileSystemIfc

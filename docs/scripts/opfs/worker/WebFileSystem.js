@@ -23,6 +23,8 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
             const { protocol, hostname, pathname } = URL.parse(pathToEntry);
             return [protocol + "//", hostname, ...pathname.substring(1).split("/")].filter(Boolean);
         }
+        if (pathToEntry == "")
+            return [];
         return pathToEntry.split("/");
     }
     static async #getDirectoryDeep(currentDir, pathSequence, create) {
@@ -146,6 +148,18 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         const leafName = pathSequence.pop();
         const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToEntry) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
         return dirHandle.removeEntry(leafName, { recursive: true });
+    }
+    async listDirectoryMembers(pathToDir) {
+        const pathSequence = _a.#getPathSequence(pathToDir);
+        const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToDir) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
+        const keys = await Array.fromAsync(dirHandle.keys());
+        keys.sort();
+        return keys;
+    }
+    async listProtocols() {
+        const keys = await Array.fromAsync(this.#urlsDir.keys());
+        keys.sort();
+        return keys;
     }
     // OPFSWebFileSystemIfc
     async getClipboardIndex() {
