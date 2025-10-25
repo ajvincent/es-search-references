@@ -63,6 +63,10 @@ implements OPFSWebFileSystemIfc
     return this[REQUEST_ASYNC_METHOD]("listDirectoryMembers", [pathToDir]);
   }
 
+  listSiblingMembers(pathToFile: string): Promise<string[]> {
+    return this[REQUEST_ASYNC_METHOD]("listSiblingMembers", [pathToFile]);
+  }
+
   listProtocols(): Promise<string[]> {
     return this[REQUEST_ASYNC_METHOD]("listProtocols", []);
   }

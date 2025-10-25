@@ -290,10 +290,20 @@ implements OPFSWebFileSystemIfc
     return dirHandle.removeEntry(leafName, { recursive: true });
   }
 
-  async listDirectoryMembers(pathToDir: string): Promise<string[]> {
-    const pathSequence = OPFSWebFileSystemWorker.#getPathSequence(pathToDir);
+  listDirectoryMembers(pathToDir: string): Promise<string[]> {
+    return this.#listMembers(pathToDir, false);
+  }
+
+  listSiblingMembers(pathToFile: string): Promise<string[]> {
+    return this.#listMembers(pathToFile, true);
+  }
+
+  async #listMembers(pathToFile: string, useParent: boolean): Promise<string[]> {
+    const pathSequence = OPFSWebFileSystemWorker.#getPathSequence(pathToFile);
+    if (useParent)
+      pathSequence.pop();
     const dirHandle: FileSystemDirectoryHandle = await OPFSWebFileSystemWorker.#getDirectoryDeep(
-      URL.canParse(pathToDir) ? this.#urlsDir : this.#packagesDir,
+      URL.canParse(pathToFile) ? this.#urlsDir : this.#packagesDir,
       pathSequence,
       false
     );

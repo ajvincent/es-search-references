@@ -31,6 +31,9 @@ export class OPFSWebFileSystemClientImpl extends DirectoryClient {
     listDirectoryMembers(pathToDir) {
         return this[REQUEST_ASYNC_METHOD]("listDirectoryMembers", [pathToDir]);
     }
+    listSiblingMembers(pathToFile) {
+        return this[REQUEST_ASYNC_METHOD]("listSiblingMembers", [pathToFile]);
+    }
     listProtocols() {
         return this[REQUEST_ASYNC_METHOD]("listProtocols", []);
     }

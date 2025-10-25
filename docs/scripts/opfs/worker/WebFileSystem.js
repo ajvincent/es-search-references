@@ -149,9 +149,17 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToEntry) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
         return dirHandle.removeEntry(leafName, { recursive: true });
     }
-    async listDirectoryMembers(pathToDir) {
-        const pathSequence = _a.#getPathSequence(pathToDir);
-        const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToDir) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
+    listDirectoryMembers(pathToDir) {
+        return this.#listMembers(pathToDir, false);
+    }
+    listSiblingMembers(pathToFile) {
+        return this.#listMembers(pathToFile, true);
+    }
+    async #listMembers(pathToFile, useParent) {
+        const pathSequence = _a.#getPathSequence(pathToFile);
+        if (useParent)
+            pathSequence.pop();
+        const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToFile) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
         const keys = await Array.fromAsync(dirHandle.keys());
         keys.sort();
         return keys;

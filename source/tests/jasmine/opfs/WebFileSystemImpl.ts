@@ -92,6 +92,11 @@ describe("OPFS/WebFileSystem", () => {
     }
 
     {
+      const dirContents = await WFS.listSiblingMembers("one://two/three.js");
+      expect(dirContents).toEqual(["four.js", "three.js"]);
+    }
+
+    {
       const dirContents = await WFS.listDirectoryMembers("");
       expect(dirContents).toEqual(["es-search-references"]);
     }

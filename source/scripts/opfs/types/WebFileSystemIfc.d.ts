@@ -23,6 +23,7 @@ export interface OPFSWebFileSystemIfc {
   removeEntryDeep(pathToEntry: string): Promise<void>;
 
   listDirectoryMembers(pathToDir: string): Promise<string[]>;
+  listSiblingMembers(pathToFile: string): Promise<string[]>;
   listProtocols(): Promise<string[]>;
 
   getClipboardIndex(): Promise<DirectoryRecord>;
