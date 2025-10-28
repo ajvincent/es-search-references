@@ -1,6 +1,7 @@
 //#region preamble
 import { FileEditorMapView } from "../codemirror/views/FileEditorMapView.js";
 import { FileSystemContextMenu } from "./contextMenu.js";
+import { FSContextMenuShowArguments } from "./contextMenuShowArguments.js";
 import { FileSystemElement } from "./elements/file-system.js";
 import { FileRowView } from "./views/file-row.js";
 import { DirectoryRowView } from "./views/directory-row.js";
@@ -90,7 +91,10 @@ export class FileSystemController {
     }
     async showFSContextMenu(event, pathToFile, isDirectory) {
         event.stopPropagation();
-        this.#fsContextMenu.show(event, pathToFile, isDirectory);
+        event.preventDefault();
+        const showArgsPromise = new FSContextMenuShowArguments(event, pathToFile, isDirectory, this.#webFS);
+        const showArgs = await showArgsPromise.promise;
+        this.#fsContextMenu.show(showArgs);
     }
     // FileSystemControllerIfc
     async startAddFile(pathToDirectory) {

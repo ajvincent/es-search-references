@@ -13,6 +13,10 @@ import type {
   FSControllerCallbacksIfc
 } from "./types/FSControllerCallbacksIfc.js";
 
+import type {
+  FSContextMenuShowArgumentsIfc
+} from "./types/FSContextMenuShowArgumentsIfc.js";
+
 export class FileSystemContextMenu {
   static readonly #CAPTURE_PASSIVE = Object.freeze({
     capture: true,
@@ -26,7 +30,8 @@ export class FileSystemContextMenu {
   static #createAddEntryItem(
     isProtocol: boolean,
     allowExtensions: boolean,
-    callback: (newFilePath: string) => void
+    submitCallback: (newFilePath: string) => void,
+    nameChangeCallback: (newFilePath: string) => string,
   ): HTMLFormElement
   {
     const template: HTMLTemplateElement = document.getElementById("addFile-contextsubmenu") as HTMLTemplateElement;
@@ -39,22 +44,25 @@ export class FileSystemContextMenu {
       newFilePath.pattern += newFilePath.dataset.extensionpattern;
     }
     delete newFilePath.dataset.extensionpattern;
+    newFilePath.onchange = ev => {
+      ev.stopPropagation();
+      newFilePath.setCustomValidity(nameChangeCallback(newFilePath.value));
+    }
 
     form.onsubmit = ev => {
       ev.stopPropagation();
       ev.preventDefault();
-      callback(newFilePath.value);
+      submitCallback(newFilePath.value);
     }
     return form;
   }
 
   readonly #controller: FSControllerCallbacksIfc;
-  #fullPath = "";
   readonly #menuDefinition: CTXMenu;
+  #showArguments?: FSContextMenuShowArgumentsIfc;
 
   constructor(controller: FSControllerCallbacksIfc) {
     this.#controller = controller;
-    this.#fullPath = "";
 
     this.#menuDefinition = [
       this.#topLevelHeaderItem,
@@ -83,6 +91,20 @@ export class FileSystemContextMenu {
     );
   }
 
+  #siblingNameInUse(localName: string): string {
+    if (this.#showArguments!.pathIsProtocol)
+      localName += "://";
+    if (this.#showArguments!.currentSiblings.has(localName))
+      return "This name is in use.";
+    return "";
+  }
+
+  #childNameInUse(localName: string): string {
+    if (this.#showArguments!.currentChildren.has(localName))
+      return "This name is in use.";
+    return "";
+  }
+
   readonly #topLevelHeaderItem: CTXMHeading = {
     text: "FileSystem"
   };
@@ -92,7 +114,9 @@ export class FileSystemContextMenu {
     disabled: true,
     subMenu: [
       {
-        element: () => FileSystemContextMenu.#createAddEntryItem(false, false, this.#addPackage.bind(this)),
+        element: () => FileSystemContextMenu.#createAddEntryItem(
+          false, false, this.#addPackage.bind(this), this.#packageNameInUse.bind(this)
+        ),
         disabled: true,
       }
     ],
@@ -105,12 +129,20 @@ export class FileSystemContextMenu {
     window.ctxmenu.hide();
   }
 
+  #packageNameInUse(packageName: string): string {
+    if (this.#showArguments!.currentPackages.has(packageName))
+      return "This package name is in use.";
+    return "";
+  }
+
   readonly #addProtocolItem: CTXMSubMenu = {
     text: "Add Protocol",
     disabled: true,
     subMenu: [
       {
-        element: () => FileSystemContextMenu.#createAddEntryItem(true, false, this.#addProtocol.bind(this)),
+        element: () => FileSystemContextMenu.#createAddEntryItem(
+          true, false, this.#addProtocol.bind(this), this.#protocolNameInUse.bind(this)
+        ),
         disabled: true,
       }
     ],
@@ -123,6 +155,13 @@ export class FileSystemContextMenu {
     window.ctxmenu.hide();
   }
 
+  #protocolNameInUse(newProtocolName: string): string {
+    if (this.#showArguments!.currentProtocols.has(newProtocolName + "://")) {
+      return "This protocol name is in use.";
+    }
+    return "";
+  }
+
   readonly #localHeaderItem: CTXMHeading = {
     text: "",
   };
@@ -132,7 +171,9 @@ export class FileSystemContextMenu {
     disabled: true,
     subMenu: [
       {
-        element: () => FileSystemContextMenu.#createAddEntryItem(false, true, this.#addDirectory.bind(this)),
+        element: () => FileSystemContextMenu.#createAddEntryItem(
+          false, true, this.#addDirectory.bind(this), this.#childNameInUse.bind(this)
+        ),
         disabled: true,
       }
     ],
@@ -150,7 +191,9 @@ export class FileSystemContextMenu {
     disabled: true,
     subMenu: [
       {
-        element: () => FileSystemContextMenu.#createAddEntryItem(false, true, this.#addFile.bind(this)),
+        element: () => FileSystemContextMenu.#createAddEntryItem(
+          false, true, this.#addFile.bind(this), this.#childNameInUse.bind(this)
+        ),
         disabled: true,
       }
     ],
@@ -200,7 +243,9 @@ export class FileSystemContextMenu {
     subMenu: [
       {
         element: () => {
-          const form: HTMLFormElement = FileSystemContextMenu.#createAddEntryItem(false, true, this.#renameFile.bind(this));
+          const form: HTMLFormElement = FileSystemContextMenu.#createAddEntryItem(
+            this.#showArguments!.pathIsProtocol, true, this.#renameFile.bind(this), this.#siblingNameInUse.bind(this)
+          );
           (form.submitButton as HTMLButtonElement).textContent = "Rename";
           return form;
         },
@@ -220,15 +265,15 @@ export class FileSystemContextMenu {
     onHide: () => this.#hideContextMenus(),
   }
 
-  show(event: MouseEvent, pathToFile: string, isDirectory: boolean): void {
-    this.#fullPath = pathToFile;
-    if (this.#fullPath.endsWith("://"))
-      this.#localHeaderItem.text = this.#fullPath;
-    else
-      this.#localHeaderItem.text = this.#fullPath.replace(/^.*\//g, "");
+  show(
+    showArgs: FSContextMenuShowArgumentsIfc
+  ): void
+  {
+    this.#showArguments = showArgs;
+    this.#localHeaderItem.text = showArgs.leafName;
 
+    const { isReservedName, isDirectory } = showArgs;
     const { isReadOnly, clipBoardHasCopy } = this.#controller;
-    const isReservedName = pathToFile == "es-search-references" || pathToFile == "es-search-references/guest";
 
     this.#addPackageItem.disabled = isReadOnly;
     this.#addProtocolItem.disabled = isReadOnly;
@@ -243,12 +288,12 @@ export class FileSystemContextMenu {
 
     window.ctxmenu.show(
       this.#menuDefinition,
-      event,
+      showArgs.event,
       this.#contextMenuConfig
     );
   }
 
   #hideContextMenus(event?: MouseEvent): void {
-    this.#fullPath = "";
+    // do nothing (for now)
   }
 }

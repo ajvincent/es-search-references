@@ -21,8 +21,16 @@ import {
 } from "./contextMenu.js";
 
 import {
+  FSContextMenuShowArguments
+} from "./contextMenuShowArguments.js";
+
+import {
   FileSystemElement
 } from "./elements/file-system.js";
+
+import type {
+  FSContextMenuShowArgumentsIfc
+} from "./types/FSContextMenuShowArgumentsIfc.js";
 
 import type {
   FSControllerCallbacksIfc
@@ -190,8 +198,12 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   ): Promise<void>
   {
     event.stopPropagation();
+    event.preventDefault();
 
-    this.#fsContextMenu.show(event, pathToFile, isDirectory);
+    const showArgsPromise = new FSContextMenuShowArguments(event, pathToFile, isDirectory, this.#webFS);
+    const showArgs: FSContextMenuShowArgumentsIfc = await showArgsPromise.promise;
+
+    this.#fsContextMenu.show(showArgs);
   }
 
   // FileSystemControllerIfc

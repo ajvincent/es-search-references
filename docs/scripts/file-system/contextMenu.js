@@ -8,7 +8,7 @@ export class FileSystemContextMenu {
     static #dividerItem = {
         isDivider: true
     };
-    static #createAddEntryItem(isProtocol, allowExtensions, callback) {
+    static #createAddEntryItem(isProtocol, allowExtensions, submitCallback, nameChangeCallback) {
         const template = document.getElementById("addFile-contextsubmenu");
         const form = template.content.firstElementChild.cloneNode(true);
         if (isProtocol)
@@ -18,19 +18,22 @@ export class FileSystemContextMenu {
             newFilePath.pattern += newFilePath.dataset.extensionpattern;
         }
         delete newFilePath.dataset.extensionpattern;
+        newFilePath.onchange = ev => {
+            ev.stopPropagation();
+            newFilePath.setCustomValidity(nameChangeCallback(newFilePath.value));
+        };
         form.onsubmit = ev => {
             ev.stopPropagation();
             ev.preventDefault();
-            callback(newFilePath.value);
+            submitCallback(newFilePath.value);
         };
         return form;
     }
     #controller;
-    #fullPath = "";
     #menuDefinition;
+    #showArguments;
     constructor(controller) {
         this.#controller = controller;
-        this.#fullPath = "";
         this.#menuDefinition = [
             this.#topLevelHeaderItem,
             _a.#dividerItem,
@@ -52,6 +55,18 @@ export class FileSystemContextMenu {
         const treeRows = this.#controller.getTreeRowsElement();
         treeRows.addEventListener("click", event => this.#hideContextMenus(event), _a.#CAPTURE_PASSIVE);
     }
+    #siblingNameInUse(localName) {
+        if (this.#showArguments.pathIsProtocol)
+            localName += "://";
+        if (this.#showArguments.currentSiblings.has(localName))
+            return "This name is in use.";
+        return "";
+    }
+    #childNameInUse(localName) {
+        if (this.#showArguments.currentChildren.has(localName))
+            return "This name is in use.";
+        return "";
+    }
     #topLevelHeaderItem = {
         text: "FileSystem"
     };
@@ -60,7 +75,7 @@ export class FileSystemContextMenu {
         disabled: true,
         subMenu: [
             {
-                element: () => _a.#createAddEntryItem(false, false, this.#addPackage.bind(this)),
+                element: () => _a.#createAddEntryItem(false, false, this.#addPackage.bind(this), this.#packageNameInUse.bind(this)),
                 disabled: true,
             }
         ],
@@ -69,12 +84,17 @@ export class FileSystemContextMenu {
     #addPackage(newPackageName) {
         window.ctxmenu.hide();
     }
+    #packageNameInUse(packageName) {
+        if (this.#showArguments.currentPackages.has(packageName))
+            return "This package name is in use.";
+        return "";
+    }
     #addProtocolItem = {
         text: "Add Protocol",
         disabled: true,
         subMenu: [
             {
-                element: () => _a.#createAddEntryItem(true, false, this.#addProtocol.bind(this)),
+                element: () => _a.#createAddEntryItem(true, false, this.#addProtocol.bind(this), this.#protocolNameInUse.bind(this)),
                 disabled: true,
             }
         ],
@@ -82,6 +102,12 @@ export class FileSystemContextMenu {
     };
     #addProtocol(newProtocolName) {
         window.ctxmenu.hide();
+    }
+    #protocolNameInUse(newProtocolName) {
+        if (this.#showArguments.currentProtocols.has(newProtocolName + "://")) {
+            return "This protocol name is in use.";
+        }
+        return "";
     }
     #localHeaderItem = {
         text: "",
@@ -91,7 +117,7 @@ export class FileSystemContextMenu {
         disabled: true,
         subMenu: [
             {
-                element: () => _a.#createAddEntryItem(false, true, this.#addDirectory.bind(this)),
+                element: () => _a.#createAddEntryItem(false, true, this.#addDirectory.bind(this), this.#childNameInUse.bind(this)),
                 disabled: true,
             }
         ],
@@ -105,7 +131,7 @@ export class FileSystemContextMenu {
         disabled: true,
         subMenu: [
             {
-                element: () => _a.#createAddEntryItem(false, true, this.#addFile.bind(this)),
+                element: () => _a.#createAddEntryItem(false, true, this.#addFile.bind(this), this.#childNameInUse.bind(this)),
                 disabled: true,
             }
         ],
@@ -147,7 +173,7 @@ export class FileSystemContextMenu {
         subMenu: [
             {
                 element: () => {
-                    const form = _a.#createAddEntryItem(false, true, this.#renameFile.bind(this));
+                    const form = _a.#createAddEntryItem(this.#showArguments.pathIsProtocol, true, this.#renameFile.bind(this), this.#siblingNameInUse.bind(this));
                     form.submitButton.textContent = "Rename";
                     return form;
                 },
@@ -162,14 +188,11 @@ export class FileSystemContextMenu {
     #contextMenuConfig = {
         onHide: () => this.#hideContextMenus(),
     };
-    show(event, pathToFile, isDirectory) {
-        this.#fullPath = pathToFile;
-        if (this.#fullPath.endsWith("://"))
-            this.#localHeaderItem.text = this.#fullPath;
-        else
-            this.#localHeaderItem.text = this.#fullPath.replace(/^.*\//g, "");
+    show(showArgs) {
+        this.#showArguments = showArgs;
+        this.#localHeaderItem.text = showArgs.leafName;
+        const { isReservedName, isDirectory } = showArgs;
         const { isReadOnly, clipBoardHasCopy } = this.#controller;
-        const isReservedName = pathToFile == "es-search-references" || pathToFile == "es-search-references/guest";
         this.#addPackageItem.disabled = isReadOnly;
         this.#addProtocolItem.disabled = isReadOnly;
         this.#addDirectoryItem.disabled = isReadOnly || !isDirectory;
@@ -178,10 +201,10 @@ export class FileSystemContextMenu {
         this.#pasteItem.disabled = isReadOnly || !isDirectory || !clipBoardHasCopy;
         this.#deleteItem.disabled = isReadOnly || isReservedName;
         this.#renameItem.disabled = isReadOnly || isReservedName;
-        window.ctxmenu.show(this.#menuDefinition, event, this.#contextMenuConfig);
+        window.ctxmenu.show(this.#menuDefinition, showArgs.event, this.#contextMenuConfig);
     }
     #hideContextMenus(event) {
-        this.#fullPath = "";
+        // do nothing (for now)
     }
 }
 _a = FileSystemContextMenu;
