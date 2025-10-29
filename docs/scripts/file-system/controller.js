@@ -97,50 +97,31 @@ export class FileSystemController {
         this.#fsContextMenu.show(showArgs);
     }
     // FileSystemControllerIfc
-    async startAddFile(pathToDirectory) {
-        /*
-        const parentRowView = this.#fileSystemView.getRowView(pathToDirectory);
-        if (parentRowView.rowType !== "directory") {
-          throw new Error("row type must be a directory: " + pathToDirectory);
+    async addFile(currentDirectory, leafName, isDirectory) {
+        let pathToFile = currentDirectory;
+        if (currentDirectory.endsWith("://") === false)
+            pathToFile += "/";
+        pathToFile += leafName;
+        if (isDirectory) {
+            await this.#webFS.createDirDeep(pathToFile);
         }
-    
-        const newRowView = new FileRowView(parentRowView.depth + 1, false, "", parentRowView + "/");
-        parentRowView.prependRow(newRowView);
-    
-        let { promise, resolve } = Promise.withResolvers<string | null>();
-        promise = promise.finally(() => parentRowView.removeRow(newRowView));
-        const localPath: string | null = await newRowView.editLabel(promise);
-    
-        if (!localPath) {
-          resolve(null);
-          return;
+        else {
+            await this.#webFS.writeFileDeep(pathToFile, "");
         }
-    
-        if (!this.#isValidNewFileName(parentRowView.fullPath, localPath, true)) {
-          resolve(null);
-          return;
+        let newRowView = this.#fileSystemView.addFile(currentDirectory, leafName, isDirectory);
+        if (newRowView instanceof FileRowView) {
+            this.#addFileEventHandlers(pathToFile, newRowView);
         }
-    
-        const fullPath = parentRowView.fullPath + "/" + localPath;
-    
-        this.fileMap.set(fullPath, "");
-        this.#addFileKey(fullPath);
-        await this.editorMapView.addEditorForPath(fullPath);
-    
-        this.#fileSystemView.showFile(fullPath);
-        resolve(null);
-        */
-        return Promise.reject(new Error("this is being rewritten"));
+        this.#fileSystemView.showFile(pathToFile);
     }
-    #isValidNewFileName(parentPath, localPath, isNewFile) {
-        if (localPath === "" || localPath.startsWith("./") || localPath.startsWith("../")) {
-            return false;
-        }
-        if (!isNewFile && localPath.includes("/"))
-            return false;
-        const fullPath = parentPath + "/" + localPath;
-        if (this.#fileSystemView.hasRowView(fullPath))
-            return false;
-        return true;
+    async addPackage(packageName) {
+        await this.#webFS.createDirDeep(packageName);
+        const packageDir = this.#fileSystemView.addNewPackage(packageName);
+        this.#fileToRowMap.set(packageName, packageDir);
+    }
+    async addProtocol(protocolName) {
+        await this.#webFS.createDirDeep(protocolName);
+        const protocolRow = this.#fileSystemView.addNewProtocol(protocolName);
+        this.#fileToRowMap.set(protocolName, protocolRow);
     }
 }

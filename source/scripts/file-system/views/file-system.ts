@@ -32,6 +32,7 @@ export class FileSystemView<
 {
   readonly #isFileCollapsible: boolean;
   readonly #fileToRowMap = new Map<string, FileView | DirectoryView>;
+  readonly #topLevelDirs: string[] = [];
   readonly #treeRowsElement: HTMLElement;
 
   readonly #DirectoryViewClass: Class<DirectoryView, DirectoryArguments>;
@@ -67,7 +68,7 @@ export class FileSystemView<
   getRowView(key: string): DirectoryView | FileView {
     const view = this.#fileToRowMap.get(key);
     if (!view)
-      throw new Error("no view found with that key!");
+      throw new Error("no view found with the key: " + key);
     return view;
   }
 
@@ -95,6 +96,7 @@ export class FileSystemView<
         }
       } else {
         fullPath = key;
+        this.#topLevelDirs.push(fullPath);
       }
 
       let view: FileView | DirectoryView;
@@ -105,6 +107,8 @@ export class FileSystemView<
       } else {
         view = new this.#DirectoryViewClass(depth, key, fullPath, this.#controllerCallbacks);
         mustShowDir = this.#fillDirectoryView(contentsOrRecord, view);
+        if (!this.#fileFilter)
+          mustShowDir = true;
       }
 
       if (mustShowDir) {
@@ -138,5 +142,81 @@ export class FileSystemView<
       if (view instanceof this.#FileViewClass)
         yield [fullPath, view];
     }
+  }
+
+  addNewPackage(pathToPackage: string): DirectoryView {
+    return this.#addNewTopLevel(pathToPackage, false);
+  }
+
+  addNewProtocol(pathToProtocol: string): DirectoryView {
+    return this.#addNewTopLevel(pathToProtocol, true);
+  }
+
+  #addNewTopLevel(pathToFile: string, isProtocol: boolean): DirectoryView {
+    const view: DirectoryView = new this.#DirectoryViewClass(0, pathToFile, pathToFile, this.#controllerCallbacks);
+
+    // split between packages and protocols
+    let firstProtocol: number = this.#topLevelDirs.findIndex(dir => dir.endsWith("://"));
+    if (firstProtocol === -1)
+      firstProtocol = this.#topLevelDirs.length;
+
+    let index: number, sublist: readonly string[];
+    if (isProtocol) {
+      sublist = this.#topLevelDirs.slice(firstProtocol);
+    } else {
+      sublist = this.#topLevelDirs.slice(0, firstProtocol);
+    }
+
+    // find the insertion index
+    // binary search would probably not be faster in this case: not enough rows to justify it
+    index = sublist.findIndex(currentDir => currentDir.localeCompare(pathToFile) > 0);
+    if (isProtocol) {
+      if (index === -1)
+        index = this.#topLevelDirs.length;
+      else
+        index += firstProtocol;
+    } else {
+      if (index === -1)
+        index = firstProtocol;
+    }
+
+    // insert the row
+    if (index === this.#topLevelDirs.length) {
+      this.#treeRowsElement.append(view.rowElement);
+    } else {
+      const refView: DirectoryView = this.#fileToRowMap.get(this.#topLevelDirs[index]) as DirectoryView;
+      refView.rowElement.before(view.rowElement);
+    }
+
+    this.#topLevelDirs.splice(index, 0, pathToFile);
+    this.#fileToRowMap.set(pathToFile, view);
+    return view;
+  }
+
+  addFile(
+    currentDirectory: string,
+    leafName: string,
+    isDirectory: boolean
+  ): FileView | DirectoryView
+  {
+    const parentRowView = this.getRowView(currentDirectory);
+    if (parentRowView.rowType !== "directory") {
+      throw new Error("assertion failure: row type must be a directory: " + currentDirectory);
+    }
+
+    let pathToFile: string = currentDirectory;
+    if (currentDirectory.endsWith("://") === false)
+      pathToFile += "/";
+    pathToFile += leafName;
+
+    let newRowView: FileView | DirectoryView;
+    if (isDirectory) {
+      newRowView = new this.#DirectoryViewClass(parentRowView.depth + 1, leafName, pathToFile, this.#controllerCallbacks);
+    } else {
+      newRowView = new this.#FileViewClass(parentRowView.depth + 1, false, leafName, pathToFile, this.#controllerCallbacks);
+    }
+    parentRowView.insertRowSorted(newRowView);
+    this.#fileToRowMap.set(pathToFile, newRowView);
+    return newRowView;
   }
 }

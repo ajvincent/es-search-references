@@ -9,4 +9,18 @@ export interface FSControllerCallbacksIfc {
     pathToFile: string,
     isDirectory: boolean
   ): void;
+
+  addFile(
+    currentDirectory: string,
+    leafName: string,
+    isDirectory: boolean
+  ): Promise<void>;
+
+  addPackage(
+    packageName: string
+  ): Promise<void>;
+
+  addProtocol(
+    protocolName: `${string}://`
+  ): Promise<void>;
 }

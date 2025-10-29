@@ -81,8 +81,9 @@ export class FileSystemContextMenu {
         ],
         subMenuAttributes: {}
     };
-    #addPackage(newPackageName) {
+    async #addPackage(newPackageName) {
         window.ctxmenu.hide();
+        await this.#controller.addPackage(newPackageName);
     }
     #packageNameInUse(packageName) {
         if (this.#showArguments.currentPackages.has(packageName))
@@ -100,8 +101,9 @@ export class FileSystemContextMenu {
         ],
         subMenuAttributes: {}
     };
-    #addProtocol(newProtocolName) {
+    async #addProtocol(newProtocolName) {
         window.ctxmenu.hide();
+        await this.#controller.addProtocol((newProtocolName + "://"));
     }
     #protocolNameInUse(newProtocolName) {
         if (this.#showArguments.currentProtocols.has(newProtocolName + "://")) {
@@ -123,8 +125,9 @@ export class FileSystemContextMenu {
         ],
         subMenuAttributes: {},
     };
-    #addDirectory(newFileName) {
+    async #addDirectory(newFileName) {
         window.ctxmenu.hide();
+        await this.#controller.addFile(this.#showArguments.pathToFile, newFileName, true);
     }
     #addFileItem = {
         text: "Add File",
@@ -137,8 +140,9 @@ export class FileSystemContextMenu {
         ],
         subMenuAttributes: {},
     };
-    #addFile(newFileName) {
+    async #addFile(newFileName) {
         window.ctxmenu.hide();
+        await this.#controller.addFile(this.#showArguments.pathToFile, newFileName, false);
     }
     #cutItem = {
         text: "Cut",

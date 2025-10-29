@@ -125,8 +125,9 @@ export class FileSystemContextMenu {
     }
   };
 
-  #addPackage(newPackageName: string): void {
+  async #addPackage(newPackageName: string): Promise<void> {
     window.ctxmenu.hide();
+    await this.#controller.addPackage(newPackageName);
   }
 
   #packageNameInUse(packageName: string): string {
@@ -151,8 +152,9 @@ export class FileSystemContextMenu {
     }
   };
 
-  #addProtocol(newProtocolName: string): void {
+  async #addProtocol(newProtocolName: string): Promise<void> {
     window.ctxmenu.hide();
+    await this.#controller.addProtocol((newProtocolName + "://") as `${string}://`);
   }
 
   #protocolNameInUse(newProtocolName: string): string {
@@ -182,8 +184,9 @@ export class FileSystemContextMenu {
     },
   }
 
-  #addDirectory(newFileName: string): void {
+  async #addDirectory(newFileName: string): Promise<void> {
     window.ctxmenu.hide();
+    await this.#controller.addFile(this.#showArguments!.pathToFile, newFileName, true);
   }
 
   readonly #addFileItem: CTXMSubMenu = {
@@ -198,12 +201,12 @@ export class FileSystemContextMenu {
       }
     ],
     subMenuAttributes: {
-
     },
   }
 
-  #addFile(newFileName: string): void {
+  async #addFile(newFileName: string): Promise<void> {
     window.ctxmenu.hide();
+    await this.#controller.addFile(this.#showArguments!.pathToFile, newFileName, false);
   }
 
   readonly #cutItem: CTXMAction = {
