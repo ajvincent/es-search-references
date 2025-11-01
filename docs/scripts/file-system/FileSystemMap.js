@@ -34,8 +34,13 @@ export class FileSystemMap {
     //#region internals
     [UNIQUE_KEY] = 0;
     #uniqueCounter = 1;
+    /**
+     * Everything is held strongly because this is the first weak key, and other
+     * weak keys are also the values.
+     */
     #descendantsMap = new WeakStrongMap();
     #fileDataMap = new WeakMap;
+    #valueToWeakKeyMap = new WeakMap;
     #createNewKey() {
         return {
             [UNIQUE_KEY]: this.#uniqueCounter++
@@ -66,6 +71,7 @@ export class FileSystemMap {
     clear() {
         this.#descendantsMap = new WeakStrongMap;
         this.#fileDataMap = new WeakMap;
+        this.#valueToWeakKeyMap = new WeakMap;
     }
     delete(key, forceRecursive) {
         const sequence = _a.#getPathSequence(key);
@@ -76,8 +82,11 @@ export class FileSystemMap {
         if (!forceRecursive && this.#descendantsMap.hasStrongKeys(lastKey)) {
             throw new Error(`There are descendants of "${key}".  Use forceRecursive to clear them all out.`);
         }
+        let fileData = this.#fileDataMap.get(lastKey);
         if (!this.#fileDataMap.delete(lastKey))
             return false;
+        if (fileData)
+            this.#valueToWeakKeyMap.delete(fileData.value);
         const parentKey = stack[sequence.length - 1];
         const localName = sequence.at(-1);
         this.#descendantsMap.delete(parentKey, localName);
@@ -109,6 +118,7 @@ export class FileSystemMap {
         const lastKey = stack.at(-1);
         let localData = this.#fileDataMap.get(lastKey);
         if (localData) {
+            this.#valueToWeakKeyMap.delete(localData.value);
             localData.value = value;
         }
         else {
@@ -119,6 +129,7 @@ export class FileSystemMap {
             };
             this.#fileDataMap.set(lastKey, localData);
         }
+        this.#valueToWeakKeyMap.set(value, lastKey);
         return this;
     }
     entries() {
@@ -152,6 +163,27 @@ export class FileSystemMap {
         }
     }
     //#endregion standard Map API's
+    filePathAndDepth(value) {
+        let filePath = "";
+        let depth = -1; // to account for this being above the top-level children
+        let ancestorKey = this.#valueToWeakKeyMap.get(value);
+        if (!ancestorKey) {
+            return { filePath: "", depth: NaN };
+        }
+        while (ancestorKey !== this) {
+            const localData = this.#fileDataMap.get(ancestorKey);
+            if (!localData) {
+                return { filePath: "", depth: NaN };
+            }
+            if (filePath === "")
+                filePath = localData.localName;
+            else
+                filePath = _a.#joinPaths(localData.localName, filePath);
+            depth++;
+            ancestorKey = localData.parentKey;
+        }
+        return { filePath, depth };
+    }
     rename(parentPath, oldLeafName, newLeafName) {
         if (!parentPath || !oldLeafName || !newLeafName)
             throw new Error("all arguments must be non-empty");
@@ -173,6 +205,7 @@ export class FileSystemMap {
         this.#descendantsMap.set(lastParentKey, newLeafName, keyToMove);
         this.#descendantsMap.delete(lastParentKey, oldLeafName);
         this.#fileDataMap.get(keyToMove).localName = newLeafName;
+        // no need to modify this.#valueToWeakKeyMap... we never changed the key or the value
         return true;
     }
     //#region copying API's
@@ -197,6 +230,7 @@ export class FileSystemMap {
                     localName,
                     parentKey,
                 });
+                this.#valueToWeakKeyMap.set(value, childKey);
             }
         };
         other[COPY_TRAVERSE_MAP](otherTreePath, leafName, traversal);

@@ -1,4 +1,5 @@
 import {
+  type FilePathAndDepth,
   FileSystemMap,
   type FileSystemValue,
 } from "../../../scripts/file-system/FileSystemMap.js";
@@ -108,6 +109,12 @@ it("FileSystemMap sanity checks", () => {
     ["one://two/three.js", THREE],
   ]);
 
+  {
+    const { filePath, depth }: FilePathAndDepth = map.filePathAndDepth(SIX);
+    expect(filePath).toBe("one://five/six.js");
+    expect(depth).toBe(2);
+  }
+
   map.rename("one://", "five", "zero");
 
   allEntries = Array.from(map.entries());
@@ -122,6 +129,12 @@ it("FileSystemMap sanity checks", () => {
     ["one://zero", FIVE],
     ["one://zero/six.js", SIX],
   ]);
+
+  {
+    const { filePath, depth }: FilePathAndDepth = map.filePathAndDepth(SIX);
+    expect(filePath).toBe("one://zero/six.js");
+    expect(depth).toBe(2);
+  }
 
   map.clear();
   map.set("one://", ONE);

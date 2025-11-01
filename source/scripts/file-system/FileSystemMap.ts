@@ -26,6 +26,11 @@ export interface FileSystemValue {
   clone(): this;
 }
 
+export interface FilePathAndDepth {
+  readonly filePath: string;
+  readonly depth: number;
+}
+
 export interface ReadonlyFileSystemMap<V extends FileSystemValue> {
   get(key: string): V | undefined;
   has(key: string): boolean;
@@ -101,10 +106,16 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
   public readonly [UNIQUE_KEY] = 0;
 
   #uniqueCounter: number = 1;
+
+  /**
+   * Everything is held strongly because this is the first weak key, and other
+   * weak keys are also the values.
+   */
   #descendantsMap: WeakStrongMap<
     FileSystemWeakKey, string, FileSystemWeakKey
   > = new WeakStrongMap();
   #fileDataMap: WeakMap<FileSystemWeakKey, LocalFileData<V>> = new WeakMap;
+  #valueToWeakKeyMap: WeakMap<V, FileSystemWeakKey> = new WeakMap;
 
   #createNewKey(): FileSystemWeakKey {
     return {
@@ -140,6 +151,7 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
   clear(): void {
     this.#descendantsMap = new WeakStrongMap;
     this.#fileDataMap = new WeakMap;
+    this.#valueToWeakKeyMap = new WeakMap;
   }
 
   delete(key: string, forceRecursive: boolean): boolean {
@@ -153,8 +165,12 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
       throw new Error(`There are descendants of "${key}".  Use forceRecursive to clear them all out.`);
     }
 
+    let fileData: LocalFileData<V> | undefined = this.#fileDataMap.get(lastKey);
+
     if (!this.#fileDataMap.delete(lastKey))
       return false;
+    if (fileData)
+      this.#valueToWeakKeyMap.delete(fileData.value);
 
     const parentKey = stack[sequence.length - 1];
     const localName = sequence.at(-1)!;
@@ -192,6 +208,7 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
     let localData: LocalFileData<V> | undefined = this.#fileDataMap.get(lastKey);
 
     if (localData) {
+      this.#valueToWeakKeyMap.delete(localData.value);
       localData.value = value;
     }
     else {
@@ -202,6 +219,7 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
       };
       this.#fileDataMap.set(lastKey, localData);
     }
+    this.#valueToWeakKeyMap.set(value, lastKey);
 
     return this;
   }
@@ -254,6 +272,33 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
 
   //#endregion standard Map API's
 
+  filePathAndDepth(value: V): FilePathAndDepth {
+    let filePath: string = "";
+    let depth: number = -1; // to account for this being above the top-level children
+
+    let ancestorKey: FileSystemWeakKey | undefined = this.#valueToWeakKeyMap.get(value);
+    if (!ancestorKey) {
+      return { filePath: "", depth: NaN };
+    }
+
+    while (ancestorKey !== this) {
+      const localData: LocalFileData<V> | undefined = this.#fileDataMap.get(ancestorKey);
+      if (!localData) {
+        return { filePath: "", depth: NaN };
+      }
+
+      if (filePath === "")
+        filePath = localData.localName;
+      else
+        filePath = FileSystemMap.#joinPaths(localData.localName, filePath);
+      depth++;
+
+      ancestorKey = localData.parentKey;
+    }
+
+    return { filePath, depth };
+  }
+
   rename(parentPath: string, oldLeafName: string, newLeafName: string): boolean
   {
     if (!parentPath || !oldLeafName || !newLeafName)
@@ -279,6 +324,7 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
     this.#descendantsMap.delete(lastParentKey, oldLeafName);
 
     this.#fileDataMap.get(keyToMove)!.localName = newLeafName;
+    // no need to modify this.#valueToWeakKeyMap... we never changed the key or the value
     return true;
   }
 
@@ -315,6 +361,7 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
           localName,
           parentKey,
         });
+        this.#valueToWeakKeyMap.set(value, childKey);
       }
     };
 
