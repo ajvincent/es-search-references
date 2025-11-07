@@ -31,6 +31,10 @@ export class FileSystemMap {
         return keyA.localeCompare(keyB);
     }
     //#endregion statics
+    depthOffset;
+    constructor(depthOffset) {
+        this.depthOffset = depthOffset;
+    }
     //#region internals
     [UNIQUE_KEY] = 0;
     #uniqueCounter = 1;
@@ -166,10 +170,19 @@ export class FileSystemMap {
     filePathAndDepth(value) {
         let filePath = "";
         let depth = -1; // to account for this being above the top-level children
+        depth += this.depthOffset;
         let ancestorKey = this.#valueToWeakKeyMap.get(value);
         if (!ancestorKey) {
             return { filePath: "", depth: NaN };
         }
+        /* TODO: if our tree structure is correct, and if the parent has a correct filePath and depth,
+        we really only need to look up the parent, not all the ancestors.  So this is a little
+        inefficient, O(depth) instead of O(1).  Which makes rename and copyFrom quadratic runtime.
+        Not the best, but for small n, it's acceptable.
+    
+        I'm skipping this for now, by not caching the parent value's filePath and depth.  I could,
+        with another WeakMap<V, FilePathAndDepth>.
+        */
         while (ancestorKey !== this) {
             const localData = this.#fileDataMap.get(ancestorKey);
             if (!localData) {
@@ -204,8 +217,15 @@ export class FileSystemMap {
             return false;
         this.#descendantsMap.set(lastParentKey, newLeafName, keyToMove);
         this.#descendantsMap.delete(lastParentKey, oldLeafName);
-        this.#fileDataMap.get(keyToMove).localName = newLeafName;
+        const renamedTopValue = this.#fileDataMap.get(keyToMove);
+        renamedTopValue.localName = newLeafName;
         // no need to modify this.#valueToWeakKeyMap... we never changed the key or the value
+        const newFullPath = _a.#joinPaths(parentPath, newLeafName);
+        renamedTopValue.value.updateFilePathAndDepth(this.filePathAndDepth(renamedTopValue.value));
+        for (const [key, value] of this.#recursiveEntries(keyToMove, newFullPath)) {
+            void key;
+            value.updateFilePathAndDepth(this.filePathAndDepth(value));
+        }
         return true;
     }
     //#region copying API's
@@ -231,6 +251,7 @@ export class FileSystemMap {
                     parentKey,
                 });
                 this.#valueToWeakKeyMap.set(value, childKey);
+                value.updateFilePathAndDepth(this.filePathAndDepth(value));
             }
         };
         other[COPY_TRAVERSE_MAP](otherTreePath, leafName, traversal);
@@ -251,7 +272,7 @@ export class FileSystemMap {
             traversal.notifyFileData(localData.localName, localData.value.clone());
             const grandchildKeys = this.#descendantsMap.strongKeysFor(childKey);
             if (grandchildKeys.size > 0) {
-                this.#copyTraversalMap(childKey, Array.from(grandchildKeys), traversal);
+                this.#copyTraversalMap(childKey, Array.from(grandchildKeys).sort(), traversal);
             }
             traversal.leaveChild();
         }

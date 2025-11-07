@@ -19,11 +19,15 @@ interface FSMapCopyTraversal<V extends FileSystemValue> {
   notifyFileData(childLeafName: string, value: V): void;
   leaveChild(): void;
 }
-//#region types
+//#endregion internal types
 
 export interface FileSystemValue {
   /** creates a shallow copy */
   clone(): this;
+
+  updateFilePathAndDepth(
+    filePathAndDepth: FilePathAndDepth
+  ): void;
 }
 
 export interface FilePathAndDepth {
@@ -38,23 +42,13 @@ export interface ReadonlyFileSystemMap<V extends FileSystemValue> {
   keys(): MapIterator<string>;
   values(): MapIterator<V>;
   [Symbol.iterator](): MapIterator<[string, V]>;
-}
 
-interface WritableFileSystemMap<V extends FileSystemValue> extends ReadonlyFileSystemMap<V> {
-  clear(): void;
-  delete(key: string, forceRecursive: boolean): boolean;
-  set(key: string, value: V): this;
-  rename(parentPath: string, oldLeafName: string, newLeafName: string): boolean;
-  copyFrom(
-    other: FileSystemMap<V>,
-    otherTreePath: string,
-    localTreePath: string,
-    leafName: string
-  ): boolean;
+  filePathAndDepth(value: V): FilePathAndDepth;
+  readonly depthOffset: number;
 }
 
 export class FileSystemMap<V extends FileSystemValue>
-implements FileSystemWeakKey, WritableFileSystemMap<V>
+implements FileSystemWeakKey
 {
   //#region statics
   static #getPathSequence(
@@ -101,6 +95,11 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
     return keyA.localeCompare(keyB);
   }
   //#endregion statics
+
+  public readonly depthOffset: number;
+  constructor(depthOffset: number) {
+    this.depthOffset = depthOffset;
+  }
 
   //#region internals
   public readonly [UNIQUE_KEY] = 0;
@@ -275,12 +274,21 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
   filePathAndDepth(value: V): FilePathAndDepth {
     let filePath: string = "";
     let depth: number = -1; // to account for this being above the top-level children
+    depth += this.depthOffset;
 
     let ancestorKey: FileSystemWeakKey | undefined = this.#valueToWeakKeyMap.get(value);
     if (!ancestorKey) {
       return { filePath: "", depth: NaN };
     }
 
+    /* TODO: if our tree structure is correct, and if the parent has a correct filePath and depth,
+    we really only need to look up the parent, not all the ancestors.  So this is a little
+    inefficient, O(depth) instead of O(1).  Which makes rename and copyFrom quadratic runtime.
+    Not the best, but for small n, it's acceptable.
+
+    I'm skipping this for now, by not caching the parent value's filePath and depth.  I could,
+    with another WeakMap<V, FilePathAndDepth>.
+    */
     while (ancestorKey !== this) {
       const localData: LocalFileData<V> | undefined = this.#fileDataMap.get(ancestorKey);
       if (!localData) {
@@ -299,7 +307,11 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
     return { filePath, depth };
   }
 
-  rename(parentPath: string, oldLeafName: string, newLeafName: string): boolean
+  rename(
+    parentPath: string,
+    oldLeafName: string,
+    newLeafName: string
+  ): boolean
   {
     if (!parentPath || !oldLeafName || !newLeafName)
       throw new Error("all arguments must be non-empty");
@@ -323,8 +335,16 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
     this.#descendantsMap.set(lastParentKey, newLeafName, keyToMove);
     this.#descendantsMap.delete(lastParentKey, oldLeafName);
 
-    this.#fileDataMap.get(keyToMove)!.localName = newLeafName;
+    const renamedTopValue: LocalFileData<V> = this.#fileDataMap.get(keyToMove)!;
+    renamedTopValue.localName = newLeafName;
     // no need to modify this.#valueToWeakKeyMap... we never changed the key or the value
+
+    const newFullPath = FileSystemMap.#joinPaths(parentPath, newLeafName);
+    renamedTopValue.value.updateFilePathAndDepth(this.filePathAndDepth(renamedTopValue.value));
+    for (const [key, value] of this.#recursiveEntries(keyToMove, newFullPath)) {
+      void key;
+      value.updateFilePathAndDepth(this.filePathAndDepth(value));
+    }
     return true;
   }
 
@@ -362,6 +382,7 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
           parentKey,
         });
         this.#valueToWeakKeyMap.set(value, childKey);
+        value.updateFilePathAndDepth(this.filePathAndDepth(value));
       }
     };
 
@@ -397,7 +418,7 @@ implements FileSystemWeakKey, WritableFileSystemMap<V>
 
       const grandchildKeys: Set<string> = this.#descendantsMap.strongKeysFor(childKey);
       if (grandchildKeys.size > 0) {
-        this.#copyTraversalMap(childKey, Array.from(grandchildKeys), traversal);
+        this.#copyTraversalMap(childKey, Array.from(grandchildKeys).sort(), traversal);
       }
       traversal.leaveChild();
     }

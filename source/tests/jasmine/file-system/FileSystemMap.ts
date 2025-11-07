@@ -5,6 +5,7 @@ import {
 } from "../../../scripts/file-system/FileSystemMap.js";
 
 it("FileSystemMap sanity checks", () => {
+  const spy = jasmine.createSpy("filePathAndDepth");
   class WrappedNumber implements FileSystemValue {
     #value: number;
 
@@ -18,6 +19,10 @@ it("FileSystemMap sanity checks", () => {
     clone(): this {
       return new WrappedNumber(this.#value) as this;
     }
+
+    updateFilePathAndDepth(filePathAndDepth: FilePathAndDepth): void {
+      spy(this, filePathAndDepth.filePath, filePathAndDepth.depth);
+    }
   }
 
   const ONE = new WrappedNumber(1);
@@ -30,7 +35,7 @@ it("FileSystemMap sanity checks", () => {
   const EIGHT = new WrappedNumber(8);
   const NINE = new WrappedNumber(9);
 
-  const map = new FileSystemMap<WrappedNumber>;
+  const map = new FileSystemMap<WrappedNumber>(0);
   expect(
     () => map.set("one://two/three.js", THREE)
   ).toThrowError(`missing an ancestor of "one://two/three.js"`);
@@ -73,11 +78,20 @@ it("FileSystemMap sanity checks", () => {
   map.set("one://two/three.js", THREE);
   map.set("one://two/four.js", FOUR);
 
+  // up to this point we haven't done any file system moves
+  expect(spy).toHaveBeenCalledTimes(0);
+
   map.rename("one://", "two", "five");
   expect(map.get("one://two/three.js")).toBeUndefined();
   expect(map.get("one://two/four.js")).toBeUndefined();
   expect(map.get("one://five/three.js")).toBe(THREE);
   expect(map.get("one://five/four.js")).toBe(FOUR);
+
+  expect(spy).toHaveBeenCalledTimes(3);
+  expect(spy.calls.argsFor(0)).toEqual([TWO, "one://five", 1]);
+  expect(spy.calls.argsFor(1)).toEqual([THREE, "one://five/four.js", 2]);
+  expect(spy.calls.argsFor(1)).toEqual([FOUR, "one://five/four.js", 2]);
+  spy.calls.reset();
 
   map.clear();
   expect(map.get("one://two/three.js")).toBeUndefined();
@@ -116,6 +130,11 @@ it("FileSystemMap sanity checks", () => {
   }
 
   map.rename("one://", "five", "zero");
+
+  expect(spy).toHaveBeenCalledTimes(2);
+  expect(spy.calls.argsFor(0)).toEqual([FIVE, "one://zero", 1]);
+  expect(spy.calls.argsFor(1)).toEqual([SIX, "one://zero/six.js", 2]);
+  spy.calls.reset();
 
   allEntries = Array.from(map.entries());
   expect(allEntries).toEqual([
@@ -160,6 +179,12 @@ it("FileSystemMap sanity checks", () => {
     ["one://two/four.js", FOUR],
     ["one://two/three.js", THREE],
   ]);
+
+  expect(spy).toHaveBeenCalledTimes(3);
+  expect(spy.calls.argsFor(0)).toEqual([new WrappedNumber(2), "seven/two", 1]);
+  expect(spy.calls.argsFor(1)).toEqual([new WrappedNumber(4), "seven/two/four.js", 2]);
+  expect(spy.calls.argsFor(2)).toEqual([new WrappedNumber(3), "seven/two/three.js", 2]);
+  spy.calls.reset();
 
   expect(map.copyFrom(map, "one://", "seven", "two")).toBeFalse();
 });
