@@ -1,5 +1,9 @@
 //#region preamble
 import {
+  FileSystemMap
+} from "../../../../scripts/file-system/FileSystemMap.js";
+
+import {
   DirectoryRowView
 } from "../../../../scripts/file-system/views/directory-row.js";
 
@@ -71,8 +75,9 @@ describe("FileSystemView builds a view of an existing file system", () => {
   });
 
   it("without filters for matching files", () => {
+    const map = new FileSystemMap<DirectoryRowView | FileRowView>(0);
     view = new FileSystemView(
-      DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord
+      DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord, map
     );
 
     expect(view.hasRowView("one://two/three.js")).toBeTrue();
@@ -101,9 +106,9 @@ describe("FileSystemView builds a view of an existing file system", () => {
 
     expect(foundFiles.map(k => k[0])).toEqual([
       "es-search-references/red",
-      "one://two/three.js",
-      "one://two/four.js",
       "one://five/six.js",
+      "one://two/four.js",
+      "one://two/three.js",
       "seven://eight.js",
     ]);
 
@@ -116,8 +121,9 @@ describe("FileSystemView builds a view of an existing file system", () => {
   });
 
   it("with a filter for matching files", () => {
+    const map = new FileSystemMap<DirectoryRowView | FileRowView>(0);
     view = new FileSystemView(
-      DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord,
+      DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord, map,
       (fullPath: string) => fullPath.startsWith("one://two/")
     );
 
@@ -131,8 +137,9 @@ describe("FileSystemView builds a view of an existing file system", () => {
   });
 
   it("reports false after clearing all rows", () => {
+    const map = new FileSystemMap<DirectoryRowView | FileRowView>(0);
     view = new FileSystemView(
-      DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord
+      DirectoryRowView, FileRowView, false, treeRows, mockDirectoryRecord, map
     );
 
     view.clearRowMap();

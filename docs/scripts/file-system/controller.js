@@ -1,5 +1,6 @@
 //#region preamble
 import { FileEditorMapView } from "../codemirror/views/FileEditorMapView.js";
+import { FileSystemMap } from "./FileSystemMap.js";
 import { FileSystemContextMenu } from "./contextMenu.js";
 import { FSContextMenuShowArguments } from "./contextMenuShowArguments.js";
 import { FileSystemElement } from "./elements/file-system.js";
@@ -18,7 +19,7 @@ export class FileSystemController {
     #webFS;
     #filesCheckedSet = new Set;
     filesCheckedSet = this.#filesCheckedSet;
-    #fileToRowMap = new Map;
+    #fileToRowMap;
     #fileSystemView;
     editorMapView;
     #fsContextMenu;
@@ -27,7 +28,9 @@ export class FileSystemController {
         this.isReadOnly = isReadonly;
         this.#webFS = webFS;
         this.#fsContextMenu = new FileSystemContextMenu(this);
-        this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows, index, undefined, this);
+        const fileToRowMap = new FileSystemMap(0);
+        this.#fileToRowMap = fileToRowMap;
+        this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.displayElement.treeRows, index, fileToRowMap, undefined, this);
         for (const [fullPath, fileView] of this.#fileSystemView.descendantFileViews()) {
             this.#addFileEventHandlers(fullPath, fileView);
         }
@@ -35,7 +38,6 @@ export class FileSystemController {
     }
     dispose() {
         this.displayElement.remove();
-        this.#fileToRowMap.clear();
         this.#fileSystemView.clearRowMap();
         this.editorMapView.dispose();
     }
@@ -46,7 +48,6 @@ export class FileSystemController {
             this.#filesCheckedSet.delete(pathToFile);
     }
     #addFileEventHandlers(fullPath, view) {
-        this.#fileToRowMap.set(fullPath, view);
         view.checkboxElement.onclick = (ev) => {
             this.#fileCheckToggled(fullPath, view.checkboxElement.checked);
         };
@@ -116,12 +117,10 @@ export class FileSystemController {
     }
     async addPackage(packageName) {
         await this.#webFS.createDirDeep(packageName);
-        const packageDir = this.#fileSystemView.addNewPackage(packageName);
-        this.#fileToRowMap.set(packageName, packageDir);
+        this.#fileSystemView.addNewPackage(packageName);
     }
     async addProtocol(protocolName) {
         await this.#webFS.createDirDeep(protocolName);
-        const protocolRow = this.#fileSystemView.addNewProtocol(protocolName);
-        this.#fileToRowMap.set(protocolName, protocolRow);
+        this.#fileSystemView.addNewProtocol(protocolName);
     }
 }

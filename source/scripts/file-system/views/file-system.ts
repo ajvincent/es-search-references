@@ -6,6 +6,10 @@ import type {
   DirectoryRecord
 } from "../../opfs/types/WebFileSystemIfc.js";
 
+import {
+  FileSystemMap
+} from "../FileSystemMap.js";
+
 import type {
   FSControllerCallbacksIfc
 } from "../types/FSControllerCallbacksIfc.js";
@@ -39,7 +43,7 @@ export class FileSystemView<
 >
 {
   readonly #isFileCollapsible: boolean;
-  readonly #fileToRowMap = new Map<string, FileView | DirectoryView>;
+  readonly #fileToRowMap: FileSystemMap<FileView | DirectoryView>;
   readonly #topLevelDirs: string[] = [];
   readonly #treeRowsElement: HTMLElement;
 
@@ -55,6 +59,7 @@ export class FileSystemView<
     isFileCollapsible: boolean,
     treeRowsElement: HTMLElement,
     initialIndex: DirectoryRecord,
+    fileToRowMap: FileSystemMap<FileView | DirectoryView>,
     fileFilter?: (fullPath: string) => boolean,
     controllerCallbacks?: FSControllerCallbacksIfc,
   )
@@ -64,6 +69,7 @@ export class FileSystemView<
     this.#isFileCollapsible = isFileCollapsible;
     this.#treeRowsElement = treeRowsElement;
     this.#fileFilter = fileFilter;
+    this.#fileToRowMap = fileToRowMap;
     this.#controllerCallbacks = controllerCallbacks;
 
     this.#fillDirectoryView(initialIndex, null);
@@ -111,9 +117,11 @@ export class FileSystemView<
       let mustShowDir: boolean;
       if (typeof contentsOrRecord === "string") {
         view = new this.#FileViewClass(depth, this.#isFileCollapsible, key, fullPath, this.#controllerCallbacks);
+        this.#fileToRowMap.set(view.fullPath, view);
         mustShowDir = !this.#fileFilter || this.#fileFilter(fullPath);
       } else {
         view = new this.#DirectoryViewClass(depth, key, fullPath, this.#controllerCallbacks);
+        this.#fileToRowMap.set(view.fullPath, view);
         mustShowDir = this.#fillDirectoryView(contentsOrRecord, view);
         if (!this.#fileFilter)
           mustShowDir = true;
@@ -126,13 +134,13 @@ export class FileSystemView<
 
     if (shouldShowSet.size) {
       for (const view of shouldShowSet) {
-        this.#fileToRowMap.set(view.fullPath, view);
         if (parentView)
           parentView.addRow(view);
         else
           this.#treeRowsElement.append(view.rowElement!);
       }
-    }
+    } else if (parentView && this.#fileFilter)
+      this.#fileToRowMap.delete(parentView.fullPath, true);
 
     return shouldShowSet.size > 0;
   }
@@ -147,7 +155,7 @@ export class FileSystemView<
   * descendantFileViews(): IterableIterator<[string, FileView]>
   {
     for (const [fullPath, view] of this.#fileToRowMap.entries()) {
-      if (view instanceof this.#FileViewClass)
+      if (view.rowType === "file")
         yield [fullPath, view];
     }
   }

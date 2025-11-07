@@ -12,9 +12,10 @@ import type {
   BaseView
 } from "../tab-panels/tab-panels-view.js";
 
-import type {
-  TreeRowView
-} from "../tree/views/tree-row.js";
+import {
+  FileSystemMap,
+  type ReadonlyFileSystemMap
+} from "./FileSystemMap.js";
 
 import {
   FileSystemContextMenu
@@ -80,7 +81,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   readonly #filesCheckedSet = new Set<string>;
   readonly filesCheckedSet: ReadonlySet<string> = this.#filesCheckedSet;
 
-  readonly #fileToRowMap = new Map<string, TreeRowView>;
+  readonly #fileToRowMap: ReadonlyFileSystemMap<DirectoryRowView | FileRowView>;
   readonly #fileSystemView: FileSystemView<DirectoryRowView, FileRowView>;
 
   readonly editorMapView: FileEditorMapView;
@@ -101,8 +102,11 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
 
     this.#fsContextMenu = new FileSystemContextMenu(this);
 
+    const fileToRowMap = new FileSystemMap<DirectoryRowView | FileRowView>(0);
+    this.#fileToRowMap = fileToRowMap;
     this.#fileSystemView = new FileSystemView(
-      DirectoryRowView, FileRowView, false, this.displayElement.treeRows!, index, undefined, this
+      DirectoryRowView, FileRowView, false, this.displayElement.treeRows!,
+      index, fileToRowMap, undefined, this
     );
     for (const [fullPath, fileView] of this.#fileSystemView.descendantFileViews()) {
       this.#addFileEventHandlers(fullPath, fileView);
@@ -113,7 +117,6 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
 
   dispose(): void {
     this.displayElement.remove();
-    this.#fileToRowMap.clear();
     this.#fileSystemView.clearRowMap();
     this.editorMapView.dispose();
   }
@@ -126,8 +129,6 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   }
 
   #addFileEventHandlers(fullPath: string, view: FileRowView): void {
-    this.#fileToRowMap.set(fullPath, view);
-
     view.checkboxElement!.onclick = (ev: MouseEvent): void => {
       this.#fileCheckToggled(fullPath, view.checkboxElement!.checked);
     };
@@ -235,13 +236,11 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
 
   async addPackage(packageName: string): Promise<void> {
     await this.#webFS.createDirDeep(packageName);
-    const packageDir = this.#fileSystemView.addNewPackage(packageName);
-    this.#fileToRowMap.set(packageName, packageDir);
+    this.#fileSystemView.addNewPackage(packageName);
   }
 
   async addProtocol(protocolName: `${string}://`): Promise<void> {
     await this.#webFS.createDirDeep(protocolName);
-    const protocolRow = this.#fileSystemView.addNewProtocol(protocolName);
-    this.#fileToRowMap.set(protocolName, protocolRow);
+    this.#fileSystemView.addNewProtocol(protocolName);
   }
 }

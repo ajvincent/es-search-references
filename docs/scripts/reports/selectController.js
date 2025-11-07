@@ -1,3 +1,4 @@
+import { FileSystemMap } from "../file-system/FileSystemMap.js";
 import { BaseDirectoryRowView } from "../file-system/views/base-directory-row.js";
 import { BaseFileRowView } from "../file-system/views/base-file-row.js";
 import { FileSystemView } from "../file-system/views/file-system.js";
@@ -19,7 +20,8 @@ export class ReportSelectController {
     }
     refreshTree(index) {
         this.clear();
-        this.#fileSystemView = new FileSystemView(BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows, index, (fullPath) => this.#outputController.filePathsAndSearchKeys.has(fullPath));
+        const map = new FileSystemMap(0);
+        this.#fileSystemView = new FileSystemView(BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows, index, map, (fullPath) => this.#outputController.filePathsAndSearchKeys.has(fullPath));
         for (const [fullPath, view] of this.#fileSystemView.descendantFileViews()) {
             const searchKeysIterator = this.#outputController.filePathsAndSearchKeys.get(fullPath);
             if (!searchKeysIterator)

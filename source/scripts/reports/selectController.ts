@@ -1,4 +1,8 @@
 import {
+  FileSystemMap
+} from "../file-system/FileSystemMap.js";
+
+import {
   BaseDirectoryRowView
 } from "../file-system/views/base-directory-row.js";
 
@@ -54,8 +58,9 @@ export class ReportSelectController {
   ): void
   {
     this.clear();
+    const map = new FileSystemMap<BaseDirectoryRowView | BaseFileRowView>(0);
     this.#fileSystemView = new FileSystemView(
-      BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows!, index,
+      BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows!, index, map,
       (fullPath: string) => this.#outputController.filePathsAndSearchKeys.has(fullPath)
     );
 
