@@ -56,20 +56,6 @@ describe("FileSystemView builds a view of an existing file system", () => {
       [right] auto
     ;
   }
-
-
-    try {
-      const view = new FileSystemView(
-        DirectoryRowView,
-        FileRowView,
-        false,
-        treeRows,
-        mockDirectories
-      );
-    }
-    finally {
-      fieldset.remove();
-    }
     `);
 
     fieldset.append(form);
