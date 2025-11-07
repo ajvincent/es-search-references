@@ -26,7 +26,10 @@ export class FileRowView extends BaseFileRowView {
         radio.name = "currentRow";
         return radio;
     }
-    selectFile(key) {
+    clone() {
+        return new FileRowView(this.depth, this.isCollapsible, this.primaryLabel, this.fullPath, this.fsControllerCallbacks);
+    }
+    selectFile() {
         this.radioElement.click();
     }
 }

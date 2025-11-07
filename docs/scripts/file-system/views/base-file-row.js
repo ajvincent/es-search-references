@@ -1,30 +1,13 @@
-import { TreeRowView } from "../../tree/views/tree-row.js";
-export class BaseFileRowView extends TreeRowView {
+import { BaseFileEntryRowView } from "./base-file-entry-row.js";
+export class BaseFileRowView extends BaseFileEntryRowView {
     rowType = "file";
-    fullPath;
     constructor(depth, isCollapsible, label, fullPath, fsControllerCallbacks) {
-        super(depth, isCollapsible, label);
-        this.fullPath = fullPath;
-        this.rowElement.dataset.fullpath = fullPath;
-        this.addCells();
-        if (fsControllerCallbacks) {
-            this.rowElement.addEventListener("contextmenu", event => fsControllerCallbacks.showFSContextMenu(event, fullPath, false));
-        }
+        super(depth, isCollapsible, label, fullPath, fsControllerCallbacks, false);
     }
-    getCellElements() {
-        return [
-            this.buildPrimaryLabelElement(),
-        ];
+    clone() {
+        return new BaseFileRowView(this.depth, this.isCollapsible, this.primaryLabel, this.fullPath, this.fsControllerCallbacks);
     }
-    registerCollapseClick() {
-        this.rowElement.onclick = this.#toggleCollapsed.bind(this);
-    }
-    #toggleCollapsed(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        this.rowElement.toggleCollapsed();
-    }
-    selectFile(key) {
+    selectFile() {
         throw new Error("not implemented");
     }
 }

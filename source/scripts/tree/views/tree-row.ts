@@ -11,16 +11,20 @@ export abstract class TreeRowView {
   #primaryLabel: string;
   #primaryLabelElement?: HTMLElement;
 
-  public readonly depth: number;
+  #depth: number;
+
+  public get depth(): number {
+    return this.#depth;
+  }
   public readonly isCollapsible: boolean;
   public readonly abstract rowType: string;
   readonly #childRowViews: TreeRowView[] = [];
 
   constructor(depth: number, isCollapsible: boolean, primaryLabel: string) {
-    this.depth = depth;
+    this.#depth = depth;
     this.isCollapsible = isCollapsible;
     this.#primaryLabel = primaryLabel;
-    this.rowElement = new TreeRowElement(this.depth, this.isCollapsible);
+    this.rowElement = new TreeRowElement(depth, this.isCollapsible);
   }
 
   protected abstract getCellElements(): HTMLElement[];

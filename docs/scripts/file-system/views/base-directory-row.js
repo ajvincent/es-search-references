@@ -1,28 +1,10 @@
-import { TreeRowView } from "../../tree/views/tree-row.js";
-export class BaseDirectoryRowView extends TreeRowView {
+import { BaseFileEntryRowView } from "./base-file-entry-row.js";
+export class BaseDirectoryRowView extends BaseFileEntryRowView {
     rowType = "directory";
-    fullPath;
     constructor(depth, primaryLabel, fullPath, fsControllerCallbacks) {
-        super(depth, depth > 0, primaryLabel);
-        this.fullPath = fullPath;
-        this.rowElement.dataset.fullpath = fullPath;
-        this.rowElement.dataset.isdirectory = "true";
-        if (fsControllerCallbacks) {
-            this.rowElement.addEventListener("contextmenu", event => fsControllerCallbacks.showFSContextMenu(event, fullPath, true));
-        }
-        this.addCells();
+        super(depth, depth > 0, primaryLabel, fullPath, fsControllerCallbacks, true);
     }
-    getCellElements() {
-        return [
-            this.buildPrimaryLabelElement(),
-        ];
-    }
-    registerCollapseClick() {
-        this.rowElement.onclick = this.#toggleCollapsed.bind(this);
-    }
-    #toggleCollapsed(event) {
-        event.preventDefault();
-        event.stopPropagation();
-        this.rowElement.toggleCollapsed();
+    clone() {
+        return new BaseDirectoryRowView(this.depth, this.primaryLabel, this.fullPath, this.fsControllerCallbacks);
     }
 }

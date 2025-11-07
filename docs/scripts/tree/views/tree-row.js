@@ -6,14 +6,17 @@ export class TreeRowView {
     rowElement;
     #primaryLabel;
     #primaryLabelElement;
-    depth;
+    #depth;
+    get depth() {
+        return this.#depth;
+    }
     isCollapsible;
     #childRowViews = [];
     constructor(depth, isCollapsible, primaryLabel) {
-        this.depth = depth;
+        this.#depth = depth;
         this.isCollapsible = isCollapsible;
         this.#primaryLabel = primaryLabel;
-        this.rowElement = new TreeRowElement(this.depth, this.isCollapsible);
+        this.rowElement = new TreeRowElement(depth, this.isCollapsible);
     }
     get primaryLabel() {
         return this.#primaryLabel;

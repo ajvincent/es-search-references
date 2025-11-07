@@ -33,9 +33,13 @@ export class FileRowView extends BaseFileRowView {
     return radio;
   }
 
-  public selectFile(
-    key: string
-  ): void
+  public override clone(): this {
+    return new FileRowView(
+      this.depth, this.isCollapsible, this.primaryLabel, this.fullPath, this.fsControllerCallbacks
+    ) as this;
+  }
+
+  public selectFile(): void
   {
     this.radioElement!.click();
   }

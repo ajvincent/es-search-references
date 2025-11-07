@@ -1,14 +1,12 @@
-import {
-  TreeRowView
-} from "../../tree/views/tree-row.js";
-
 import type {
   FSControllerCallbacksIfc
 } from "../types/FSControllerCallbacksIfc.js";
+import {
+  BaseFileEntryRowView
+} from "./base-file-entry-row.js";
 
-export class BaseDirectoryRowView extends TreeRowView {
+export class BaseDirectoryRowView extends BaseFileEntryRowView {
   public readonly rowType = "directory";
-  public readonly fullPath: string;
 
   constructor(
     depth: number,
@@ -16,34 +14,12 @@ export class BaseDirectoryRowView extends TreeRowView {
     fullPath: string,
     fsControllerCallbacks: FSControllerCallbacksIfc | undefined)
   {
-    super(depth, depth > 0, primaryLabel);
-    this.fullPath = fullPath;
-    this.rowElement.dataset.fullpath = fullPath;
-    this.rowElement.dataset.isdirectory = "true";
-
-    if (fsControllerCallbacks) {
-      this.rowElement.addEventListener(
-        "contextmenu",
-        event => fsControllerCallbacks.showFSContextMenu(event, fullPath, true)
-      );
-    }
-
-    this.addCells();
+    super(depth, depth > 0, primaryLabel, fullPath, fsControllerCallbacks, true);
   }
 
-  protected getCellElements(): HTMLElement[] {
-    return [
-      this.buildPrimaryLabelElement(),
-    ];
-  }
-
-  public registerCollapseClick(): void {
-    this.rowElement!.onclick = this.#toggleCollapsed.bind(this);
-  }
-
-  #toggleCollapsed(event: MouseEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.rowElement!.toggleCollapsed();
+  public clone(): this {
+    return new BaseDirectoryRowView(
+      this.depth, this.primaryLabel, this.fullPath, this.fsControllerCallbacks
+    ) as this;
   }
 }

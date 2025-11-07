@@ -212,7 +212,6 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     leafName: string,
     isDirectory: boolean
   ): Promise<void> {
-
     let pathToFile: string = currentDirectory;
     if (currentDirectory.endsWith("://") === false)
       pathToFile += "/";

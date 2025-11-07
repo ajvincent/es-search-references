@@ -1,14 +1,13 @@
-import {
-  TreeRowView
-} from "../../tree/views/tree-row.js";
-
 import type {
   FSControllerCallbacksIfc
 } from "../types/FSControllerCallbacksIfc.js";
 
-export class BaseFileRowView extends TreeRowView {
+import {
+  BaseFileEntryRowView
+} from "./base-file-entry-row.js";
+
+export class BaseFileRowView extends BaseFileEntryRowView {
   public readonly rowType = "file";
-  public readonly fullPath: string;
 
   constructor(
     depth: number,
@@ -18,36 +17,16 @@ export class BaseFileRowView extends TreeRowView {
     fsControllerCallbacks: FSControllerCallbacksIfc | undefined
   )
   {
-    super(depth, isCollapsible, label);
-    this.fullPath = fullPath;
-    this.rowElement.dataset.fullpath = fullPath;
-    this.addCells();
-
-    if (fsControllerCallbacks) {
-      this.rowElement.addEventListener(
-        "contextmenu",
-        event => fsControllerCallbacks.showFSContextMenu(event, fullPath, false)
-      );
-    }
+    super(depth, isCollapsible, label, fullPath, fsControllerCallbacks, false);
   }
 
-  protected getCellElements(): HTMLElement[] {
-    return [
-      this.buildPrimaryLabelElement(),
-    ];
+  public clone(): this {
+    return new BaseFileRowView(
+      this.depth, this.isCollapsible, this.primaryLabel, this.fullPath, this.fsControllerCallbacks
+    ) as this;
   }
 
-  public registerCollapseClick(): void {
-    this.rowElement!.onclick = this.#toggleCollapsed.bind(this);
-  }
-
-  #toggleCollapsed(event: MouseEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    this.rowElement!.toggleCollapsed();
-  }
-
-  selectFile(key: string): void {
+  selectFile(): void {
     throw new Error("not implemented");
   }
 }

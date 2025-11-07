@@ -1,12 +1,7 @@
 export class TreeRowElement extends HTMLElement {
     constructor(depth, isCollapsible) {
         super();
-        if (depth % 2 === 1) {
-            this.classList.add("depth-odd");
-        }
-        else if (depth > 0) {
-            this.classList.add("depth-even");
-        }
+        this.refreshDepthClass(depth);
         if (isCollapsible) {
             this.classList.add("is-collapsible");
         }
@@ -28,6 +23,16 @@ export class TreeRowElement extends HTMLElement {
     }
     toggleCollapsed() {
         this.classList.toggle("collapsed");
+    }
+    refreshDepthClass(newDepth) {
+        if (newDepth % 2 === 1) {
+            this.classList.add("depth-odd");
+            this.classList.remove("depth-even");
+        }
+        else {
+            this.classList.remove("depth-odd");
+            this.classList.add("depth-even");
+        }
     }
 }
 window.customElements.define("tree-row", TreeRowElement);

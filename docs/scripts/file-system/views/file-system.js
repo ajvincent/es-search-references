@@ -75,7 +75,7 @@ export class FileSystemView {
         return shouldShowSet.size > 0;
     }
     showFile(fullPath) {
-        this.#fileToRowMap.get(fullPath).selectFile(fullPath);
+        this.#fileToRowMap.get(fullPath).selectFile();
     }
     *descendantFileViews() {
         for (const [fullPath, view] of this.#fileToRowMap.entries()) {

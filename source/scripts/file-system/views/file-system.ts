@@ -18,11 +18,19 @@ import type {
   BaseFileRowView,
 } from "./base-file-row.js";
 
-type DirectoryArguments = [
-  depth: number, primaryLabel: string, fullPath: string, fsController?: FSControllerCallbacksIfc
+export type DirectoryArguments = [
+  depth: number,
+  primaryLabel: string,
+  fullPath: string,
+  fsController?: FSControllerCallbacksIfc
 ];
-type FileArguments = [
-  depth: number, isCollapsible: boolean, label: string, fullPath: string, fsController?: FSControllerCallbacksIfc
+
+export type FileArguments = [
+  depth: number,
+  isCollapsible: boolean,
+  label: string,
+  fullPath: string,
+  fsController?: FSControllerCallbacksIfc
 ];
 
 export class FileSystemView<
@@ -133,7 +141,7 @@ export class FileSystemView<
     fullPath: string
   ): void
   {
-    (this.#fileToRowMap.get(fullPath) as FileView).selectFile(fullPath);
+    (this.#fileToRowMap.get(fullPath) as FileView).selectFile();
   }
 
   * descendantFileViews(): IterableIterator<[string, FileView]>
@@ -211,9 +219,13 @@ export class FileSystemView<
 
     let newRowView: FileView | DirectoryView;
     if (isDirectory) {
-      newRowView = new this.#DirectoryViewClass(parentRowView.depth + 1, leafName, pathToFile, this.#controllerCallbacks);
+      newRowView = new this.#DirectoryViewClass(
+        parentRowView.depth + 1, leafName, pathToFile, this.#controllerCallbacks
+      );
     } else {
-      newRowView = new this.#FileViewClass(parentRowView.depth + 1, false, leafName, pathToFile, this.#controllerCallbacks);
+      newRowView = new this.#FileViewClass(
+        parentRowView.depth + 1, false, leafName, pathToFile, this.#controllerCallbacks
+      );
     }
     parentRowView.insertRowSorted(newRowView);
     this.#fileToRowMap.set(pathToFile, newRowView);
