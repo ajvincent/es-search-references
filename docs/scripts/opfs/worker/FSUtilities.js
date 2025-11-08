@@ -20,18 +20,18 @@ const FileSystemUtilities = {
             }
         }
     },
-    copyFile: async function (sourceDirectory, name, targetDirectory) {
+    copyFile: async function (sourceDirectory, sourceLeafName, targetDirectory, targetLeafName = sourceLeafName) {
         const [sourceFile, targetWriter] = await Promise.all([
-            sourceDirectory.getFileHandle(name).then(handle => handle.getFile()),
-            targetDirectory.getFileHandle(name, { create: true }).then(handle => handle.createWritable())
+            sourceDirectory.getFileHandle(sourceLeafName).then(handle => handle.getFile()),
+            targetDirectory.getFileHandle(targetLeafName, { create: true }).then(handle => handle.createWritable())
         ]);
         await targetWriter.write(sourceFile);
         await targetWriter.close();
     },
-    copyDirectoryRecursive: async function (sourceDirectory, name, targetDirectory) {
+    copyDirectoryRecursive: async function (sourceDirectory, sourceName, targetDirectory, targetName = sourceName) {
         [sourceDirectory, targetDirectory] = await Promise.all([
-            sourceDirectory.getDirectoryHandle(name),
-            targetDirectory.getDirectoryHandle(name, { create: true })
+            sourceDirectory.getDirectoryHandle(sourceName),
+            targetDirectory.getDirectoryHandle(targetName, { create: true })
         ]);
         const entries = await Array.fromAsync(sourceDirectory);
         const promises = new Set;

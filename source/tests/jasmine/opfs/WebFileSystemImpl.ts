@@ -282,4 +282,53 @@ describe("OPFS/WebFileSystem", () => {
 
     await WFS.terminate();
   });
+
+  it("can copy files and directories", async () => {
+    WFS = await OPFSWebFileSystemClientImpl.build(
+      getResolvedTempDirPath("opfs_WebFileSystem/copy-files-and-dirs"),
+      getResolvedTempDirPath("opfs_WebFileSystem/emptyClipboard")
+    );
+    await WFS.importDirectoryRecord(mockDirectories);
+
+    await WFS.copyEntryDeep("one://five", "six.js", "nine.js");
+    await expectAsync(
+      WFS.readFileDeep("one://five/nine.js")
+    ).toBeResolvedTo(mockDirectories.urls.one.five["six.js"]);
+
+    await WFS.copyEntryDeep("one://", "two", "ten");
+    await expectAsync(
+      WFS.readFileDeep("one://ten/three.js")
+    ).toBeResolvedTo(mockDirectories.urls.one.two["three.js"]);
+    await expectAsync(
+      WFS.readFileDeep("one://ten/four.js")
+    ).toBeResolvedTo(mockDirectories.urls.one.two["four.js"]);
+
+    await WFS.copyEntryDeep("es-search-references", "red", "blue");
+    await expectAsync(
+      WFS.readFileDeep("es-search-references/blue")
+    ).toBeResolvedTo(mockDirectories.packages["es-search-references"].red);
+
+    // Top-level tests
+    await WFS.copyEntryDeep("", "es-search-references", "es-junk");
+    await expectAsync(
+      WFS.readFileDeep("es-junk/red")
+    ).toBeResolvedTo(mockDirectories.packages["es-search-references"].red);
+
+    await WFS.copyEntryDeep("", "seven://", "eleven://");
+    await expectAsync(
+      WFS.readFileDeep("eleven://eight.js")
+    ).toBeResolvedTo(mockDirectories.urls.seven["eight.js"]);
+
+    await WFS.copyEntryDeep("", "es-search-references", "twelve://");
+    await expectAsync(
+      WFS.readFileDeep("twelve://red")
+    ).toBeResolvedTo(mockDirectories.packages["es-search-references"].red);
+
+    await WFS.copyEntryDeep("", "seven://", "thirteen");
+    await expectAsync(
+      WFS.readFileDeep("thirteen/eight.js")
+    ).toBeResolvedTo(mockDirectories.urls.seven["eight.js"]);
+
+    await WFS.terminate();
+  });
 });

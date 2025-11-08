@@ -20,6 +20,11 @@ export interface OPFSWebFileSystemIfc {
   createDirDeep(pathToDir: string): Promise<void>;
   readFileDeep(pathToFile: string): Promise<string>;
   writeFileDeep(pathToFile: string, contents: string): Promise<void>;
+  copyEntryDeep(
+    parentDirectory: string,
+    sourceLeafName: string,
+    targetLeafName: string,
+  ): Promise<void>;
   removeEntryDeep(pathToEntry: string): Promise<void>;
 
   listDirectoryMembers(pathToDir: string): Promise<string[]>;

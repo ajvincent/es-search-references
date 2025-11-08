@@ -259,6 +259,47 @@ implements OPFSWebFileSystemIfc
     return FileSystemUtilities.writeFile(fileHandle, contents);
   }
 
+  async copyEntryDeep(
+    parentDirectory: string,
+    sourceLeafName: string,
+    targetLeafName: string
+  ): Promise<void>
+  {
+    const pathSequence = OPFSWebFileSystemWorker.#getPathSequence(parentDirectory);
+    let sourceDirHandle: FileSystemDirectoryHandle =
+      URL.canParse(parentDirectory) || (parentDirectory === "" && sourceLeafName.endsWith("://")) ?
+      this.#urlsDir :
+      this.#packagesDir;
+
+    sourceDirHandle = await OPFSWebFileSystemWorker.#getDirectoryDeep(
+      sourceDirHandle,
+      pathSequence,
+      false
+    );
+    let targetDirHandle: FileSystemDirectoryHandle = sourceDirHandle;
+    if (parentDirectory === "") {
+      targetDirHandle = targetLeafName.endsWith("://") ? this.#urlsDir : this.#packagesDir;
+    }
+
+    let child: FileSystemHandle | undefined;
+    try {
+      child = await sourceDirHandle.getDirectoryHandle(sourceLeafName, { create: false });
+    }
+    catch (ex) {
+      child = await sourceDirHandle.getFileHandle(sourceLeafName, { create: false });
+    }
+
+    if (child.kind === "directory") {
+      await FileSystemUtilities.copyDirectoryRecursive(
+        sourceDirHandle, sourceLeafName, targetDirHandle, targetLeafName
+      );
+    } else {
+      await FileSystemUtilities.copyFile(
+        sourceDirHandle, sourceLeafName, targetDirHandle, targetLeafName
+      );
+    }
+  }
+
   async #getFileDeep(
     pathToFile: string,
     create: boolean

@@ -55,6 +55,17 @@ implements OPFSWebFileSystemIfc
     return this[REQUEST_ASYNC_METHOD]("writeFileDeep", [pathToFile, contents]);
   }
 
+  copyEntryDeep(
+    parentDirectory: string,
+    sourceLeafName: string,
+    targetLeafName: string
+
+  ): Promise<void> {
+    return this[REQUEST_ASYNC_METHOD]("copyEntryDeep", [
+      parentDirectory, sourceLeafName, targetLeafName
+    ]);
+  }
+
   removeEntryDeep(pathToEntry: string): Promise<void> {
     return this[REQUEST_ASYNC_METHOD]("removeEntryDeep", [pathToEntry]);
   }

@@ -25,6 +25,11 @@ export class OPFSWebFileSystemClientImpl extends DirectoryClient {
     writeFileDeep(pathToFile, contents) {
         return this[REQUEST_ASYNC_METHOD]("writeFileDeep", [pathToFile, contents]);
     }
+    copyEntryDeep(parentDirectory, sourceLeafName, targetLeafName) {
+        return this[REQUEST_ASYNC_METHOD]("copyEntryDeep", [
+            parentDirectory, sourceLeafName, targetLeafName
+        ]);
+    }
     removeEntryDeep(pathToEntry) {
         return this[REQUEST_ASYNC_METHOD]("removeEntryDeep", [pathToEntry]);
     }
