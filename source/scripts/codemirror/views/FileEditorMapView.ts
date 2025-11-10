@@ -9,7 +9,7 @@ import {
 
 import {
   EditorPanelView
-} from "./EditorView.js";
+} from "./EditorPanelView.js";
 
 export class FileEditorMapView implements BaseView {
   readonly #panelsView: TabPanelsView<EditorPanelView>;
@@ -76,5 +76,9 @@ export class FileEditorMapView implements BaseView {
     const fileContents: string = currentPanel.getContents();
 
     await this.#webFS.writeFileDeep(pathToFile, fileContents);
+  }
+
+  public clearPanels(): void {
+    this.#panelsView.clearPanels();
   }
 }

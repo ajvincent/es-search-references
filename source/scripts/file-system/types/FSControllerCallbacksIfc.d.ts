@@ -23,4 +23,14 @@ export interface FSControllerCallbacksIfc {
   addProtocol(
     protocolName: `${string}://`
   ): Promise<void>;
+
+  deleteFile(
+    pathToFile: string
+  ): Promise<void>;
+
+  /*
+  renameFile(
+
+  ): Promise<void>;
+  */
 }

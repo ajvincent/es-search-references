@@ -90,6 +90,7 @@ export class FileSystemController {
     get clipBoardHasCopy() {
         return false;
     }
+    // FileSystemControllerIfc
     async showFSContextMenu(event, pathToFile, isDirectory) {
         event.stopPropagation();
         event.preventDefault();
@@ -115,12 +116,20 @@ export class FileSystemController {
         }
         this.#fileSystemView.showFile(pathToFile);
     }
+    // FileSystemControllerIfc
     async addPackage(packageName) {
         await this.#webFS.createDirDeep(packageName);
         this.#fileSystemView.addNewPackage(packageName);
     }
+    // FileSystemControllerIfc
     async addProtocol(protocolName) {
         await this.#webFS.createDirDeep(protocolName);
         this.#fileSystemView.addNewProtocol(protocolName);
+    }
+    // FileSystemControllerIfc
+    async deleteFile(pathToFile) {
+        await this.#webFS.removeEntryDeep(pathToFile);
+        this.#fileSystemView.deleteFile(pathToFile);
+        this.editorMapView.clearPanels();
     }
 }

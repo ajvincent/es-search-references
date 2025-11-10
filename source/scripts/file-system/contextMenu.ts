@@ -235,8 +235,8 @@ export class FileSystemContextMenu {
   readonly #deleteItem: CTXMAction = {
     text: "Delete",
     disabled: true,
-    action(ev) {
-      void(ev);
+    action: async (ev) => {
+      await this.#controller.deleteFile(this.#showArguments!.pathToFile);
     },
   }
 

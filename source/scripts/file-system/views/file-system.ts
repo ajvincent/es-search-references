@@ -239,4 +239,13 @@ export class FileSystemView<
     this.#fileToRowMap.set(pathToFile, newRowView);
     return newRowView;
   }
+
+  deleteFile(
+    pathToFile: string
+  ): void
+  {
+    const currentRow: DirectoryView | FileView = this.#fileToRowMap.get(pathToFile)!;
+    this.#fileToRowMap.delete(pathToFile, true);
+    currentRow.removeAndDispose();
+  }
 }

@@ -151,4 +151,9 @@ export class FileSystemView {
         this.#fileToRowMap.set(pathToFile, newRowView);
         return newRowView;
     }
+    deleteFile(pathToFile) {
+        const currentRow = this.#fileToRowMap.get(pathToFile);
+        this.#fileToRowMap.delete(pathToFile, true);
+        currentRow.removeAndDispose();
+    }
 }

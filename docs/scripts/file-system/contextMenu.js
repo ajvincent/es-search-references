@@ -167,8 +167,8 @@ export class FileSystemContextMenu {
     #deleteItem = {
         text: "Delete",
         disabled: true,
-        action(ev) {
-            void (ev);
+        action: async (ev) => {
+            await this.#controller.deleteFile(this.#showArguments.pathToFile);
         },
     };
     #renameItem = {

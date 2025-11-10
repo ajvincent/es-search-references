@@ -1,5 +1,5 @@
 import { TabPanelsView } from "../../tab-panels/tab-panels-view.js";
-import { EditorPanelView } from "./EditorView.js";
+import { EditorPanelView } from "./EditorPanelView.js";
 export class FileEditorMapView {
     #panelsView;
     #webFS;
@@ -45,5 +45,8 @@ export class FileEditorMapView {
         const pathToFile = this.#panelsView.activeViewKey;
         const fileContents = currentPanel.getContents();
         await this.#webFS.writeFileDeep(pathToFile, fileContents);
+    }
+    clearPanels() {
+        this.#panelsView.clearPanels();
     }
 }

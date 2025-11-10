@@ -192,6 +192,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     return false;
   }
 
+  // FileSystemControllerIfc
   async showFSContextMenu(
     event: MouseEvent,
     pathToFile: string,
@@ -212,7 +213,8 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     currentDirectory: string,
     leafName: string,
     isDirectory: boolean
-  ): Promise<void> {
+  ): Promise<void>
+  {
     let pathToFile: string = currentDirectory;
     if (currentDirectory.endsWith("://") === false)
       pathToFile += "/";
@@ -234,13 +236,25 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     this.#fileSystemView.showFile(pathToFile);
   }
 
+  // FileSystemControllerIfc
   async addPackage(packageName: string): Promise<void> {
     await this.#webFS.createDirDeep(packageName);
     this.#fileSystemView.addNewPackage(packageName);
   }
 
+  // FileSystemControllerIfc
   async addProtocol(protocolName: `${string}://`): Promise<void> {
     await this.#webFS.createDirDeep(protocolName);
     this.#fileSystemView.addNewProtocol(protocolName);
+  }
+
+  // FileSystemControllerIfc
+  async deleteFile(
+    pathToFile: string
+  ): Promise<void>
+  {
+    await this.#webFS.removeEntryDeep(pathToFile);
+    this.#fileSystemView.deleteFile(pathToFile);
+    this.editorMapView.clearPanels();
   }
 }
