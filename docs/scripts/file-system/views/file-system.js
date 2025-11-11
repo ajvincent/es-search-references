@@ -156,4 +156,7 @@ export class FileSystemView {
         this.#fileToRowMap.delete(pathToFile, true);
         currentRow.removeAndDispose();
     }
+    renameFile(parentPath, oldLeafName, newLeafName) {
+        this.#fileToRowMap.rename(parentPath, oldLeafName, newLeafName);
+    }
 }

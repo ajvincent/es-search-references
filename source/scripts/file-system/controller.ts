@@ -257,4 +257,23 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     this.#fileSystemView.deleteFile(pathToFile);
     this.editorMapView.clearPanels();
   }
+
+  async renameFile(
+    currentPathToFile: string,
+    newLeafName: string
+  ): Promise<void>
+  {
+    const parentPath: string = FileSystemMap.getParentPath(currentPathToFile);
+    const oldLeafName: string = currentPathToFile.substring(parentPath.length + 1);
+
+    await this.#webFS.copyEntryDeep(parentPath, oldLeafName, newLeafName);
+    await this.#webFS.removeEntryDeep(currentPathToFile);
+
+    this.#fileSystemView.renameFile(
+      parentPath,
+      oldLeafName,
+      newLeafName
+    );
+    this.editorMapView.clearPanels();
+  }
 }

@@ -28,9 +28,8 @@ export interface FSControllerCallbacksIfc {
     pathToFile: string
   ): Promise<void>;
 
-  /*
   renameFile(
-
+    currentPathToFile: string,
+    newLeafName: string,
   ): Promise<void>;
-  */
 }

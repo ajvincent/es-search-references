@@ -188,6 +188,7 @@ export class FileSystemContextMenu {
     };
     #renameFile(newFileName) {
         window.ctxmenu.hide();
+        this.#controller.renameFile(this.#showArguments.pathToFile, newFileName);
     }
     #contextMenuConfig = {
         onHide: () => this.#hideContextMenus(),

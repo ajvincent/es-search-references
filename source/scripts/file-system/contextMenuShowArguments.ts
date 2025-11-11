@@ -1,4 +1,6 @@
-import { AwaitedMap } from "../search/AwaitedMap.js";
+import {
+  AwaitedMap
+} from "../utilities/AwaitedMap.js";
 
 import type {
   OPFSWebFileSystemIfc

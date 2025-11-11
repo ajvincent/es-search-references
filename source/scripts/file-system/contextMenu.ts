@@ -262,6 +262,7 @@ export class FileSystemContextMenu {
 
   #renameFile(newFileName: string): void {
     window.ctxmenu.hide();
+    this.#controller.renameFile(this.#showArguments!.pathToFile, newFileName);
   }
 
   #contextMenuConfig: CTXConfig = {

@@ -30,6 +30,18 @@ export class FileSystemMap {
             return -1;
         return keyA.localeCompare(keyB);
     }
+    static getParentPath(pathToEntry) {
+        const pathSequence = _a.#getPathSequence(pathToEntry);
+        if (pathSequence.length < 2) {
+            return "";
+        }
+        pathSequence.pop();
+        const head = pathSequence.shift();
+        const tail = pathSequence.join("/");
+        if (head.endsWith("://"))
+            return head + tail;
+        return head + "/" + tail;
+    }
     //#endregion statics
     depthOffset;
     constructor(depthOffset) {

@@ -94,6 +94,23 @@ implements FileSystemWeakKey
       return -1;
     return keyA.localeCompare(keyB);
   }
+
+  static getParentPath(
+    pathToEntry: string
+  ): string
+  {
+    const pathSequence: string[] = FileSystemMap.#getPathSequence(pathToEntry);
+    if (pathSequence.length < 2) {
+      return "";
+    }
+
+    pathSequence.pop();
+    const head: string = pathSequence.shift()!;
+    const tail = pathSequence.join("/");
+    if (head.endsWith("://"))
+      return head + tail;
+    return head + "/" + tail;
+  }
   //#endregion statics
 
   public readonly depthOffset: number;

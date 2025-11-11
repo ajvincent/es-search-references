@@ -1,4 +1,4 @@
-import { AwaitedMap } from "../search/AwaitedMap.js";
+import { AwaitedMap } from "../utilities/AwaitedMap.js";
 export class FSContextMenuShowArguments {
     #event;
     #pathToFile;

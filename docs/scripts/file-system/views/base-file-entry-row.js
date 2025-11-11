@@ -13,7 +13,9 @@ export class BaseFileEntryRowView extends TreeRowView {
             this.rowElement.dataset.isdirectory = "true";
         this.addCells();
         if (fsControllerCallbacks) {
-            this.rowElement.addEventListener("contextmenu", event => fsControllerCallbacks.showFSContextMenu(event, fullPath, isDirectory));
+            this.rowElement.addEventListener("contextmenu", event => {
+                fsControllerCallbacks.showFSContextMenu(event, this.#fullPath, isDirectory);
+            });
         }
     }
     get depth() {
@@ -26,6 +28,8 @@ export class BaseFileEntryRowView extends TreeRowView {
         this.#depth = filePathAndDepth.depth;
         this.#fullPath = filePathAndDepth.filePath;
         this.rowElement.dataset.fullpath = filePathAndDepth.filePath;
+        const leafName = filePathAndDepth.filePath.substring(filePathAndDepth.filePath.lastIndexOf("/") + 1);
+        this.updateLabel(leafName);
     }
     getCellElements() {
         return [

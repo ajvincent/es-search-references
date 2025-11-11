@@ -45,42 +45,11 @@ export class TreeRowView {
         }
         return label;
     }
-    /**
-     * Make the primary label editable.
-     *
-     * @param newLabelPromise - the new label to apply, or null to revert.
-     * @returns the entered text, or null if the user canceled.
-     */
-    editLabel(newLabelPromise) {
-        if (!this.#primaryLabelElement) {
-            throw new Error("no label element");
-        }
-        newLabelPromise.then((label) => {
-            if (typeof label === "string") {
-                this.#primaryLabel = this.#primaryLabelElement.innerText = label;
-            }
-            else {
-                this.#primaryLabelElement.innerText = this.#primaryLabel;
-            }
-        });
-        let { promise, resolve } = Promise.withResolvers();
-        promise = promise.finally(() => {
-            this.#primaryLabelElement.contentEditable = "false";
-            this.#primaryLabelElement.onkeyup = null;
-            this.#primaryLabelElement.onblur = null;
-        });
-        this.#primaryLabelElement.onkeyup = event => this.#handleLabelKey(resolve, event.key);
-        this.#primaryLabelElement.onblur = event => this.#handleLabelKey(resolve, "Escape");
-        this.#primaryLabelElement.contentEditable = "plaintext-only";
-        this.#primaryLabelElement.focus();
-        return promise;
-    }
-    #handleLabelKey(resolve, key) {
-        if (key === "Escape") {
-            resolve(null);
-        }
-        else if (key === "Enter") {
-            resolve(this.#primaryLabelElement.innerText.trim());
+    updateLabel(newLabel) {
+        if (this.#primaryLabel !== newLabel) {
+            if (this.#primaryLabelElement)
+                this.#primaryLabelElement.textContent = newLabel;
+            this.#primaryLabel = newLabel;
         }
     }
     prependRow(rowView) {

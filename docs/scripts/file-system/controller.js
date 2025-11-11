@@ -132,4 +132,12 @@ export class FileSystemController {
         this.#fileSystemView.deleteFile(pathToFile);
         this.editorMapView.clearPanels();
     }
+    async renameFile(currentPathToFile, newLeafName) {
+        const parentPath = FileSystemMap.getParentPath(currentPathToFile);
+        const oldLeafName = currentPathToFile.substring(parentPath.length + 1);
+        await this.#webFS.copyEntryDeep(parentPath, oldLeafName, newLeafName);
+        await this.#webFS.removeEntryDeep(currentPathToFile);
+        this.#fileSystemView.renameFile(parentPath, oldLeafName, newLeafName);
+        this.editorMapView.clearPanels();
+    }
 }

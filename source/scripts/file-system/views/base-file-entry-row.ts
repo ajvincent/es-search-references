@@ -44,7 +44,9 @@ implements FileSystemValue
     if (fsControllerCallbacks) {
       this.rowElement.addEventListener(
         "contextmenu",
-        event => fsControllerCallbacks.showFSContextMenu(event, fullPath, isDirectory)
+        event => {
+          fsControllerCallbacks.showFSContextMenu(event, this.#fullPath, isDirectory);
+        }
       );
     }
   }
@@ -63,6 +65,8 @@ implements FileSystemValue
     this.#depth = filePathAndDepth.depth;
     this.#fullPath = filePathAndDepth.filePath;
     this.rowElement.dataset.fullpath = filePathAndDepth.filePath;
+    const leafName: string = filePathAndDepth.filePath.substring(filePathAndDepth.filePath.lastIndexOf("/") + 1);
+    this.updateLabel(leafName);
   }
 
   protected getCellElements(): HTMLElement[] {

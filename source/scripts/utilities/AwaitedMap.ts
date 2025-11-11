@@ -41,8 +41,7 @@ export class AwaitedMapError<K> extends Error
     this.errorMap = new Map(rejectedEntries.map(entry => [entry[0], entry[1].reason]));
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly errorMap: ReadonlyMap<K, any>;
+  readonly errorMap: ReadonlyMap<K, unknown>;
 }
 
 export type ReadonlyAwaitedMap<K, V> =

@@ -248,4 +248,13 @@ export class FileSystemView<
     this.#fileToRowMap.delete(pathToFile, true);
     currentRow.removeAndDispose();
   }
+
+  renameFile(
+    parentPath: string,
+    oldLeafName: string,
+    newLeafName: string,
+  ): void
+  {
+    this.#fileToRowMap.rename(parentPath, oldLeafName, newLeafName);
+  }
 }

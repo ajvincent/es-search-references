@@ -27,6 +27,5 @@ export class AwaitedMapError extends Error {
         super("AwaitedMap.resolve() failed");
         this.errorMap = new Map(rejectedEntries.map(entry => [entry[0], entry[1].reason]));
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     errorMap;
 }
