@@ -45,17 +45,25 @@ export class FileEditorMapView implements BaseView {
     return this.#panelsView.hasPanel(filePath);
   }
 
-  public async addEditorForPath(filePath: string): Promise<void> {
+  public async addEditorForPath(
+    filePath: string,
+    forceReadonly: boolean
+  ): Promise<void>
+  {
     if (this.#panelsView.hasPanel(filePath)) {
       throw new Error("we already have an editor for " + filePath);
     }
 
-    const contents = await this.#webFS.readFileDeep(filePath);
+    let contents: string;
+    if (filePath.startsWith("(clipboard)/"))
+      contents = await this.#webFS.readClipboardFile(filePath.substring(12));
+    else
+      contents = await this.#webFS.readFileDeep(filePath);
     if (contents === undefined) {
       throw new Error("unknown file path: " + filePath);
     }
 
-    const editorPanelView = new EditorPanelView(filePath, contents, this.#isReadonly);
+    const editorPanelView = new EditorPanelView(filePath, contents, this.#isReadonly || forceReadonly);
     this.displayElement.append(editorPanelView.displayElement);
     this.#panelsView.addPanel(filePath, editorPanelView);
   }

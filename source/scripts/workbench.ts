@@ -203,6 +203,7 @@ class Workbench_Base {
 
     this.#fileSystemPanels!.activeViewKey = panelKey;
     this.#codeMirrorPanels!.activeViewKey = panelKey;
+    await this.#fileSystemPanels!.currentPanel!.rebuildClipboard();
 
     this.#reportSelectorController?.clear();
     this.#outputController?.clearResults();

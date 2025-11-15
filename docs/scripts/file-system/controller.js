@@ -1,5 +1,6 @@
 //#region preamble
 import { FileEditorMapView } from "../codemirror/views/FileEditorMapView.js";
+import { ClipboardController } from "./clipboardController.js";
 import { FileSystemMap } from "./FileSystemMap.js";
 import { FileSystemContextMenu } from "./contextMenu.js";
 import { FSContextMenuShowArguments } from "./contextMenuShowArguments.js";
@@ -21,6 +22,7 @@ export class FileSystemController {
     filesCheckedSet = this.#filesCheckedSet;
     #fileToRowMap;
     #fileSystemView;
+    #clipboardController;
     editorMapView;
     #fsContextMenu;
     constructor(rootId, isReadonly, fileSystemElement, codeMirrorPanelsElement, webFS, index) {
@@ -34,6 +36,7 @@ export class FileSystemController {
         for (const [fullPath, fileView] of this.#fileSystemView.descendantFileViews()) {
             this.#addFileEventHandlers(fullPath, fileView);
         }
+        this.#clipboardController = new ClipboardController(fileSystemElement, webFS);
         this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS);
     }
     dispose() {
@@ -64,7 +67,8 @@ export class FileSystemController {
         }
         await this.editorMapView.updateSelectedFile();
         if (!this.editorMapView.hasEditorForPath(fullPath)) {
-            await this.editorMapView.addEditorForPath(fullPath);
+            const forceReadonly = fullPath.startsWith(ClipboardController.rowName);
+            await this.editorMapView.addEditorForPath(fullPath, forceReadonly);
         }
         this.editorMapView.selectFile(fullPath);
     }
@@ -132,6 +136,7 @@ export class FileSystemController {
         this.#fileSystemView.deleteFile(pathToFile);
         this.editorMapView.clearPanels();
     }
+    // FileSystemControllerIfc
     async renameFile(currentPathToFile, newLeafName) {
         const parentPath = FileSystemMap.getParentPath(currentPathToFile);
         const oldLeafName = currentPathToFile.substring(parentPath.length + 1);
@@ -139,5 +144,21 @@ export class FileSystemController {
         await this.#webFS.removeEntryDeep(currentPathToFile);
         this.#fileSystemView.renameFile(parentPath, oldLeafName, newLeafName);
         this.editorMapView.clearPanels();
+    }
+    // FileSystemControllerIfc
+    async copyToClipboard(pathToFile, isCut) {
+        await this.#webFS.copyToClipboard(pathToFile);
+        if (isCut) {
+            await this.#webFS.removeEntryDeep(pathToFile);
+            this.#fileSystemView.deleteFile(pathToFile);
+        }
+        await this.rebuildClipboard();
+        this.editorMapView.clearPanels();
+    }
+    async rebuildClipboard() {
+        await this.#clipboardController.rebuild();
+        for (const [fullPath, fileView] of this.#clipboardController.fileSystemView.descendantFileViews()) {
+            this.#addFileEventHandlers(fullPath, fileView);
+        }
     }
 }

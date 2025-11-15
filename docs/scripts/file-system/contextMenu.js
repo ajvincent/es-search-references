@@ -147,14 +147,14 @@ export class FileSystemContextMenu {
     #cutItem = {
         text: "Cut",
         disabled: true,
-        action(ev) {
-            void (ev);
+        action: async (ev) => {
+            await this.#controller.copyToClipboard(this.#showArguments.pathToFile, true);
         },
     };
     #copyItem = {
         text: "Copy",
-        action(ev) {
-            void (ev);
+        action: async (ev) => {
+            await this.#controller.copyToClipboard(this.#showArguments.pathToFile, false);
         },
     };
     #pasteItem = {
@@ -196,13 +196,14 @@ export class FileSystemContextMenu {
     show(showArgs) {
         this.#showArguments = showArgs;
         this.#localHeaderItem.text = showArgs.leafName;
-        const { isReservedName, isDirectory } = showArgs;
+        const { isReservedName, isDirectory, pathIsProtocol } = showArgs;
         const { isReadOnly, clipBoardHasCopy } = this.#controller;
         this.#addPackageItem.disabled = isReadOnly;
         this.#addProtocolItem.disabled = isReadOnly;
         this.#addDirectoryItem.disabled = isReadOnly || !isDirectory;
         this.#addFileItem.disabled = isReadOnly || !isDirectory;
-        this.#cutItem.disabled = isReadOnly || isReservedName;
+        this.#cutItem.disabled = isReadOnly || isReservedName || pathIsProtocol;
+        this.#copyItem.disabled = pathIsProtocol;
         this.#pasteItem.disabled = isReadOnly || !isDirectory || !clipBoardHasCopy;
         this.#deleteItem.disabled = isReadOnly || isReservedName;
         this.#renameItem.disabled = isReadOnly || isReservedName;

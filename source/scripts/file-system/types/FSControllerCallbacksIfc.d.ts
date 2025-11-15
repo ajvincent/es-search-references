@@ -32,4 +32,9 @@ export interface FSControllerCallbacksIfc {
     currentPathToFile: string,
     newLeafName: string,
   ): Promise<void>;
+
+  copyToClipboard(
+    currentPathToFile: string,
+    isCut: boolean
+  ): Promise<void>;
 }

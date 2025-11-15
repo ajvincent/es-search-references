@@ -21,3 +21,7 @@ tree-grid.filesystem tree-row > :first-child {
 tree-grid.filesystem input {
   color: #ffffff;
 }
+
+tree-grid.filesystem tree-row[data-fullpath="(clipboard)"] input[type="checkbox"] {
+  visibility: collapse;
+}

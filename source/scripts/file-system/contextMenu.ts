@@ -212,15 +212,15 @@ export class FileSystemContextMenu {
   readonly #cutItem: CTXMAction = {
     text: "Cut",
     disabled: true,
-    action(ev) {
-      void(ev);
+    action: async (ev: MouseEvent) => {
+      await this.#controller.copyToClipboard(this.#showArguments!.pathToFile, true);
     },
   };
 
   readonly #copyItem: CTXMAction = {
     text: "Copy",
-    action(ev) {
-      void(ev);
+    action: async (ev: MouseEvent) => {
+      await this.#controller.copyToClipboard(this.#showArguments!.pathToFile, false);
     },
   };
 
@@ -276,7 +276,7 @@ export class FileSystemContextMenu {
     this.#showArguments = showArgs;
     this.#localHeaderItem.text = showArgs.leafName;
 
-    const { isReservedName, isDirectory } = showArgs;
+    const { isReservedName, isDirectory, pathIsProtocol } = showArgs;
     const { isReadOnly, clipBoardHasCopy } = this.#controller;
 
     this.#addPackageItem.disabled = isReadOnly;
@@ -284,7 +284,8 @@ export class FileSystemContextMenu {
     this.#addDirectoryItem.disabled = isReadOnly || !isDirectory;
     this.#addFileItem.disabled = isReadOnly || !isDirectory;
 
-    this.#cutItem.disabled = isReadOnly || isReservedName;
+    this.#cutItem.disabled = isReadOnly || isReservedName || pathIsProtocol;
+    this.#copyItem.disabled = pathIsProtocol;
     this.#pasteItem.disabled = isReadOnly || !isDirectory || !clipBoardHasCopy;
 
     this.#deleteItem.disabled = isReadOnly || isReservedName;

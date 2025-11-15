@@ -47,9 +47,9 @@ describe("FileEditorMapView", () => {
     const mapView = new FileEditorMapView("FileEditorMapView-test", false, fieldset, webFS);
 
     await Promise.all([
-      mapView.addEditorForPath("one://two/three.js"),
-      mapView.addEditorForPath("one://two/four.js"),
-      mapView.addEditorForPath("seven://eight.js"),
+      mapView.addEditorForPath("one://two/three.js", true),
+      mapView.addEditorForPath("one://two/four.js", true),
+      mapView.addEditorForPath("seven://eight.js", false),
     ]);
 
     expect(mapView.hasEditorForPath("one://two/three.js")).toBeTrue();

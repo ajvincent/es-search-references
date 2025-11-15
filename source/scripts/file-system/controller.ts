@@ -13,6 +13,10 @@ import type {
 } from "../tab-panels/tab-panels-view.js";
 
 import {
+  ClipboardController
+} from "./clipboardController.js";
+
+import {
   FileSystemMap,
   type ReadonlyFileSystemMap
 } from "./FileSystemMap.js";
@@ -83,6 +87,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
 
   readonly #fileToRowMap: ReadonlyFileSystemMap<DirectoryRowView | FileRowView>;
   readonly #fileSystemView: FileSystemView<DirectoryRowView, FileRowView>;
+  readonly #clipboardController: ClipboardController;
 
   readonly editorMapView: FileEditorMapView;
   readonly #fsContextMenu: FileSystemContextMenu;
@@ -111,6 +116,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     for (const [fullPath, fileView] of this.#fileSystemView.descendantFileViews()) {
       this.#addFileEventHandlers(fullPath, fileView);
     }
+    this.#clipboardController = new ClipboardController(fileSystemElement, webFS);
 
     this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS);
   }
@@ -153,7 +159,8 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     await this.editorMapView.updateSelectedFile();
 
     if (!this.editorMapView.hasEditorForPath(fullPath)) {
-      await this.editorMapView.addEditorForPath(fullPath);
+      const forceReadonly: boolean = fullPath.startsWith(ClipboardController.rowName);
+      await this.editorMapView.addEditorForPath(fullPath, forceReadonly);
     }
     this.editorMapView.selectFile(fullPath);
   }
@@ -258,6 +265,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     this.editorMapView.clearPanels();
   }
 
+  // FileSystemControllerIfc
   async renameFile(
     currentPathToFile: string,
     newLeafName: string
@@ -275,5 +283,29 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
       newLeafName
     );
     this.editorMapView.clearPanels();
+  }
+
+  // FileSystemControllerIfc
+  async copyToClipboard(
+    pathToFile: string,
+    isCut: boolean
+  ): Promise<void>
+  {
+    await this.#webFS.copyToClipboard(pathToFile);
+    if (isCut) {
+      await this.#webFS.removeEntryDeep(pathToFile);
+      this.#fileSystemView.deleteFile(pathToFile);
+    }
+
+    await this.rebuildClipboard();
+    this.editorMapView.clearPanels();
+  }
+
+  async rebuildClipboard(): Promise<void> {
+    await this.#clipboardController.rebuild();
+
+    for (const [fullPath, fileView] of this.#clipboardController.fileSystemView.descendantFileViews()) {
+      this.#addFileEventHandlers(fullPath, fileView);
+    }
   }
 }
