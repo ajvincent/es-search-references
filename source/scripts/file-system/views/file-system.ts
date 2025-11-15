@@ -209,7 +209,7 @@ export class FileSystemView<
     return view;
   }
 
-  addFile(
+  addNewFile(
     currentDirectory: string,
     leafName: string,
     isDirectory: boolean
@@ -238,6 +238,24 @@ export class FileSystemView<
     parentRowView.insertRowSorted(newRowView);
     this.#fileToRowMap.set(pathToFile, newRowView);
     return newRowView;
+  }
+
+  addExistingFileEntries(
+    currentDirectory: string,
+    leafName: string,
+    newRecord: DirectoryRecord | null
+  ): void
+  {
+    let pathToFile: string = currentDirectory;
+    if (currentDirectory.endsWith("://") === false)
+      pathToFile += "/";
+    pathToFile += leafName;
+
+    const isDirectory: boolean = Boolean(newRecord);
+    const row: FileView | DirectoryView = this.addNewFile(currentDirectory, leafName, isDirectory);
+    if (newRecord) {
+      this.#fillDirectoryView(newRecord, row as DirectoryView);
+    }
   }
 
   deleteFile(

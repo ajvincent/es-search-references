@@ -69,6 +69,28 @@ describe("OPFS/WebFileSystem", () => {
       }
     });
 
+    const protocolIndex = await WFS.getDescendantIndex("one://");
+    expect(protocolIndex).toEqual({
+      two: {
+        "three.js": "",
+        "four.js": "",
+      },
+      five: {
+        "six.js": "",
+      },
+    });
+
+    const pathIndex = await WFS.getDescendantIndex("one://two");
+    expect(pathIndex).toEqual({
+      "three.js": "",
+      "four.js": "",
+    });
+
+    const packageIndex = await WFS.getDescendantIndex("es-search-references");
+    expect(packageIndex).toEqual({
+      "red": ""
+    });
+
     // We expect the file system to present the keys in order.
     expect(Object.keys(index["one://"])).toEqual(["five", "two"]);
     await WFS.terminate();

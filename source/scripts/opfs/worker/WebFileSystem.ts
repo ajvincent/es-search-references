@@ -50,6 +50,7 @@ implements OPFSWebFileSystemIfc
       true
     );
     const clipboard = new FileSystemClipboard(clipboardDir);
+    void(clipboard.flushOtherDirectories());
 
     void(new OPFSWebFileSystemWorker(packagesDir, new URLDirHandle(urlsDir), clipboard));
     WorkerGlobal.postMessage("initialized");
@@ -225,6 +226,20 @@ implements OPFSWebFileSystemIfc
     }
 
     return packageIndex;
+  }
+
+  async getDescendantIndex(
+    pathToDir: string
+  ): Promise<DirectoryRecord>
+  {
+    const pathSequence = OPFSWebFileSystemWorker.#getPathSequence(pathToDir);
+    const dirHandle = await OPFSWebFileSystemWorker.#getDirectoryDeep(
+      URL.canParse(pathToDir) ? this.#urlsDir : this.#packagesDir,
+      pathSequence,
+      false
+    );
+
+    return this.#exportDirectoryRecordRecursive(dirHandle, false);
   }
 
   // OPFSWebFileSystemIfc

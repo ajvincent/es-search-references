@@ -15,6 +15,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         let rootDir = await WorkerGlobal.navigator.storage.getDirectory();
         const clipboardDir = await this.#getDirectoryDeep(rootDir, this[SEARCH_PARAMS].get("pathToClipboardDir").split("/"), true);
         const clipboard = new FileSystemClipboard(clipboardDir);
+        void (clipboard.flushOtherDirectories());
         void (new _a(packagesDir, new URLDirHandle(urlsDir), clipboard));
         WorkerGlobal.postMessage("initialized");
     }
@@ -120,6 +121,11 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
             packageIndex[key] = entry;
         }
         return packageIndex;
+    }
+    async getDescendantIndex(pathToDir) {
+        const pathSequence = _a.#getPathSequence(pathToDir);
+        const dirHandle = await _a.#getDirectoryDeep(URL.canParse(pathToDir) ? this.#urlsDir : this.#packagesDir, pathSequence, false);
+        return this.#exportDirectoryRecordRecursive(dirHandle, false);
     }
     // OPFSWebFileSystemIfc
     async createDirDeep(pathToDir) {

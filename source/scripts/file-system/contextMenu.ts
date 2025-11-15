@@ -186,7 +186,7 @@ export class FileSystemContextMenu {
 
   async #addDirectory(newFileName: string): Promise<void> {
     window.ctxmenu.hide();
-    await this.#controller.addFile(this.#showArguments!.pathToFile, newFileName, true);
+    await this.#controller.addNewFile(this.#showArguments!.pathToFile, newFileName, true);
   }
 
   readonly #addFileItem: CTXMSubMenu = {
@@ -206,7 +206,7 @@ export class FileSystemContextMenu {
 
   async #addFile(newFileName: string): Promise<void> {
     window.ctxmenu.hide();
-    await this.#controller.addFile(this.#showArguments!.pathToFile, newFileName, false);
+    await this.#controller.addNewFile(this.#showArguments!.pathToFile, newFileName, false);
   }
 
   readonly #cutItem: CTXMAction = {
@@ -227,8 +227,15 @@ export class FileSystemContextMenu {
   readonly #pasteItem: CTXMAction = {
     text: "Paste",
     disabled: true,
-    action(ev) {
-      void(ev);
+    action: async (ev: MouseEvent) => {
+      const {
+        pathToFile,
+        clipboardContentFileName,
+        clipboardContentIsDir
+      } = this.#showArguments!;
+      await this.#controller.copyFromClipboard(
+        pathToFile, clipboardContentFileName, clipboardContentIsDir
+      );
     },
   };
 
@@ -276,7 +283,10 @@ export class FileSystemContextMenu {
     this.#showArguments = showArgs;
     this.#localHeaderItem.text = showArgs.leafName;
 
-    const { isReservedName, isDirectory, pathIsProtocol } = showArgs;
+    const {
+      isReservedName, isDirectory, pathIsProtocol,
+      currentChildren, clipboardContentFileName
+    } = showArgs;
     const { isReadOnly, clipBoardHasCopy } = this.#controller;
 
     this.#addPackageItem.disabled = isReadOnly;
@@ -286,7 +296,8 @@ export class FileSystemContextMenu {
 
     this.#cutItem.disabled = isReadOnly || isReservedName || pathIsProtocol;
     this.#copyItem.disabled = pathIsProtocol;
-    this.#pasteItem.disabled = isReadOnly || !isDirectory || !clipBoardHasCopy;
+    this.#pasteItem.disabled = isReadOnly || !isDirectory || !clipBoardHasCopy ||
+      currentChildren.has(clipboardContentFileName);
 
     this.#deleteItem.disabled = isReadOnly || isReservedName;
     this.#renameItem.disabled = isReadOnly || isReservedName;

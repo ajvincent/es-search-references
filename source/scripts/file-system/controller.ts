@@ -18,7 +18,6 @@ import {
 
 import {
   FileSystemMap,
-  type ReadonlyFileSystemMap
 } from "./FileSystemMap.js";
 
 import {
@@ -85,7 +84,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   readonly #filesCheckedSet = new Set<string>;
   readonly filesCheckedSet: ReadonlySet<string> = this.#filesCheckedSet;
 
-  readonly #fileToRowMap: ReadonlyFileSystemMap<DirectoryRowView | FileRowView>;
+  readonly #fileToRowMap: FileSystemMap<DirectoryRowView | FileRowView>;
   readonly #fileSystemView: FileSystemView<DirectoryRowView, FileRowView>;
   readonly #clipboardController: ClipboardController;
 
@@ -196,7 +195,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
 
   // FileSystemControllerIfc
   get clipBoardHasCopy(): boolean {
-    return false;
+    return this.#clipboardController.clipboardHasCopy;
   }
 
   // FileSystemControllerIfc
@@ -216,7 +215,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   }
 
   // FileSystemControllerIfc
-  async addFile(
+  async addNewFile(
     currentDirectory: string,
     leafName: string,
     isDirectory: boolean
@@ -233,7 +232,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
       await this.#webFS.writeFileDeep(pathToFile, "");
     }
 
-    let newRowView: FileRowView | DirectoryRowView = this.#fileSystemView.addFile(
+    const newRowView: FileRowView | DirectoryRowView = this.#fileSystemView.addNewFile(
       currentDirectory, leafName, isDirectory
     );
 
@@ -304,8 +303,40 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   async rebuildClipboard(): Promise<void> {
     await this.#clipboardController.rebuild();
 
-    for (const [fullPath, fileView] of this.#clipboardController.fileSystemView.descendantFileViews()) {
+    const iterator: IterableIterator<
+      [string, FileRowView]
+    > = this.#clipboardController.fileSystemView.descendantFileViews();
+
+    for (const [fullPath, fileView] of iterator) {
       this.#addFileEventHandlers(fullPath, fileView);
     }
+  }
+
+  async copyFromClipboard(
+    currentDirectory: string,
+    leafName: string,
+    isDirectory: boolean,
+  ): Promise<void>
+  {
+    await this.#webFS.copyFromClipboard(currentDirectory);
+    let pathToFile: string = currentDirectory;
+    if (currentDirectory.endsWith("://") === false)
+      pathToFile += "/";
+    pathToFile += leafName;
+
+    let newRecord: DirectoryRecord | null = null;
+    if (isDirectory)
+      newRecord = await this.#webFS.getDescendantIndex(pathToFile);
+
+    this.#fileToRowMap.copyFrom(
+      this.#clipboardController.fileToRowMap,
+      leafName,
+      currentDirectory,
+      leafName
+    );
+
+    this.#fileSystemView.addExistingFileEntries(
+      currentDirectory, leafName, newRecord
+    );
   }
 }

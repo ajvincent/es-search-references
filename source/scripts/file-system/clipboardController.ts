@@ -1,4 +1,4 @@
-import { DirectoryRecord, OPFSWebFileSystemIfc } from "../opfs/types/WebFileSystemIfc.js";
+import type { DirectoryRecord, OPFSWebFileSystemIfc } from "../opfs/types/WebFileSystemIfc.js";
 import { FileSystemElement } from "./elements/file-system.js";
 import { FileSystemMap } from "./FileSystemMap.js";
 import { DirectoryRowView } from "./views/directory-row.js";
@@ -10,8 +10,9 @@ export class ClipboardController {
 
   #fileSystemElement: FileSystemElement;
   #webFS: OPFSWebFileSystemIfc;
+  #clipboardHasCopy: boolean;
 
-  readonly #fileToRowMap: FileSystemMap<DirectoryRowView | FileRowView>;
+  readonly fileToRowMap: FileSystemMap<DirectoryRowView | FileRowView>;
   #fileSystemView: FileSystemView<DirectoryRowView, FileRowView>;
 
   constructor(
@@ -21,9 +22,10 @@ export class ClipboardController {
   {
     this.#fileSystemElement = fileSystemElement;
     this.#webFS = webFS;
+    this.#clipboardHasCopy = false;
 
     const fileToRowMap = new FileSystemMap<DirectoryRowView | FileRowView>(0);
-    this.#fileToRowMap = fileToRowMap;
+    this.fileToRowMap = fileToRowMap;
     this.#fileSystemView = new FileSystemView(
       DirectoryRowView, FileRowView, false, this.#fileSystemElement.treeRows!,
       { [ClipboardController.rowName]: {} }, fileToRowMap
@@ -41,13 +43,18 @@ export class ClipboardController {
     this.#fileSystemView.clearRowMap();
 
     const index: DirectoryRecord = await this.#webFS.getClipboardIndex();
+    this.#clipboardHasCopy = Object.entries(index).length > 0;
     this.#fileSystemView = new FileSystemView(
       DirectoryRowView, FileRowView, false, this.#fileSystemElement.treeRows!,
-      { [ClipboardController.rowName]: index }, this.#fileToRowMap
+      { [ClipboardController.rowName]: index }, this.fileToRowMap
     );
   }
 
   public get clipboardRow(): DirectoryRowView {
     return this.#fileSystemView.getRowView(ClipboardController.rowName) as DirectoryRowView;
+  }
+
+  public get clipboardHasCopy(): boolean {
+    return this.#clipboardHasCopy;
   }
 }

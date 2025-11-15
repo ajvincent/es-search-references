@@ -18,7 +18,9 @@ export class FSContextMenuShowArguments {
         promiseMap.set("currentSiblings", this.#currentSiblingsPromise());
         promiseMap.set("currentPackages", this.#currentPackagesPromise());
         promiseMap.set("currentURLs", this.#currentProtocolsPromise());
-        const map = await promiseMap.allResolved();
+        const clipboardPromise = this.#clipboardPromise();
+        const mapPromise = promiseMap.allResolved();
+        const [map, clipboardContents] = await Promise.all([mapPromise, clipboardPromise]);
         let leafName;
         let pathIsProtocol;
         if (this.#pathToFile.endsWith("://")) {
@@ -42,6 +44,8 @@ export class FSContextMenuShowArguments {
             currentSiblings: map.get("currentSiblings"),
             currentPackages: map.get("currentPackages"),
             currentProtocols: map.get("currentURLs"),
+            clipboardContentFileName: clipboardContents?.key ?? "",
+            clipboardContentIsDir: clipboardContents?.type === "directory",
         };
     }
     async #currentChildrenPromise() {
@@ -68,5 +72,18 @@ export class FSContextMenuShowArguments {
     async #currentProtocolsPromise() {
         const keys = await this.#webFS.listProtocols();
         return new Set(keys);
+    }
+    async #clipboardPromise() {
+        const index = await this.#webFS.getClipboardIndex();
+        const entries = Object.entries(index);
+        if (entries.length === 0) {
+            return null;
+        }
+        if (entries.length > 1) {
+            throw new Error("assertion failure, clipboard should have at most one entry");
+        }
+        const [key, content] = entries[0];
+        const type = (typeof content === "string") ? "file" : "directory";
+        return { type, key };
     }
 }

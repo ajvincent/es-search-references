@@ -52,7 +52,7 @@ export class FileSystemClipboard implements FileSystemClipboardIfc {
     await FileSystemUtilities.writeFile(fileHandle, newIndexName);
   }
 
-  private async flushOtherDirectories(): Promise<void> {
+  public async flushOtherDirectories(): Promise<void> {
     const currentDirName: string | null = await this.#getIndexName();
     const keys = new Set<string>(await Array.fromAsync(this.#topDir.keys()));
     keys.delete(FileSystemClipboard.#indexFileName);
@@ -81,6 +81,7 @@ export class FileSystemClipboard implements FileSystemClipboardIfc {
     name: string
   ): Promise<void>
   {
+    const oldClipboardName: string | null = await this.#getIndexName();
     const newClipboardName = WorkerGlobal.crypto.randomUUID();
     const clipboardDirectory = await this.#topDir.getDirectoryHandle(newClipboardName, { create: true });
 
@@ -98,7 +99,6 @@ export class FileSystemClipboard implements FileSystemClipboardIfc {
       await FileSystemUtilities.copyFile(sourceDirectory, name, clipboardDirectory);
     }
 
-    const oldClipboardName: string | null = await this.#getIndexName();
     await this.#writeIndexName(newClipboardName);
 
     if (oldClipboardName)

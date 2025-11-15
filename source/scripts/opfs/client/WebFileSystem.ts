@@ -43,6 +43,10 @@ implements OPFSWebFileSystemIfc
     return this[REQUEST_ASYNC_METHOD]("getIndex", []);
   }
 
+  getDescendantIndex(pathToDir: string): Promise<DirectoryRecord> {
+    return this[REQUEST_ASYNC_METHOD]("getDescendantIndex", [pathToDir]);
+  }
+
   createDirDeep(pathToDir: string): Promise<void> {
     return this[REQUEST_ASYNC_METHOD]("createDirDeep", [pathToDir]);
   }

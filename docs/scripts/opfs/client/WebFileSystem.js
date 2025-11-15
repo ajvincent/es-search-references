@@ -16,6 +16,9 @@ export class OPFSWebFileSystemClientImpl extends DirectoryClient {
     getIndex() {
         return this[REQUEST_ASYNC_METHOD]("getIndex", []);
     }
+    getDescendantIndex(pathToDir) {
+        return this[REQUEST_ASYNC_METHOD]("getDescendantIndex", [pathToDir]);
+    }
     createDirDeep(pathToDir) {
         return this[REQUEST_ASYNC_METHOD]("createDirDeep", [pathToDir]);
     }

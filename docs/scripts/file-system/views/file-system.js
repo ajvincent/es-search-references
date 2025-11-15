@@ -131,7 +131,7 @@ export class FileSystemView {
         this.#fileToRowMap.set(pathToFile, view);
         return view;
     }
-    addFile(currentDirectory, leafName, isDirectory) {
+    addNewFile(currentDirectory, leafName, isDirectory) {
         const parentRowView = this.getRowView(currentDirectory);
         if (parentRowView.rowType !== "directory") {
             throw new Error("assertion failure: row type must be a directory: " + currentDirectory);
@@ -150,6 +150,17 @@ export class FileSystemView {
         parentRowView.insertRowSorted(newRowView);
         this.#fileToRowMap.set(pathToFile, newRowView);
         return newRowView;
+    }
+    addExistingFileEntries(currentDirectory, leafName, newRecord) {
+        let pathToFile = currentDirectory;
+        if (currentDirectory.endsWith("://") === false)
+            pathToFile += "/";
+        pathToFile += leafName;
+        const isDirectory = Boolean(newRecord);
+        const row = this.addNewFile(currentDirectory, leafName, isDirectory);
+        if (newRecord) {
+            this.#fillDirectoryView(newRecord, row);
+        }
     }
     deleteFile(pathToFile) {
         const currentRow = this.#fileToRowMap.get(pathToFile);

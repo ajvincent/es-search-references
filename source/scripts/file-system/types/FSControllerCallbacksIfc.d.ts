@@ -10,7 +10,7 @@ export interface FSControllerCallbacksIfc {
     isDirectory: boolean
   ): void;
 
-  addFile(
+  addNewFile(
     currentDirectory: string,
     leafName: string,
     isDirectory: boolean
@@ -36,5 +36,11 @@ export interface FSControllerCallbacksIfc {
   copyToClipboard(
     currentPathToFile: string,
     isCut: boolean
+  ): Promise<void>;
+
+  copyFromClipboard(
+    currentDirectory: string,
+    leafName: string,
+    isDirectory: boolean,
   ): Promise<void>;
 }

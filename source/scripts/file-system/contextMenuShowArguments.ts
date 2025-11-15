@@ -3,6 +3,7 @@ import {
 } from "../utilities/AwaitedMap.js";
 
 import type {
+  DirectoryRecord,
   OPFSWebFileSystemIfc
 } from "../opfs/types/WebFileSystemIfc.js";
 
@@ -10,7 +11,18 @@ import type {
   FSContextMenuShowArgumentsIfc
 } from "./types/FSContextMenuShowArgumentsIfc.js";
 
-type AwaitedSetKeys = "currentChildren" | "currentSiblings" | "currentPackages" | "currentURLs";
+type AwaitedSetKeys = (
+  "currentChildren" |
+  "currentSiblings" |
+  "currentPackages" |
+  "currentURLs" |
+  "clipboardP"
+);
+
+interface ClipboardContents {
+  readonly type: "directory" | "file",
+  readonly key: string;
+}
 
 export class FSContextMenuShowArguments {
   readonly #event: MouseEvent;
@@ -42,7 +54,10 @@ export class FSContextMenuShowArguments {
     promiseMap.set("currentPackages", this.#currentPackagesPromise());
     promiseMap.set("currentURLs", this.#currentProtocolsPromise());
 
-    const map: Map<AwaitedSetKeys, ReadonlySet<string>> = await promiseMap.allResolved();
+    const clipboardPromise: Promise<ClipboardContents | null> = this.#clipboardPromise();
+    const mapPromise: Promise<Map<AwaitedSetKeys, ReadonlySet<string>>> = promiseMap.allResolved();
+
+    const [map, clipboardContents] = await Promise.all([mapPromise, clipboardPromise]);
 
     let leafName: string;
     let pathIsProtocol: boolean;
@@ -69,6 +84,8 @@ export class FSContextMenuShowArguments {
       currentSiblings: map.get("currentSiblings")!,
       currentPackages: map.get("currentPackages")!,
       currentProtocols: map.get("currentURLs")!,
+      clipboardContentFileName: clipboardContents?.key ?? "",
+      clipboardContentIsDir: clipboardContents?.type === "directory",
     };
   }
 
@@ -99,5 +116,19 @@ export class FSContextMenuShowArguments {
   async #currentProtocolsPromise(): Promise<ReadonlySet<string>> {
     const keys: string[] = await this.#webFS.listProtocols();
     return new Set(keys);
+  }
+
+  async #clipboardPromise(): Promise<ClipboardContents | null> {
+    const index: DirectoryRecord = await this.#webFS.getClipboardIndex();
+    const entries = Object.entries(index);
+    if (entries.length === 0) {
+      return null;
+    }
+    if (entries.length > 1) {
+      throw new Error("assertion failure, clipboard should have at most one entry");
+    }
+    const [key, content] = entries[0];
+    const type: "directory" | "file" = (typeof content === "string") ? "file" : "directory";
+    return {type, key};
   }
 }

@@ -9,4 +9,6 @@ export interface FSContextMenuShowArgumentsIfc {
   readonly currentSiblings: ReadonlySet<string>;
   readonly currentPackages: ReadonlySet<string>;
   readonly currentProtocols: ReadonlySet<string>;
+  readonly clipboardContentFileName: string;
+  readonly clipboardContentIsDir: boolean;
 }

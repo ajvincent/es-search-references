@@ -17,6 +17,7 @@ export interface OPFSWebFileSystemIfc {
   exportDirectoryRecord(): Promise<TopDirectoryRecord>;
 
   getIndex(): Promise<DirectoryRecord>;
+  getDescendantIndex(pathToDir: string): Promise<DirectoryRecord>;
   createDirDeep(pathToDir: string): Promise<void>;
   readFileDeep(pathToFile: string): Promise<string>;
   writeFileDeep(pathToFile: string, contents: string): Promise<void>;

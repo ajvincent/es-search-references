@@ -49,6 +49,7 @@ export class FileSystemClipboard {
         return currentDirName ? this.#topDir.getDirectoryHandle(currentDirName) : null;
     }
     async copyFrom(sourceDirectory, name) {
+        const oldClipboardName = await this.#getIndexName();
         const newClipboardName = WorkerGlobal.crypto.randomUUID();
         const clipboardDirectory = await this.#topDir.getDirectoryHandle(newClipboardName, { create: true });
         let child;
@@ -63,7 +64,6 @@ export class FileSystemClipboard {
         else {
             await FileSystemUtilities.copyFile(sourceDirectory, name, clipboardDirectory);
         }
-        const oldClipboardName = await this.#getIndexName();
         await this.#writeIndexName(newClipboardName);
         if (oldClipboardName)
             this.#topDir.removeEntry(oldClipboardName, { recursive: true });
