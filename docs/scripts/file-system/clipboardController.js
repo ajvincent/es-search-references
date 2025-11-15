@@ -26,6 +26,7 @@ export class ClipboardController {
         const index = await this.#webFS.getClipboardIndex();
         this.#clipboardHasCopy = Object.entries(index).length > 0;
         this.#fileSystemView = new FileSystemView(DirectoryRowView, FileRowView, false, this.#fileSystemElement.treeRows, { [ClipboardController.rowName]: index }, this.fileToRowMap);
+        this.clipboardRow.rowElement.addEventListener("contextmenu", ev => this.#showContextMenu(ev));
     }
     get clipboardRow() {
         return this.#fileSystemView.getRowView(ClipboardController.rowName);
@@ -33,4 +34,16 @@ export class ClipboardController {
     get clipboardHasCopy() {
         return this.#clipboardHasCopy;
     }
+    #showContextMenu(ev) {
+        this.#clearItem.disabled = !this.#clipboardHasCopy;
+        window.ctxmenu.show([this.#clearItem], ev);
+    }
+    #clearItem = {
+        text: "Clear Clipboard",
+        disabled: true,
+        action: async (ev) => {
+            await this.#webFS.clearClipboard();
+            await this.rebuild();
+        }
+    };
 }

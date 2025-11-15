@@ -1,9 +1,31 @@
-import type { DirectoryRecord, OPFSWebFileSystemIfc } from "../opfs/types/WebFileSystemIfc.js";
-import { FileSystemElement } from "./elements/file-system.js";
-import { FileSystemMap } from "./FileSystemMap.js";
-import { DirectoryRowView } from "./views/directory-row.js";
-import { FileRowView } from "./views/file-row.js";
-import { FileSystemView } from "./views/file-system.js";
+import type {
+  CTXMAction,
+} from "../../lib/packages/ctxmenu.js";
+
+import type {
+  DirectoryRecord,
+  OPFSWebFileSystemIfc
+} from "../opfs/types/WebFileSystemIfc.js";
+
+import {
+  FileSystemElement
+} from "./elements/file-system.js";
+
+import {
+  FileSystemMap
+} from "./FileSystemMap.js";
+
+import {
+  DirectoryRowView
+} from "./views/directory-row.js";
+
+import {
+  FileRowView
+} from "./views/file-row.js";
+
+import {
+  FileSystemView
+} from "./views/file-system.js";
 
 export class ClipboardController {
   public static readonly rowName = "(clipboard)";
@@ -48,6 +70,11 @@ export class ClipboardController {
       DirectoryRowView, FileRowView, false, this.#fileSystemElement.treeRows!,
       { [ClipboardController.rowName]: index }, this.fileToRowMap
     );
+
+    this.clipboardRow.rowElement.addEventListener(
+      "contextmenu",
+      ev => this.#showContextMenu(ev)
+    );
   }
 
   public get clipboardRow(): DirectoryRowView {
@@ -56,5 +83,22 @@ export class ClipboardController {
 
   public get clipboardHasCopy(): boolean {
     return this.#clipboardHasCopy;
+  }
+
+  #showContextMenu(ev: MouseEvent): void {
+    this.#clearItem.disabled = !this.#clipboardHasCopy;
+    window.ctxmenu.show(
+      [ this.#clearItem ],
+      ev,
+    );
+  }
+
+  readonly #clearItem: CTXMAction = {
+    text: "Clear Clipboard",
+    disabled: true,
+    action: async (ev: MouseEvent) => {
+      await this.#webFS.clearClipboard();
+      await this.rebuild();
+    }
   }
 }
