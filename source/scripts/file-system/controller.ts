@@ -13,6 +13,14 @@ import type {
 } from "../tab-panels/tab-panels-view.js";
 
 import {
+  AwaitedMap
+} from "../utilities/AwaitedMap.js";
+
+import {
+  ThrottleTimer
+} from "../utilities/ThrottleTimer.js";
+
+import {
   ClipboardController
 } from "./clipboardController.js";
 
@@ -80,6 +88,8 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   readonly displayElement: FileSystemElement;
 
   readonly #webFS: OPFSWebFileSystemIfc;
+  readonly #dirtyFilesSet = new Set<string>;
+  readonly #fileThrottle: ThrottleTimer;
 
   readonly #filesCheckedSet = new Set<string>;
   readonly filesCheckedSet: ReadonlySet<string> = this.#filesCheckedSet;
@@ -117,13 +127,40 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
     }
     this.#clipboardController = new ClipboardController(fileSystemElement, webFS);
 
-    this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS);
+    {
+      const callback = this.#docChangedCallback.bind(this);
+
+      this.editorMapView = new FileEditorMapView(
+        rootId, isReadonly, codeMirrorPanelsElement, webFS, callback
+      );
+    }
+    this.#fileThrottle = new ThrottleTimer(250, this.#saveThrottleCallback.bind(this));
   }
 
   dispose(): void {
     this.displayElement.remove();
     this.#fileSystemView.clearRowMap();
     this.editorMapView.dispose();
+  }
+
+  #docChangedCallback(pathToFile: string): void {
+    this.#dirtyFilesSet.add(pathToFile);
+    this.#fileThrottle.start();
+  }
+
+  async #saveThrottleCallback(): Promise<void> {
+    if (this.#dirtyFilesSet.size === 0)
+      return;
+    const allPaths = Array.from(this.#dirtyFilesSet);
+    this.#dirtyFilesSet.clear();
+
+    const map = new AwaitedMap<string, void>();
+    for (const pathToFile of allPaths) {
+      const contents = this.editorMapView.getContentsFromEditor(pathToFile)!;
+      map.set(pathToFile, this.#webFS.writeFileDeep(pathToFile, contents));
+    }
+    await map.allResolved();
+    console.log("at " + new Date() + ", wrote files: " + JSON.stringify(allPaths));
   }
 
   #fileCheckToggled(pathToFile: string, isChecked: boolean): void {
@@ -155,7 +192,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
       event.stopPropagation();
     }
 
-    await this.editorMapView.updateSelectedFile();
+    await this.#fileThrottle.flush();
 
     if (!this.editorMapView.hasEditorForPath(fullPath)) {
       const forceReadonly: boolean = fullPath.startsWith(ClipboardController.rowName);
@@ -185,7 +222,8 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   }
 
   async updateSelectedFile(): Promise<void> {
-    return this.editorMapView.updateSelectedFile();
+    this.#fileThrottle.clear();
+    await this.#saveThrottleCallback();
   }
 
   // FileSystemControllerIfc

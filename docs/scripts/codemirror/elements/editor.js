@@ -2,13 +2,24 @@ import * as CodeMirror from "../../../lib/packages/CodeMirror.mjs";
 export class CodeMirrorElement extends HTMLElement {
     #shadowRoot;
     editorView;
+    #docChangedCallback;
     constructor(pathToFile, contents, isReadonly) {
         super();
         this.dataset.pathtofile = pathToFile;
         this.#shadowRoot = this.attachShadow({ mode: "closed" });
-        const extensions = [CodeMirror.basicSetup, CodeMirror.javascript()];
+        const extensions = [
+            CodeMirror.basicSetup,
+            CodeMirror.javascript(),
+        ];
         if (isReadonly) {
             extensions.push(CodeMirror.EditorView.editable.of(false));
+        }
+        else {
+            const docChangedCallback = (viewUpdate) => {
+                if (viewUpdate.docChanged && this.#docChangedCallback)
+                    this.#docChangedCallback();
+            };
+            extensions.push(CodeMirror.EditorView.updateListener.of(docChangedCallback));
         }
         this.editorView = new CodeMirror.EditorView({
             extensions,
@@ -27,6 +38,9 @@ export class CodeMirrorElement extends HTMLElement {
             effects: [effect]
         });
         this.scrollIntoView({ block: "start" });
+    }
+    setDocChangedCallback(callback) {
+        this.#docChangedCallback = callback;
     }
 }
 customElements.define("codemirror-editor", CodeMirrorElement);

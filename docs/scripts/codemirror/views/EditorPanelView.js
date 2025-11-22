@@ -13,4 +13,7 @@ export class EditorPanelView {
     scrollToLine(lineNumber) {
         this.displayElement.scrollToLine(lineNumber);
     }
+    setDocChangedCallback(callback) {
+        this.displayElement.setDocChangedCallback(callback);
+    }
 }

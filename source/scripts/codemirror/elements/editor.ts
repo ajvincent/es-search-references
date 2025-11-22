@@ -4,15 +4,33 @@ export class CodeMirrorElement extends HTMLElement {
   readonly #shadowRoot: DocumentFragment;
   readonly editorView: CodeMirror.EditorView;
 
-  constructor(pathToFile: string, contents: string, isReadonly: boolean) {
+  #docChangedCallback?: () => void;
+
+  constructor(
+    pathToFile: string,
+    contents: string,
+    isReadonly: boolean
+  )
+  {
     super();
     this.dataset.pathtofile = pathToFile;
     this.#shadowRoot = this.attachShadow({mode: "closed"});
-    const extensions = [CodeMirror.basicSetup, CodeMirror.javascript()];
+    const extensions = [
+      CodeMirror.basicSetup,
+      CodeMirror.javascript(),
+    ];
+
     if (isReadonly) {
       extensions.push(
         CodeMirror.EditorView.editable.of(false)
       );
+    }
+    else {
+      const docChangedCallback = (viewUpdate: CodeMirror.ViewUpdate) => {
+        if (viewUpdate.docChanged && this.#docChangedCallback)
+          this.#docChangedCallback();
+      };
+      extensions.push(CodeMirror.EditorView.updateListener.of(docChangedCallback));
     }
     this.editorView = new CodeMirror.EditorView({
       extensions,
@@ -35,6 +53,10 @@ export class CodeMirrorElement extends HTMLElement {
       effects: [effect]
     });
     this.scrollIntoView({ block: "start" });
+  }
+
+  setDocChangedCallback(callback: (this: void) => void): void {
+    this.#docChangedCallback = callback;
   }
 }
 customElements.define("codemirror-editor", CodeMirrorElement);

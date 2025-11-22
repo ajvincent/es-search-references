@@ -23,4 +23,11 @@ export class EditorPanelView implements BaseView {
   scrollToLine(lineNumber: number): void {
     this.displayElement.scrollToLine(lineNumber);
   }
+
+  setDocChangedCallback(
+    callback: (this: void) => void
+  ): void
+  {
+    this.displayElement.setDocChangedCallback(callback);
+  }
 }

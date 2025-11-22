@@ -4250,6 +4250,63 @@ function keyName(event) {
   return name
 }
 
+function crelt() {
+  var elt = arguments[0];
+  if (typeof elt == "string") elt = document.createElement(elt);
+  var i = 1, next = arguments[1];
+  if (next && typeof next == "object" && next.nodeType == null && !Array.isArray(next)) {
+    for (var name in next) if (Object.prototype.hasOwnProperty.call(next, name)) {
+      var value = next[name];
+      if (typeof value == "string") elt.setAttribute(name, value);
+      else if (value != null) elt[name] = value;
+    }
+    i++;
+  }
+  for (; i < arguments.length; i++) add(elt, arguments[i]);
+  return elt
+}
+
+function add(elt, child) {
+  if (typeof child == "string") {
+    elt.appendChild(document.createTextNode(child));
+  } else if (child == null) ; else if (child.nodeType != null) {
+    elt.appendChild(child);
+  } else if (Array.isArray(child)) {
+    for (var i = 0; i < child.length; i++) add(elt, child[i]);
+  } else {
+    throw new RangeError("Unsupported child node: " + child)
+  }
+}
+
+let nav = typeof navigator != "undefined" ? navigator : { userAgent: "", vendor: "", platform: "" };
+let doc = typeof document != "undefined" ? document : { documentElement: { style: {} } };
+const ie_edge = /*@__PURE__*//Edge\/(\d+)/.exec(nav.userAgent);
+const ie_upto10 = /*@__PURE__*//MSIE \d/.test(nav.userAgent);
+const ie_11up = /*@__PURE__*//Trident\/(?:[7-9]|\d{2,})\..*rv:(\d+)/.exec(nav.userAgent);
+const ie = !!(ie_upto10 || ie_11up || ie_edge);
+const gecko = !ie && /*@__PURE__*//gecko\/(\d+)/i.test(nav.userAgent);
+const chrome = !ie && /*@__PURE__*//Chrome\/(\d+)/.exec(nav.userAgent);
+const webkit = "webkitFontSmoothing" in doc.documentElement.style;
+const safari = !ie && /*@__PURE__*//Apple Computer/.test(nav.vendor);
+const ios = safari && (/*@__PURE__*//Mobile\/\w+/.test(nav.userAgent) || nav.maxTouchPoints > 2);
+var browser = {
+    mac: ios || /*@__PURE__*//Mac/.test(nav.platform),
+    windows: /*@__PURE__*//Win/.test(nav.platform),
+    linux: /*@__PURE__*//Linux|X11/.test(nav.platform),
+    ie,
+    ie_version: ie_upto10 ? doc.documentMode || 6 : ie_11up ? +ie_11up[1] : ie_edge ? +ie_edge[1] : 0,
+    gecko,
+    gecko_version: gecko ? +(/*@__PURE__*//Firefox\/(\d+)/.exec(nav.userAgent) || [0, 0])[1] : 0,
+    chrome: !!chrome,
+    chrome_version: chrome ? +chrome[1] : 0,
+    ios,
+    android: /*@__PURE__*//Android\b/.test(nav.userAgent),
+    webkit_version: webkit ? +(/*@__PURE__*//\bAppleWebKit\/(\d+)/.exec(nav.userAgent) || [0, 0])[1] : 0,
+    safari,
+    safari_version: safari ? +(/*@__PURE__*//\bVersion\/(\d+(\.\d+)?)/.exec(nav.userAgent) || [0, 0])[1] : 0,
+    tabSize: doc.documentElement.style.tabSize != null ? "tab-size" : "-moz-tab-size"
+};
+
 function getSelection(root) {
     let target;
     // Browsers differ on whether shadow roots have a getSelection
@@ -4500,6 +4557,9 @@ class DOMSelectionState {
     }
 }
 let preventScrollSupported = null;
+// Safari 26 breaks preventScroll support
+if (browser.safari && browser.safari_version >= 26)
+    preventScrollSupported = false;
 // Feature-detects support for .focus({preventScroll: true}), and uses
 // a fallback kludge when not supported.
 function focusPreventScroll(dom) {
@@ -4968,34 +5028,6 @@ function mergeChildrenInto(parent, from, to, insert, openStart, openEnd) {
     parent.length += dLen;
     replaceRange(parent, fromI, fromOff, toI, toOff, insert, 0, openStart, openEnd);
 }
-
-let nav = typeof navigator != "undefined" ? navigator : { userAgent: "", vendor: "", platform: "" };
-let doc = typeof document != "undefined" ? document : { documentElement: { style: {} } };
-const ie_edge = /*@__PURE__*//Edge\/(\d+)/.exec(nav.userAgent);
-const ie_upto10 = /*@__PURE__*//MSIE \d/.test(nav.userAgent);
-const ie_11up = /*@__PURE__*//Trident\/(?:[7-9]|\d{2,})\..*rv:(\d+)/.exec(nav.userAgent);
-const ie = !!(ie_upto10 || ie_11up || ie_edge);
-const gecko = !ie && /*@__PURE__*//gecko\/(\d+)/i.test(nav.userAgent);
-const chrome = !ie && /*@__PURE__*//Chrome\/(\d+)/.exec(nav.userAgent);
-const webkit = "webkitFontSmoothing" in doc.documentElement.style;
-const safari = !ie && /*@__PURE__*//Apple Computer/.test(nav.vendor);
-const ios = safari && (/*@__PURE__*//Mobile\/\w+/.test(nav.userAgent) || nav.maxTouchPoints > 2);
-var browser = {
-    mac: ios || /*@__PURE__*//Mac/.test(nav.platform),
-    windows: /*@__PURE__*//Win/.test(nav.platform),
-    linux: /*@__PURE__*//Linux|X11/.test(nav.platform),
-    ie,
-    ie_version: ie_upto10 ? doc.documentMode || 6 : ie_11up ? +ie_11up[1] : ie_edge ? +ie_edge[1] : 0,
-    gecko,
-    gecko_version: gecko ? +(/*@__PURE__*//Firefox\/(\d+)/.exec(nav.userAgent) || [0, 0])[1] : 0,
-    chrome: !!chrome,
-    chrome_version: chrome ? +chrome[1] : 0,
-    ios,
-    android: /*@__PURE__*//Android\b/.test(nav.userAgent),
-    safari,
-    webkit_version: webkit ? +(/*@__PURE__*//\bAppleWebKit\/(\d+)/.exec(nav.userAgent) || [0, 0])[1] : 0,
-    tabSize: doc.documentElement.style.tabSize != null ? "tab-size" : "-moz-tab-size"
-};
 
 const MaxJoinLen = 256;
 class TextView extends ContentView {
@@ -6029,13 +6061,14 @@ class ContentBuilder {
                     this.textOff = 0;
                 }
             }
-            let take = Math.min(this.text.length - this.textOff, length, 512 /* T.Chunk */);
+            let remaining = Math.min(this.text.length - this.textOff, length);
+            let take = Math.min(remaining, 512 /* T.Chunk */);
             this.flushBuffer(active.slice(active.length - openStart));
             this.getLine().append(wrapMarks(new TextView(this.text.slice(this.textOff, this.textOff + take)), active), openStart);
             this.atCursorPos = true;
             this.textOff += take;
             length -= take;
-            openStart = 0;
+            openStart = remaining <= take ? 0 : active.length;
         }
     }
     span(from, to, active, openStart) {
@@ -6665,8 +6698,7 @@ function logException(state, exception, context) {
     let handler = state.facet(exceptionSink);
     if (handler.length)
         handler[0](exception);
-    else if (window.onerror)
-        window.onerror(String(exception), context, undefined, undefined, exception);
+    else if (window.onerror && window.onerror(String(exception), context, undefined, undefined, exception)) ;
     else if (context)
         console.error(context + ":", exception);
     else
@@ -6674,11 +6706,23 @@ function logException(state, exception, context) {
 }
 const editable = /*@__PURE__*/Facet.define({ combine: values => values.length ? values[0] : true });
 let nextPluginID = 0;
-const viewPlugin = /*@__PURE__*/Facet.define();
+const viewPlugin = /*@__PURE__*/Facet.define({
+    combine(plugins) {
+        return plugins.filter((p, i) => {
+            for (let j = 0; j < i; j++)
+                if (plugins[j].plugin == p.plugin)
+                    return false;
+            return true;
+        });
+    }
+});
 /**
 View plugins associate stateful values with a view. They can
 influence the way the content is drawn, and are notified of things
-that happen in the view.
+that happen in the view. They optionally take an argument, in
+which case you need to call [`of`](https://codemirror.net/6/docs/ref/#view.ViewPlugin.of) to create
+an extension for the plugin. When the argument type is undefined,
+you can use the plugin instance as an extension directly.
 */
 class ViewPlugin {
     constructor(
@@ -6702,7 +6746,14 @@ class ViewPlugin {
         this.create = create;
         this.domEventHandlers = domEventHandlers;
         this.domEventObservers = domEventObservers;
-        this.extension = buildExtensions(this);
+        this.baseExtensions = buildExtensions(this);
+        this.extension = this.baseExtensions.concat(viewPlugin.of({ plugin: this, arg: undefined }));
+    }
+    /**
+    Create an extension for this plugin with the given argument.
+    */
+    of(arg) {
+        return this.baseExtensions.concat(viewPlugin.of({ plugin: this, arg }));
     }
     /**
     Define a plugin from a constructor function that creates the
@@ -6711,7 +6762,7 @@ class ViewPlugin {
     static define(create, spec) {
         const { eventHandlers, eventObservers, provide, decorations: deco } = spec || {};
         return new ViewPlugin(nextPluginID++, create, eventHandlers, eventObservers, plugin => {
-            let ext = [viewPlugin.of(plugin)];
+            let ext = [];
             if (deco)
                 ext.push(decorations.of(view => {
                     let pluginInst = view.plugin(plugin);
@@ -6727,7 +6778,7 @@ class ViewPlugin {
     editor view as argument.
     */
     static fromClass(cls, spec) {
-        return ViewPlugin.define(view => new cls(view), spec);
+        return ViewPlugin.define((view, arg) => new cls(view, arg), spec);
     }
 }
 class PluginInstance {
@@ -6735,18 +6786,19 @@ class PluginInstance {
         this.spec = spec;
         // When starting an update, all plugins have this field set to the
         // update object, indicating they need to be updated. When finished
-        // updating, it is set to `false`. Retrieving a plugin that needs to
+        // updating, it is set to `null`. Retrieving a plugin that needs to
         // be updated with `view.plugin` forces an eager update.
         this.mustUpdate = null;
         // This is null when the plugin is initially created, but
         // initialized on the first update.
         this.value = null;
     }
+    get plugin() { return this.spec && this.spec.plugin; }
     update(view) {
         if (!this.value) {
             if (this.spec) {
                 try {
-                    this.value = this.spec.create(view);
+                    this.value = this.spec.plugin.create(view, this.spec.arg);
                 }
                 catch (e) {
                     logException(view.state, e, "CodeMirror plugin crashed");
@@ -7542,6 +7594,13 @@ class DocView extends ContentView {
         let { offsetWidth, offsetHeight } = this.view.scrollDOM;
         scrollRectIntoView(this.view.scrollDOM, targetRect, range.head < range.anchor ? -1 : 1, target.x, target.y, Math.max(Math.min(target.xMargin, offsetWidth), -offsetWidth), Math.max(Math.min(target.yMargin, offsetHeight), -offsetHeight), this.view.textDirection == Direction.LTR);
     }
+    lineHasWidget(pos) {
+        let { i } = this.childCursor().findPos(pos);
+        if (i == this.children.length)
+            return false;
+        let scan = (child) => child instanceof WidgetView || child.children.some(scan);
+        return scan(this.children[i]);
+    }
 }
 function betweenUneditable(pos) {
     return pos.node.nodeType == 1 && pos.node.firstChild &&
@@ -7702,8 +7761,7 @@ function domPosAtCoords(parent, x, y) {
                 closestRect = rect;
                 closestX = dx;
                 closestY = dy;
-                let side = dy ? (y < rect.top ? -1 : 1) : dx ? (x < rect.left ? -1 : 1) : 0;
-                closestOverlap = !side || (side > 0 ? i < rects.length - 1 : i > 0);
+                closestOverlap = !dx ? true : x < rect.left ? i > 0 : i < rects.length - 1;
             }
             if (dx == 0) {
                 if (y > rect.bottom && (!aboveRect || aboveRect.bottom < rect.bottom)) {
@@ -7760,7 +7818,7 @@ function domPosInText(node, x, y) {
                     // Check for RTL on browsers that support getting client
                     // rects for empty ranges.
                     let rectBefore = textRange(node, i).getBoundingClientRect();
-                    if (rectBefore.left == rect.right)
+                    if (Math.abs(rectBefore.left - rect.right) < 0.1)
                         after = !right;
                 }
                 if (dy <= 0)
@@ -7831,14 +7889,13 @@ function posAtCoords(view, coords, precise, bias = -1) {
         }
         else if (doc.caretRangeFromPoint) {
             let range = doc.caretRangeFromPoint(x, y);
-            if (range) {
+            if (range)
                 ({ startContainer: node, startOffset: offset } = range);
-                if (!view.contentDOM.contains(node) ||
-                    browser.safari && isSuspiciousSafariCaretResult(node, offset, x) ||
-                    browser.chrome && isSuspiciousChromeCaretResult(node, offset, x))
-                    node = undefined;
-            }
         }
+        if (node && (!view.contentDOM.contains(node) ||
+            browser.safari && isSuspiciousSafariCaretResult(node, offset, x) ||
+            browser.chrome && isSuspiciousChromeCaretResult(node, offset, x)))
+            node = undefined;
         // Chrome will return offsets into <input> elements without child
         // nodes, which will lead to a null deref below, so clip the
         // offset to the node size.
@@ -7874,23 +7931,37 @@ function posAtCoordsImprecise(view, contentRect, block, x, y) {
     let content = view.state.sliceDoc(block.from, block.to);
     return block.from + findColumn(content, into, view.state.tabSize);
 }
+function isEndOfLineBefore(node, offset, x) {
+    let len, scan = node;
+    if (node.nodeType != 3 || offset != (len = node.nodeValue.length))
+        return false;
+    for (;;) { // Check that there is no content after this node
+        let next = scan.nextSibling;
+        if (next) {
+            if (next.nodeName == "BR")
+                break;
+            return false;
+        }
+        else {
+            let parent = scan.parentNode;
+            if (!parent || parent.nodeName == "DIV")
+                break;
+            scan = parent;
+        }
+    }
+    return textRange(node, len - 1, len).getBoundingClientRect().right > x;
+}
 // In case of a high line height, Safari's caretRangeFromPoint treats
 // the space between lines as belonging to the last character of the
 // line before. This is used to detect such a result so that it can be
 // ignored (issue #401).
 function isSuspiciousSafariCaretResult(node, offset, x) {
-    let len;
-    if (node.nodeType != 3 || offset != (len = node.nodeValue.length))
-        return false;
-    for (let next = node.nextSibling; next; next = next.nextSibling)
-        if (next.nodeType != 1 || next.nodeName != "BR")
-            return false;
-    return textRange(node, len - 1, len).getBoundingClientRect().left > x;
+    return isEndOfLineBefore(node, offset, x);
 }
 // Chrome will move positions between lines to the start of the next line
 function isSuspiciousChromeCaretResult(node, offset, x) {
     if (offset != 0)
-        return false;
+        return isEndOfLineBefore(node, offset, x);
     for (let cur = node;;) {
         let parent = cur.parentNode;
         if (!parent || parent.nodeType != 1 || parent.firstChild != cur)
@@ -8015,6 +8086,29 @@ function skipAtomicRanges(atoms, pos, bias) {
             return pos;
     }
 }
+function skipAtomsForSelection(atoms, sel) {
+    let ranges = null;
+    for (let i = 0; i < sel.ranges.length; i++) {
+        let range = sel.ranges[i], updated = null;
+        if (range.empty) {
+            let pos = skipAtomicRanges(atoms, range.from, 0);
+            if (pos != range.from)
+                updated = EditorSelection.cursor(pos, -1);
+        }
+        else {
+            let from = skipAtomicRanges(atoms, range.from, -1);
+            let to = skipAtomicRanges(atoms, range.to, 1);
+            if (from != range.from || to != range.to)
+                updated = EditorSelection.range(range.from == range.anchor ? from : to, range.from == range.head ? from : to);
+        }
+        if (updated) {
+            if (!ranges)
+                ranges = sel.ranges.slice();
+            ranges[i] = updated;
+        }
+    }
+    return ranges ? EditorSelection.create(ranges, sel.mainIndex) : sel;
+}
 function skipAtoms(view, oldPos, pos) {
     let newPos = skipAtomicRanges(view.state.facet(atomicRanges).map(f => f(view)), pos.from, oldPos.head > pos.from ? -1 : 1);
     return newPos == pos.from ? pos : EditorSelection.cursor(newPos, newPos < pos.from ? 1 : -1);
@@ -8045,9 +8139,10 @@ class DOMReader {
             if (next == end)
                 break;
             let view = ContentView.get(cur), nextView = ContentView.get(next);
-            if (view && nextView ? view.breakAfter :
+            if ((view && nextView ? view.breakAfter :
                 (view ? view.breakAfter : isBlockElement(cur)) ||
-                    (isBlockElement(next) && (cur.nodeName != "BR" || cur.cmIgnore) && this.text.length > oldLen))
+                    (isBlockElement(next) && (cur.nodeName != "BR" || cur.cmIgnore) && this.text.length > oldLen)) &&
+                !isEmptyToEnd(next, end))
                 this.lineBreak();
             cur = next;
         }
@@ -8126,6 +8221,25 @@ function isAtEnd(parent, node, offset) {
         node = node.parentNode;
     }
 }
+function isEmptyToEnd(node, end) {
+    let widgets;
+    for (;; node = node.nextSibling) {
+        if (node == end || !node)
+            break;
+        let view = ContentView.get(node);
+        if (!((view === null || view === void 0 ? void 0 : view.isWidget) || node.cmIgnore))
+            return false;
+        if (view)
+            (widgets || (widgets = [])).push(view);
+    }
+    if (widgets)
+        for (let w of widgets) {
+            let override = w.overrideDOMText;
+            if (override === null || override === void 0 ? void 0 : override.length)
+                return false;
+        }
+    return true;
+}
 class DOMPoint {
     constructor(node, offset) {
         this.node = node;
@@ -8176,7 +8290,10 @@ class DOMChange {
                     anchor = view.state.doc.length;
                 }
             }
-            this.newSel = EditorSelection.single(anchor, head);
+            if (view.inputState.composing > -1 && view.state.selection.ranges.length > 1)
+                this.newSel = view.state.selection.replaceRange(EditorSelection.range(anchor, head));
+            else
+                this.newSel = EditorSelection.single(anchor, head);
         }
     }
 }
@@ -8232,6 +8349,18 @@ function applyDOMChange(view, domChange) {
             insert: view.state.doc.slice(sel.from, change.from).append(change.insert).append(view.state.doc.slice(change.to, sel.to))
         };
     }
+    else if (view.state.doc.lineAt(sel.from).to < sel.to && view.docView.lineHasWidget(sel.to) &&
+        view.inputState.insertingTextAt > Date.now() - 50) {
+        // For a cross-line insertion, Chrome and Safari will crudely take
+        // the text of the line after the selection, flattening any
+        // widgets, and move it into the joined line. This tries to detect
+        // such a situation, and replaces the change with a selection
+        // replace of the text provided by the beforeinput event.
+        change = {
+            from: sel.from, to: sel.to,
+            insert: view.state.toText(view.inputState.insertingText)
+        };
+    }
     else if (browser.chrome && change && change.from == change.to && change.from == sel.head &&
         change.insert.toString() == "\n " && view.lineWrapping) {
         // In Chrome, if you insert a space at the start of a wrapped
@@ -8250,6 +8379,8 @@ function applyDOMChange(view, domChange) {
             if (view.inputState.lastSelectionOrigin == "select")
                 scrollIntoView = true;
             userEvent = view.inputState.lastSelectionOrigin;
+            if (userEvent == "select.pointer")
+                newSel = skipAtomsForSelection(view.state.facet(atomicRanges).map(f => f(view)), newSel);
         }
         view.dispatch({ selection: newSel, scrollIntoView, userEvent });
         return true;
@@ -8291,8 +8422,20 @@ function applyDOMChangeInner(view, change, newSel, lastKey = -1) {
     return true;
 }
 function applyDefaultInsert(view, change, newSel) {
-    let tr, startState = view.state, sel = startState.selection.main;
-    if (change.from >= sel.from && change.to <= sel.to && change.to - change.from >= (sel.to - sel.from) / 3 &&
+    let tr, startState = view.state, sel = startState.selection.main, inAtomic = -1;
+    if (change.from == change.to && change.from < sel.from || change.from > sel.to) {
+        let side = change.from < sel.from ? -1 : 1, pos = side < 0 ? sel.from : sel.to;
+        let moved = skipAtomicRanges(startState.facet(atomicRanges).map(f => f(view)), pos, side);
+        if (change.from == moved)
+            inAtomic = moved;
+    }
+    if (inAtomic > -1) {
+        tr = {
+            changes: change,
+            selection: EditorSelection.cursor(change.from + change.insert.length, -1)
+        };
+    }
+    else if (change.from >= sel.from && change.to <= sel.to && change.to - change.from >= (sel.to - sel.from) / 3 &&
         (!newSel || newSel.main.empty && newSel.main.from == change.from + change.insert.length) &&
         view.inputState.composing < 0) {
         let before = sel.from < change.from ? startState.sliceDoc(sel.from, change.from) : "";
@@ -8303,8 +8446,8 @@ function applyDefaultInsert(view, change, newSel) {
         let changes = startState.changes(change);
         let mainSel = newSel && newSel.main.to <= changes.newLength ? newSel.main : undefined;
         // Try to apply a composition change to all cursors
-        if (startState.selection.ranges.length > 1 && view.inputState.composing >= 0 &&
-            change.to <= sel.to && change.to >= sel.to - 10) {
+        if (startState.selection.ranges.length > 1 && (view.inputState.composing >= 0 || view.inputState.compositionPendingChange) &&
+            change.to <= sel.to + 10 && change.to >= sel.to - 10) {
             let replaced = view.state.sliceDoc(change.from, change.to);
             let compositionRange, composition = newSel && findCompositionNode(view, newSel.main.head);
             if (composition) {
@@ -8314,17 +8457,17 @@ function applyDefaultInsert(view, change, newSel) {
             else {
                 compositionRange = view.state.doc.lineAt(sel.head);
             }
-            let offset = sel.to - change.to, size = sel.to - sel.from;
+            let offset = sel.to - change.to;
             tr = startState.changeByRange(range => {
                 if (range.from == sel.from && range.to == sel.to)
                     return { changes, range: mainSel || range.map(changes) };
                 let to = range.to - offset, from = to - replaced.length;
-                if (range.to - range.from != size || view.state.sliceDoc(from, to) != replaced ||
+                if (view.state.sliceDoc(from, to) != replaced ||
                     // Unfortunately, there's no way to make multiple
                     // changes in the same node work without aborting
                     // composition, so cursors in the composition range are
                     // ignored.
-                    range.to >= compositionRange.from && range.from <= compositionRange.to)
+                    to >= compositionRange.from && from <= compositionRange.to)
                     return { range };
                 let rangeChanges = startState.changes({ from, to, insert: change.insert }), selOff = range.to - sel.to;
                 return {
@@ -8451,6 +8594,9 @@ class InputState {
         // Used to categorize changes as part of a composition, even when
         // the mutation events fire shortly after the compositionend event
         this.compositionPendingChange = false;
+        // Set by beforeinput, used in DOM change reader
+        this.insertingText = "";
+        this.insertingTextAt = 0;
         this.mouseSelection = null;
         // When a drag from the editor is active, this points at the range
         // being dragged.
@@ -8553,7 +8699,7 @@ class InputState {
         return dispatchKey(this.view.contentDOM, key.key, key.keyCode, key instanceof KeyboardEvent ? key : undefined);
     }
     ignoreDuringComposition(event) {
-        if (!/^key/.test(event.type))
+        if (!/^key/.test(event.type) || event.synthetic)
             return false;
         if (this.composing > 0)
             return true;
@@ -8604,16 +8750,16 @@ function computeHandlers(plugins) {
         return result[type] || (result[type] = { observers: [], handlers: [] });
     }
     for (let plugin of plugins) {
-        let spec = plugin.spec;
-        if (spec && spec.domEventHandlers)
-            for (let type in spec.domEventHandlers) {
-                let f = spec.domEventHandlers[type];
+        let spec = plugin.spec, handlers = spec && spec.plugin.domEventHandlers, observers = spec && spec.plugin.domEventObservers;
+        if (handlers)
+            for (let type in handlers) {
+                let f = handlers[type];
                 if (f)
                     record(type).handlers.push(bindHandler(plugin.value, f));
             }
-        if (spec && spec.domEventObservers)
-            for (let type in spec.domEventObservers) {
-                let f = spec.domEventObservers[type];
+        if (observers)
+            for (let type in observers) {
+                let f = observers[type];
                 if (f)
                     record(type).observers.push(bindHandler(plugin.value, f));
             }
@@ -8727,31 +8873,8 @@ class MouseSelection {
         if (this.dragging === false)
             this.select(this.lastEvent);
     }
-    skipAtoms(sel) {
-        let ranges = null;
-        for (let i = 0; i < sel.ranges.length; i++) {
-            let range = sel.ranges[i], updated = null;
-            if (range.empty) {
-                let pos = skipAtomicRanges(this.atoms, range.from, 0);
-                if (pos != range.from)
-                    updated = EditorSelection.cursor(pos, -1);
-            }
-            else {
-                let from = skipAtomicRanges(this.atoms, range.from, -1);
-                let to = skipAtomicRanges(this.atoms, range.to, 1);
-                if (from != range.from || to != range.to)
-                    updated = EditorSelection.range(range.from == range.anchor ? from : to, range.from == range.head ? from : to);
-            }
-            if (updated) {
-                if (!ranges)
-                    ranges = sel.ranges.slice();
-                ranges[i] = updated;
-            }
-        }
-        return ranges ? EditorSelection.create(ranges, sel.mainIndex) : sel;
-    }
     select(event) {
-        let { view } = this, selection = this.skipAtoms(this.style.get(event, this.extend, this.multiple));
+        let { view } = this, selection = skipAtomsForSelection(this.atoms, this.style.get(event, this.extend, this.multiple));
         if (this.mustSelect || !selection.eq(view.state.selection, this.dragging === false))
             this.view.dispatch({
                 selection,
@@ -8903,6 +9026,9 @@ handlers.mousedown = (view, event) => {
             mouseSel.start(event);
             return mouseSel.dragging === false;
         }
+    }
+    else {
+        view.inputState.setSelectionOrigin("select.pointer");
     }
     return false;
 };
@@ -9225,6 +9351,10 @@ observers.contextmenu = view => {
 };
 handlers.beforeinput = (view, event) => {
     var _a, _b;
+    if (event.inputType == "insertText" || event.inputType == "insertCompositionText") {
+        view.inputState.insertingText = event.data;
+        view.inputState.insertingTextAt = Date.now();
+    }
     // In EditContext mode, we must handle insertReplacementText events
     // directly, to make spell checking corrections work
     if (event.inputType == "insertReplacementText" && view.observer.editContext) {
@@ -9308,7 +9438,7 @@ class HeightOracle {
     heightForLine(length) {
         if (!this.lineWrapping)
             return this.lineHeight;
-        let lines = 1 + Math.max(0, Math.ceil((length - this.lineLength) / (this.lineLength - 5)));
+        let lines = 1 + Math.max(0, Math.ceil((length - this.lineLength) / Math.max(1, this.lineLength - 5)));
         return lines * this.lineHeight;
     }
     setDoc(doc) { this.doc = doc; return this; }
@@ -10278,7 +10408,7 @@ class ViewState {
                 refresh = true;
             if (refresh || oracle.lineWrapping && Math.abs(contentWidth - this.contentDOMWidth) > oracle.charWidth) {
                 let { lineHeight, charWidth, textHeight } = view.docView.measureTextSize();
-                refresh = lineHeight > 0 && oracle.refresh(whiteSpace, lineHeight, charWidth, textHeight, contentWidth / charWidth, lineHeights);
+                refresh = lineHeight > 0 && oracle.refresh(whiteSpace, lineHeight, charWidth, textHeight, Math.max(5, contentWidth / charWidth), lineHeights);
                 if (refresh) {
                     view.docView.minWidth = 0;
                     result |= 16 /* UpdateFlag.Geometry */;
@@ -10803,13 +10933,16 @@ const baseTheme$1$3 = /*@__PURE__*/buildTheme("." + baseThemeID, {
         display: "flex",
         height: "100%",
         boxSizing: "border-box",
-        insetInlineStart: 0,
-        zIndex: 200
+        zIndex: 200,
     },
+    ".cm-gutters-before": { insetInlineStart: 0 },
+    ".cm-gutters-after": { insetInlineEnd: 0 },
     "&light .cm-gutters": {
         backgroundColor: "#f5f5f5",
         color: "#6c6c6c",
-        borderRight: "1px solid #ddd"
+        border: "0px solid #ddd",
+        "&.cm-gutters-before": { borderRightWidth: "1px" },
+        "&.cm-gutters-after": { borderLeftWidth: "1px" },
     },
     "&dark .cm-gutters": {
         backgroundColor: "#333338",
@@ -10858,6 +10991,21 @@ const baseTheme$1$3 = /*@__PURE__*/buildTheme("." + baseThemeID, {
     "&dark .cm-panels": {
         backgroundColor: "#333338",
         color: "white"
+    },
+    ".cm-dialog": {
+        padding: "2px 19px 4px 6px",
+        position: "relative",
+        "& label": { fontSize: "80%" },
+    },
+    ".cm-dialog-close": {
+        position: "absolute",
+        top: "3px",
+        right: "4px",
+        backgroundColor: "inherit",
+        border: "none",
+        font: "inherit",
+        fontSize: "14px",
+        padding: "0"
     },
     ".cm-tab": {
         display: "inline-block",
@@ -10985,7 +11133,7 @@ class DOMObserver {
             else
                 this.flush();
         });
-        if (window.EditContext && view.constructor.EDIT_CONTEXT !== false &&
+        if (window.EditContext && browser.android && view.constructor.EDIT_CONTEXT !== false &&
             // Chrome <126 doesn't support inverted selections in edit context (#1392)
             !(browser.chrome && browser.chrome_version < 126)) {
             this.editContext = new EditContextManager(view);
@@ -11459,20 +11607,23 @@ class EditContextManager {
             let from = this.toEditorPos(e.updateRangeStart), to = this.toEditorPos(e.updateRangeEnd);
             if (view.inputState.composing >= 0 && !this.composing)
                 this.composing = { contextBase: e.updateRangeStart, editorBase: from, drifted: false };
-            let change = { from, to, insert: Text.of(e.text.split("\n")) };
+            let deletes = to - from > e.text.length;
             // If the window doesn't include the anchor, assume changes
             // adjacent to a side go up to the anchor.
-            if (change.from == this.from && anchor < this.from)
-                change.from = anchor;
-            else if (change.to == this.to && anchor > this.to)
-                change.to = anchor;
+            if (from == this.from && anchor < this.from)
+                from = anchor;
+            else if (to == this.to && anchor > this.to)
+                to = anchor;
+            let diff = findDiff(view.state.sliceDoc(from, to), e.text, (deletes ? main.from : main.to) - from, deletes ? "end" : null);
             // Edit contexts sometimes fire empty changes
-            if (change.from == change.to && !change.insert.length) {
+            if (!diff) {
                 let newSel = EditorSelection.single(this.toEditorPos(e.selectionStart), this.toEditorPos(e.selectionEnd));
                 if (!newSel.main.eq(main))
                     view.dispatch({ selection: newSel, userEvent: "select" });
                 return;
             }
+            let change = { from: diff.from + from, to: diff.toA + from,
+                insert: Text.of(e.text.slice(diff.from, diff.toB).split("\n")) };
             if ((browser.mac || browser.android) && change.from == head - 1 &&
                 /^\. ?$/.test(e.text) && view.contentDOM.getAttribute("autocorrect") == "off")
                 change = { from, to, insert: Text.of([e.text.replace(".", " ")]) };
@@ -11487,6 +11638,10 @@ class EditContextManager {
                 this.revertPending(view.state);
                 this.setSelection(view.state);
             }
+            // Work around missed compositionend events. See https://discuss.codemirror.net/t/a/9514
+            if (change.from < change.to && !change.insert.length && view.inputState.composing >= 0 &&
+                !/[\\p{Alphabetic}\\p{Number}_]/.test(context.text.slice(Math.max(0, e.updateRangeStart - 1), Math.min(context.text.length, e.updateRangeStart + 1))))
+                this.handlers.compositionend(e);
         };
         this.handlers.characterboundsupdate = e => {
             let rects = [], prev = null;
@@ -11502,10 +11657,11 @@ class EditContextManager {
             let deco = [];
             for (let format of e.getTextFormats()) {
                 let lineStyle = format.underlineStyle, thickness = format.underlineThickness;
-                if (lineStyle != "None" && thickness != "None") {
+                if (!/none/i.test(lineStyle) && !/none/i.test(thickness)) {
                     let from = this.toEditorPos(format.rangeStart), to = this.toEditorPos(format.rangeEnd);
                     if (from < to) {
-                        let style = `text-decoration: underline ${lineStyle == "Dashed" ? "dashed " : lineStyle == "Squiggle" ? "wavy " : ""}${thickness == "Thin" ? 1 : 2}px`;
+                        // These values changed from capitalized custom strings to lower-case CSS keywords in 2025
+                        let style = `text-decoration: underline ${/^[a-z]/.test(lineStyle) ? lineStyle + " " : lineStyle == "Dashed" ? "dashed " : lineStyle == "Squiggle" ? "wavy " : ""}${/thin/i.test(thickness) ? 1 : 2}px`;
                         deco.push(Decoration.mark({ attributes: { style } }).range(from, to));
                     }
                 }
@@ -11688,14 +11844,14 @@ class EditorView {
     [IME](https://en.wikipedia.org/wiki/Input_method), and at least
     one change has been made in the current composition.
     */
-    get composing() { return this.inputState.composing > 0; }
+    get composing() { return !!this.inputState && this.inputState.composing > 0; }
     /**
     Indicates whether the user is currently in composing state. Note
     that on some platforms, like Android, this will be the case a
     lot, since just putting the cursor on a word starts a
     composition there.
     */
-    get compositionStarted() { return this.inputState.composing >= 0; }
+    get compositionStarted() { return !!this.inputState && this.inputState.composing >= 0; }
     /**
     The document or shadow root that the view lives in.
     */
@@ -12171,8 +12327,8 @@ class EditorView {
     */
     plugin(plugin) {
         let known = this.pluginMap.get(plugin);
-        if (known === undefined || known && known.spec != plugin)
-            this.pluginMap.set(plugin, known = this.plugins.find(p => p.spec == plugin) || null);
+        if (known === undefined || known && known.plugin != plugin)
+            this.pluginMap.set(plugin, known = this.plugins.find(p => p.plugin == plugin) || null);
         return known && known.update(this).value;
     }
     /**
@@ -12210,7 +12366,7 @@ class EditorView {
     }
     /**
     Find the line block (see
-    [`lineBlockAt`](https://codemirror.net/6/docs/ref/#view.EditorView.lineBlockAt) at the given
+    [`lineBlockAt`](https://codemirror.net/6/docs/ref/#view.EditorView.lineBlockAt)) at the given
     height, again interpreted relative to the [top of the
     document](https://codemirror.net/6/docs/ref/#view.EditorView.documentTop).
     */
@@ -12704,7 +12860,7 @@ Facet that works much like
 [`decorations`](https://codemirror.net/6/docs/ref/#view.EditorView^decorations), but puts its
 inputs at the very bottom of the precedence stack, meaning mark
 decorations provided here will only be split by other, partially
-overlapping \`outerDecorations\` ranges, and wrap around all
+overlapping `outerDecorations` ranges, and wrap around all
 regular decorations. Use this for mark elements that should, as
 much as possible, remain in one piece.
 */
@@ -12996,6 +13152,8 @@ function runHandlers(map, event, view, scope) {
         else if (isChar && (event.altKey || event.metaKey || event.ctrlKey) &&
             // Ctrl-Alt may be used for AltGr on Windows
             !(browser.windows && event.ctrlKey && event.altKey) &&
+            // Alt-combinations on macOS tend to be typed characters
+            !(browser.mac && event.altKey && !(event.ctrlKey || event.metaKey)) &&
             (baseName = base[event.keyCode]) && baseName != name) {
             if (runFor(scopeObj[prefix + modifiers(baseName, event, true)])) {
                 handled = true;
@@ -13270,6 +13428,8 @@ class LayerView {
                 old = next;
             }
             this.drawn = markers;
+            if (browser.safari && browser.safari_version >= 26) // Issue #1600, 1627
+                this.dom.style.display = this.dom.firstChild ? "" : "none";
         }
     }
     destroy() {
@@ -13575,7 +13735,7 @@ class MatchDecorator {
     updateRange(view, deco, updateFrom, updateTo) {
         for (let r of view.visibleRanges) {
             let from = Math.max(r.from, updateFrom), to = Math.min(r.to, updateTo);
-            if (to > from) {
+            if (to >= from) {
                 let fromLine = view.state.doc.lineAt(from), toLine = fromLine.to < to ? view.state.doc.lineAt(to) : fromLine;
                 let start = Math.max(r.from, fromLine.from), end = Math.min(r.to, toLine.to);
                 if (this.boundary) {
@@ -14109,17 +14269,17 @@ const tooltipPlugin = /*@__PURE__*/ViewPlugin.fromClass(class {
         let scaleX = 1, scaleY = 1, makeAbsolute = false;
         if (this.position == "fixed" && this.manager.tooltipViews.length) {
             let { dom } = this.manager.tooltipViews[0];
-            if (browser.gecko) {
-                // Firefox sets the element's `offsetParent` to the
-                // transformed element when a transform interferes with fixed
-                // positioning.
-                makeAbsolute = dom.offsetParent != this.container.ownerDocument.body;
-            }
-            else if (dom.style.top == Outside && dom.style.left == "0px") {
-                // On other browsers, we have to awkwardly try and use other
-                // information to detect a transform.
+            if (browser.safari) {
+                // Safari always sets offsetParent to null, even if a fixed
+                // element is positioned relative to a transformed parent. So
+                // we use this kludge to try and detect this.
                 let rect = dom.getBoundingClientRect();
                 makeAbsolute = Math.abs(rect.top + 10000) > 1 || Math.abs(rect.left) > 1;
+            }
+            else {
+                // More conforming browsers will set offsetParent to the
+                // transformed element.
+                makeAbsolute = !!dom.offsetParent && dom.offsetParent != this.container.ownerDocument.body;
             }
         }
         if (makeAbsolute || this.position == "absolute") {
@@ -14821,7 +14981,8 @@ const defaults$1 = {
     lineMarkerChange: null,
     initialSpacer: null,
     updateSpacer: null,
-    domEventHandlers: {}
+    domEventHandlers: {},
+    side: "before"
 };
 const activeGutters = /*@__PURE__*/Facet.define();
 /**
@@ -14829,7 +14990,7 @@ Define an editor gutter. The order in which the gutters appear is
 determined by their extension priority.
 */
 function gutter(config) {
-    return [gutters(), activeGutters.of(Object.assign(Object.assign({}, defaults$1), config))];
+    return [gutters(), activeGutters.of({ ...defaults$1, ...config })];
 }
 const unfixGutters = /*@__PURE__*/Facet.define({
     combine: values => values.some(x => x)
@@ -14853,15 +15014,20 @@ function gutters(config) {
 const gutterView = /*@__PURE__*/ViewPlugin.fromClass(class {
     constructor(view) {
         this.view = view;
+        this.domAfter = null;
         this.prevViewport = view.viewport;
         this.dom = document.createElement("div");
-        this.dom.className = "cm-gutters";
+        this.dom.className = "cm-gutters cm-gutters-before";
         this.dom.setAttribute("aria-hidden", "true");
         this.dom.style.minHeight = (this.view.contentHeight / this.view.scaleY) + "px";
         this.gutters = view.state.facet(activeGutters).map(conf => new SingleGutterView(view, conf));
-        for (let gutter of this.gutters)
-            this.dom.appendChild(gutter.dom);
         this.fixed = !view.state.facet(unfixGutters);
+        for (let gutter of this.gutters) {
+            if (gutter.config.side == "after")
+                this.getDOMAfter().appendChild(gutter.dom);
+            else
+                this.dom.appendChild(gutter.dom);
+        }
         if (this.fixed) {
             // FIXME IE11 fallback, which doesn't support position: sticky,
             // by using position: relative + event handlers that realign the
@@ -14870,6 +15036,17 @@ const gutterView = /*@__PURE__*/ViewPlugin.fromClass(class {
         }
         this.syncGutters(false);
         view.scrollDOM.insertBefore(this.dom, view.contentDOM);
+    }
+    getDOMAfter() {
+        if (!this.domAfter) {
+            this.domAfter = document.createElement("div");
+            this.domAfter.className = "cm-gutters cm-gutters-after";
+            this.domAfter.setAttribute("aria-hidden", "true");
+            this.domAfter.style.minHeight = (this.view.contentHeight / this.view.scaleY) + "px";
+            this.domAfter.style.position = this.fixed ? "sticky" : "";
+            this.view.scrollDOM.appendChild(this.domAfter);
+        }
+        return this.domAfter;
     }
     update(update) {
         if (this.updateGutters(update)) {
@@ -14881,18 +15058,26 @@ const gutterView = /*@__PURE__*/ViewPlugin.fromClass(class {
             this.syncGutters(vpOverlap < (vpB.to - vpB.from) * 0.8);
         }
         if (update.geometryChanged) {
-            this.dom.style.minHeight = (this.view.contentHeight / this.view.scaleY) + "px";
+            let min = (this.view.contentHeight / this.view.scaleY) + "px";
+            this.dom.style.minHeight = min;
+            if (this.domAfter)
+                this.domAfter.style.minHeight = min;
         }
         if (this.view.state.facet(unfixGutters) != !this.fixed) {
             this.fixed = !this.fixed;
             this.dom.style.position = this.fixed ? "sticky" : "";
+            if (this.domAfter)
+                this.domAfter.style.position = this.fixed ? "sticky" : "";
         }
         this.prevViewport = update.view.viewport;
     }
     syncGutters(detach) {
         let after = this.dom.nextSibling;
-        if (detach)
+        if (detach) {
             this.dom.remove();
+            if (this.domAfter)
+                this.domAfter.remove();
+        }
         let lineClasses = RangeSet.iter(this.view.state.facet(gutterLineClass), this.view.viewport.from);
         let classSet = [];
         let contexts = this.gutters.map(gutter => new UpdateContext(gutter, this.view.viewport, -this.view.documentPadding.top));
@@ -14926,8 +15111,11 @@ const gutterView = /*@__PURE__*/ViewPlugin.fromClass(class {
         }
         for (let cx of contexts)
             cx.finish();
-        if (detach)
+        if (detach) {
             this.view.scrollDOM.insertBefore(this.dom, after);
+            if (this.domAfter)
+                this.view.scrollDOM.appendChild(this.domAfter);
+        }
     }
     updateGutters(update) {
         let prev = update.startState.facet(activeGutters), cur = update.state.facet(activeGutters);
@@ -14956,8 +15144,12 @@ const gutterView = /*@__PURE__*/ViewPlugin.fromClass(class {
                 if (gutters.indexOf(g) < 0)
                     g.destroy();
             }
-            for (let g of gutters)
-                this.dom.appendChild(g.dom);
+            for (let g of gutters) {
+                if (g.config.side == "after")
+                    this.getDOMAfter().appendChild(g.dom);
+                else
+                    this.dom.appendChild(g.dom);
+            }
             this.gutters = gutters;
         }
         return change;
@@ -14966,15 +15158,18 @@ const gutterView = /*@__PURE__*/ViewPlugin.fromClass(class {
         for (let view of this.gutters)
             view.destroy();
         this.dom.remove();
+        if (this.domAfter)
+            this.domAfter.remove();
     }
 }, {
     provide: plugin => EditorView.scrollMargins.of(view => {
         let value = view.plugin(plugin);
         if (!value || value.gutters.length == 0 || !value.fixed)
             return null;
+        let before = value.dom.offsetWidth * view.scaleX, after = value.domAfter ? value.domAfter.offsetWidth * view.scaleX : 0;
         return view.textDirection == Direction.LTR
-            ? { left: value.dom.offsetWidth * view.scaleX }
-            : { right: value.dom.offsetWidth * view.scaleX };
+            ? { left: before, right: after }
+            : { right: before, left: after };
     })
 });
 function asArray(val) { return (Array.isArray(val) ? val : [val]); }
@@ -15216,7 +15411,8 @@ const lineNumberGutter = /*@__PURE__*/activeGutters.compute([lineNumberConfig], 
         let max = formatNumber(update.view, maxLineNumber(update.view.state.doc.lines));
         return max == spacer.number ? spacer : new NumberMarker(max);
     },
-    domEventHandlers: state.facet(lineNumberConfig).domEventHandlers
+    domEventHandlers: state.facet(lineNumberConfig).domEventHandlers,
+    side: "before"
 }));
 /**
 Create a line number gutter extension.
@@ -21133,34 +21329,6 @@ const defaultKeymap = /*@__PURE__*/[
     { key: "Alt-A", run: toggleBlockComment },
     { key: "Ctrl-m", mac: "Shift-Alt-m", run: toggleTabFocusMode },
 ].concat(standardKeymap);
-
-function crelt() {
-  var elt = arguments[0];
-  if (typeof elt == "string") elt = document.createElement(elt);
-  var i = 1, next = arguments[1];
-  if (next && typeof next == "object" && next.nodeType == null && !Array.isArray(next)) {
-    for (var name in next) if (Object.prototype.hasOwnProperty.call(next, name)) {
-      var value = next[name];
-      if (typeof value == "string") elt.setAttribute(name, value);
-      else if (value != null) elt[name] = value;
-    }
-    i++;
-  }
-  for (; i < arguments.length; i++) add(elt, arguments[i]);
-  return elt
-}
-
-function add(elt, child) {
-  if (typeof child == "string") {
-    elt.appendChild(document.createTextNode(child));
-  } else if (child == null) ; else if (child.nodeType != null) {
-    elt.appendChild(child);
-  } else if (Array.isArray(child)) {
-    for (var i = 0; i < child.length; i++) add(elt, child[i]);
-  } else {
-    throw new RangeError("Unsupported child node: " + child)
-  }
-}
 
 const basicNormalize = typeof String.prototype.normalize == "function"
     ? x => x.normalize("NFKD") : x => x;

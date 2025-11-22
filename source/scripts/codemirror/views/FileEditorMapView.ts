@@ -17,13 +17,15 @@ export class FileEditorMapView implements BaseView {
 
   public readonly displayElement: HTMLElement;
   readonly #isReadonly: boolean;
+  readonly #fileModifiedCallback?: (this: void, pathToFile: string) => void;
 
   constructor(
     panelSetId: string,
     isReadonly: boolean,
     parentElement: HTMLElement,
 
-    webFS: OPFSWebFileSystemIfc
+    webFS: OPFSWebFileSystemIfc,
+    fileModifiedCallback: ((this: void, pathToFile: string) => void) | undefined,
   )
   {
     this.#isReadonly = isReadonly;
@@ -34,6 +36,7 @@ export class FileEditorMapView implements BaseView {
     this.#panelsView = new TabPanelsView(panelSetId);
 
     this.#webFS = webFS;
+    this.#fileModifiedCallback = fileModifiedCallback;
   }
 
   dispose(): void {
@@ -63,9 +66,21 @@ export class FileEditorMapView implements BaseView {
       throw new Error("unknown file path: " + filePath);
     }
 
-    const editorPanelView = new EditorPanelView(filePath, contents, this.#isReadonly || forceReadonly);
+    const editorPanelView = new EditorPanelView(
+      filePath, contents, this.#isReadonly || forceReadonly
+    );
+    if (this.#fileModifiedCallback) {
+      editorPanelView.setDocChangedCallback(() => this.#fileModifiedCallback!(filePath));
+    }
     this.displayElement.append(editorPanelView.displayElement);
     this.#panelsView.addPanel(filePath, editorPanelView);
+  }
+
+  public getContentsFromEditor(
+    filePath: string
+  ): string | undefined
+  {
+    return this.#panelsView.getPanel(filePath)?.getContents();
   }
 
   public selectFile(filePath: string) {
@@ -74,16 +89,6 @@ export class FileEditorMapView implements BaseView {
 
   public scrollToLine(lineNumber: number): void {
     this.#panelsView.currentPanel!.scrollToLine(lineNumber);
-  }
-
-  public async updateSelectedFile(): Promise<void> {
-    const currentPanel: EditorPanelView | undefined = this.#panelsView.currentPanel;
-    if (!currentPanel)
-      return;
-    const pathToFile: string = this.#panelsView.activeViewKey!;
-    const fileContents: string = currentPanel.getContents();
-
-    await this.#webFS.writeFileDeep(pathToFile, fileContents);
   }
 
   public clearPanels(): void {

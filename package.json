@@ -35,6 +35,7 @@
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.3",
     "@codemirror/lang-json": "^6.0.1",
+    "@codemirror/view": "^6.38.8",
     "@dagrejs/graphlib": "^2.2.4",
     "@engine262/engine262": "^0.0.1-eacb4e2fa7f362c22d5a754ca1bf853d28e69258",
     "codemirror": "^6.0.1",

@@ -5,13 +5,15 @@ export class FileEditorMapView {
     #webFS;
     displayElement;
     #isReadonly;
-    constructor(panelSetId, isReadonly, parentElement, webFS) {
+    #fileModifiedCallback;
+    constructor(panelSetId, isReadonly, parentElement, webFS, fileModifiedCallback) {
         this.#isReadonly = isReadonly;
         this.displayElement = document.createElement("tab-panels");
         this.displayElement.id = panelSetId;
         parentElement.append(this.displayElement);
         this.#panelsView = new TabPanelsView(panelSetId);
         this.#webFS = webFS;
+        this.#fileModifiedCallback = fileModifiedCallback;
     }
     dispose() {
         this.displayElement.remove();
@@ -33,22 +35,20 @@ export class FileEditorMapView {
             throw new Error("unknown file path: " + filePath);
         }
         const editorPanelView = new EditorPanelView(filePath, contents, this.#isReadonly || forceReadonly);
+        if (this.#fileModifiedCallback) {
+            editorPanelView.setDocChangedCallback(() => this.#fileModifiedCallback(filePath));
+        }
         this.displayElement.append(editorPanelView.displayElement);
         this.#panelsView.addPanel(filePath, editorPanelView);
+    }
+    getContentsFromEditor(filePath) {
+        return this.#panelsView.getPanel(filePath)?.getContents();
     }
     selectFile(filePath) {
         this.#panelsView.activeViewKey = filePath;
     }
     scrollToLine(lineNumber) {
         this.#panelsView.currentPanel.scrollToLine(lineNumber);
-    }
-    async updateSelectedFile() {
-        const currentPanel = this.#panelsView.currentPanel;
-        if (!currentPanel)
-            return;
-        const pathToFile = this.#panelsView.activeViewKey;
-        const fileContents = currentPanel.getContents();
-        await this.#webFS.writeFileDeep(pathToFile, fileContents);
     }
     clearPanels() {
         this.#panelsView.clearPanels();

@@ -1,5 +1,7 @@
 //#region preamble
 import { FileEditorMapView } from "../codemirror/views/FileEditorMapView.js";
+import { AwaitedMap } from "../utilities/AwaitedMap.js";
+import { ThrottleTimer } from "../utilities/ThrottleTimer.js";
 import { ClipboardController } from "./clipboardController.js";
 import { FileSystemMap, } from "./FileSystemMap.js";
 import { FileSystemContextMenu } from "./contextMenu.js";
@@ -18,6 +20,8 @@ export class FileSystemController {
     isReadOnly;
     displayElement;
     #webFS;
+    #dirtyFilesSet = new Set;
+    #fileThrottle;
     #filesCheckedSet = new Set;
     filesCheckedSet = this.#filesCheckedSet;
     #fileToRowMap;
@@ -37,12 +41,33 @@ export class FileSystemController {
             this.#addFileEventHandlers(fullPath, fileView);
         }
         this.#clipboardController = new ClipboardController(fileSystemElement, webFS);
-        this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS);
+        {
+            const callback = this.#docChangedCallback.bind(this);
+            this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS, callback);
+        }
+        this.#fileThrottle = new ThrottleTimer(250, this.#saveThrottleCallback.bind(this));
     }
     dispose() {
         this.displayElement.remove();
         this.#fileSystemView.clearRowMap();
         this.editorMapView.dispose();
+    }
+    #docChangedCallback(pathToFile) {
+        this.#dirtyFilesSet.add(pathToFile);
+        this.#fileThrottle.start();
+    }
+    async #saveThrottleCallback() {
+        if (this.#dirtyFilesSet.size === 0)
+            return;
+        const allPaths = Array.from(this.#dirtyFilesSet);
+        this.#dirtyFilesSet.clear();
+        const map = new AwaitedMap();
+        for (const pathToFile of allPaths) {
+            const contents = this.editorMapView.getContentsFromEditor(pathToFile);
+            map.set(pathToFile, this.#webFS.writeFileDeep(pathToFile, contents));
+        }
+        await map.allResolved();
+        console.log("at " + new Date() + ", wrote files: " + JSON.stringify(allPaths));
     }
     #fileCheckToggled(pathToFile, isChecked) {
         if (isChecked)
@@ -65,7 +90,7 @@ export class FileSystemController {
         if (event) {
             event.stopPropagation();
         }
-        await this.editorMapView.updateSelectedFile();
+        await this.#fileThrottle.flush();
         if (!this.editorMapView.hasEditorForPath(fullPath)) {
             const forceReadonly = fullPath.startsWith(ClipboardController.rowName);
             await this.editorMapView.addEditorForPath(fullPath, forceReadonly);
@@ -84,7 +109,8 @@ export class FileSystemController {
         this.editorMapView.scrollToLine(lineNumber);
     }
     async updateSelectedFile() {
-        return this.editorMapView.updateSelectedFile();
+        this.#fileThrottle.clear();
+        await this.#saveThrottleCallback();
     }
     // FileSystemControllerIfc
     getTreeRowsElement() {

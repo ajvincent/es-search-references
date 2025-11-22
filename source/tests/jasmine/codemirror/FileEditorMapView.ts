@@ -44,7 +44,7 @@ describe("FileEditorMapView", () => {
   });
 
   it("provides CodeMirror editors and shows the right one", async () => {
-    const mapView = new FileEditorMapView("FileEditorMapView-test", false, fieldset, webFS);
+    const mapView = new FileEditorMapView("FileEditorMapView-test", false, fieldset, webFS, () => { return undefined });
 
     await Promise.all([
       mapView.addEditorForPath("one://two/three.js", true),
