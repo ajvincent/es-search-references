@@ -152,10 +152,6 @@ export class FileSystemView {
         return newRowView;
     }
     addExistingFileEntries(currentDirectory, leafName, newRecord) {
-        let pathToFile = currentDirectory;
-        if (currentDirectory.endsWith("://") === false)
-            pathToFile += "/";
-        pathToFile += leafName;
         const isDirectory = Boolean(newRecord);
         const row = this.addNewFile(currentDirectory, leafName, isDirectory);
         if (newRecord) {

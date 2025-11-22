@@ -54,6 +54,6 @@ implements OPFSFileSystemManagerIfc
 
   async terminate(): Promise<void> {
     await this[REQUEST_ASYNC_METHOD]("terminate", []);
-    super.terminate();
+    await super.terminate();
   }
 }

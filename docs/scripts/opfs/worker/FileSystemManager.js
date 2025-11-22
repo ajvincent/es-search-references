@@ -10,7 +10,8 @@ class OPFSFileSystemManagerWorker extends DirectoryWorker {
             topDir.getDirectoryHandle("clipboard", { create: true }),
         ]);
         const indexMap = await AsyncJSONMap.build(indexFile);
-        void (new OPFSFileSystemManagerWorker(topDir + "/filesystems", systemsDir, indexMap));
+        const rootPath = DirectoryWorker[GET_ROOT_DIR_PATH]();
+        void (new OPFSFileSystemManagerWorker(rootPath + "/filesystems", systemsDir, indexMap));
         void (clipboardDir);
         WorkerGlobal.postMessage("initialized");
     }

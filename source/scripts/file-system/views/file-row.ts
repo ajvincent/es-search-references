@@ -12,10 +12,10 @@ export class FileRowView extends BaseFileRowView {
   }
 
   public get checkboxElement(): HTMLInputElement | null {
-    return this.rowElement!.querySelector(`:scope > input[type="checkbox"]`);
+    return this.rowElement.querySelector(`:scope > input[type="checkbox"]`);
   }
   public get radioElement(): HTMLInputElement | null {
-    return this.rowElement!.querySelector(`:scope > input[type="radio"]`);
+    return this.rowElement.querySelector(`:scope > input[type="radio"]`);
   }
 
   private buildCheckbox(): HTMLInputElement {

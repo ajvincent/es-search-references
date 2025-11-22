@@ -7,7 +7,7 @@ export class SearchKeyRowView extends TreeRowView {
   constructor(depth: number, searchKey: string) {
     super(depth, false, searchKey);
     this.addCells();
-    this.rowElement!.classList.add("searchkey");
+    this.rowElement.classList.add("searchkey");
   }
 
   protected getCellElements(): HTMLElement[] {
@@ -17,10 +17,10 @@ export class SearchKeyRowView extends TreeRowView {
   }
 
   setSelected(): void {
-    this.rowElement!.classList.add("selected");
+    this.rowElement.classList.add("selected");
   }
 
   clearSelected(): void {
-    this.rowElement!.classList.remove("selected");
+    this.rowElement.classList.remove("selected");
   }
 }

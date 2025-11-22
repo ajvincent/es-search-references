@@ -21,7 +21,7 @@ export class FileSystemClipboard {
             const name = await FileSystemUtilities.readFile(fileHandle);
             return name === "" ? null : name;
         }
-        catch (ex) {
+        catch {
             return Promise.resolve(null);
         }
     }
@@ -56,7 +56,7 @@ export class FileSystemClipboard {
         try {
             child = await sourceDirectory.getDirectoryHandle(name, { create: false });
         }
-        catch (ex) {
+        catch {
             child = await sourceDirectory.getFileHandle(name, { create: false });
         }
         if (child.kind === "directory")
@@ -66,7 +66,7 @@ export class FileSystemClipboard {
         }
         await this.#writeIndexName(newClipboardName);
         if (oldClipboardName)
-            this.#topDir.removeEntry(oldClipboardName, { recursive: true });
+            await this.#topDir.removeEntry(oldClipboardName, { recursive: true });
     }
     async copyTo(targetDirectory) {
         const clipboardName = await this.#getIndexName();
@@ -85,7 +85,7 @@ export class FileSystemClipboard {
         const clipboardName = await this.#getIndexName();
         if (clipboardName) {
             await this.#writeIndexName("");
-            this.#topDir.removeEntry(clipboardName, { recursive: true });
+            await this.#topDir.removeEntry(clipboardName, { recursive: true });
         }
     }
 }

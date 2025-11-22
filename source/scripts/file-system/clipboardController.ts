@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import type {
   CTXMAction,
 } from "../../lib/packages/ctxmenu.js";
@@ -96,7 +97,7 @@ export class ClipboardController {
   readonly #clearItem: CTXMAction = {
     text: "Clear Clipboard",
     disabled: true,
-    action: async (ev: MouseEvent) => {
+    action: async () => {
       await this.#webFS.clearClipboard();
       await this.rebuild();
     }

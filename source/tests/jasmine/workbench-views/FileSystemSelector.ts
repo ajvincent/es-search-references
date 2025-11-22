@@ -26,7 +26,6 @@ import {
 describe("FileSystemSelectorView", () => {
   const dirPromise = getTempDirAndCleanup("opfs_FrontEnd");
   const pathToTempDir = getResolvedTempDirPath("opfs_FrontEnd");
-  let tempDir: FileSystemDirectoryHandle;
   let frontEnd: OPFSFrontEnd;
 
   let fieldset: HTMLFieldSetElement;
@@ -34,7 +33,7 @@ describe("FileSystemSelectorView", () => {
   let controlsOption: HTMLOptionElement;
 
   beforeAll(async () => {
-    tempDir = await dirPromise;
+    await dirPromise;
     frontEnd = await OPFSFrontEnd.build(pathToTempDir);
 
     fieldset = getTempFieldset("FileSystemSelectorView tests");
@@ -47,8 +46,8 @@ describe("FileSystemSelectorView", () => {
   });
 
   it("can reflect real file systems and execute callbacks", async () => {
-    const controlsSpy = jasmine.createSpy();
-    const selectSpy = jasmine.createSpy();
+    const controlsSpy = jasmine.createSpy<(arg: string) => void>();
+    const selectSpy = jasmine.createSpy<(uuid: UUID) => void>();
 
     function resetPending(): void {
       controlsSpy.calls.reset();

@@ -24,7 +24,7 @@ extends DirectoryWorker<OPFSFileSystemManagerIfc>
 implements OPFSFileSystemManagerIfc
 {
   static async build(): Promise<void> {
-    const topDir = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
+    const topDir: FileSystemDirectoryHandle = await DirectoryWorker[GET_ROOT_DIR_METHOD]();
 
     const [systemsDir, indexFile, clipboardDir] = await Promise.all([
       topDir.getDirectoryHandle("filesystems", { create: true }),
@@ -34,7 +34,8 @@ implements OPFSFileSystemManagerIfc
 
     const indexMap = await AsyncJSONMap.build<UUID, string>(indexFile);
 
-    void(new OPFSFileSystemManagerWorker(topDir + "/filesystems", systemsDir, indexMap));
+    const rootPath: string = DirectoryWorker[GET_ROOT_DIR_PATH]();
+    void(new OPFSFileSystemManagerWorker(rootPath + "/filesystems", systemsDir, indexMap));
     void(clipboardDir);
     WorkerGlobal.postMessage("initialized");
   }

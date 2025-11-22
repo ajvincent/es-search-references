@@ -17,7 +17,7 @@ export class DirectoryWorker {
         return rootDir;
     }
     constructor() {
-        WorkerGlobal.onmessage = event => this.#callAsync(event.data);
+        WorkerGlobal.onmessage = (event) => this.#callAsync(event.data);
     }
     // Worker support
     async #callAsync(requestMessage) {
@@ -30,6 +30,7 @@ export class DirectoryWorker {
                 throw new Error("service is not a method: " + requestMessage.serviceName);
             }
             // @ts-expect-error assume the service exists
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
             const result = await this[requestMessage.serviceName](...requestMessage.parameters);
             // @ts-expect-error merging the types back together is troublesome, but this works for each type... I think
             const fulfilledMessage = {
@@ -41,7 +42,7 @@ export class DirectoryWorker {
             WorkerGlobal.postMessage(fulfilledMessage);
         }
         catch (ex) {
-            // @ts-expect-error
+            // @ts-expect-error we've formatted this correctly as far as I can tell
             const rejectedMessage = {
                 serviceName: requestMessage.serviceName,
                 uuid: requestMessage.uuid,

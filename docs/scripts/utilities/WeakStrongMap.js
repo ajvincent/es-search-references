@@ -15,7 +15,7 @@ export default class WeakStrongMap {
      * @returns True if we found the value and deleted it.
      */
     delete(weakKey, strongKey) {
-        let innerMap = this.#root.get(weakKey);
+        const innerMap = this.#root.get(weakKey);
         if (!innerMap)
             return false;
         const rv = innerMap.delete(strongKey);

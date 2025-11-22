@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export type UUID = ReturnType<Crypto["randomUUID"]>;
 export type FileSystemsRecords = { [ key: UUID ]: string };
 

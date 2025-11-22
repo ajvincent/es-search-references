@@ -60,6 +60,7 @@ export class FileSystemSetView {
         this.targetInput = this.#getElement("file-system-target");
         this.submitButton = this.#getElement("filesystem-submit");
         this.#sourceSelectorView = new FileSystemSelectorView(this.sourceSelector, (uuid) => {
+            void uuid;
         }, () => null);
         this.operationSelect.onchange = this.#handleOperationSelect.bind(this);
         this.targetInput.onchange = this.#customValidateTarget.bind(this);
@@ -68,7 +69,7 @@ export class FileSystemSetView {
         throw new Error("not implemented, this is a singleton");
     }
     handleActivated() {
-        this.updateExistingSystemSelector();
+        void this.updateExistingSystemSelector();
     }
     ;
     async #handleOperationSelect(event) {
@@ -122,7 +123,7 @@ export class FileSystemSetView {
             return undefined;
         return value;
     }
-    #customValidateTarget(event) {
+    #customValidateTarget() {
         const { value } = this.targetInput;
         if (value === _a.#referenceFSLabel || value === _a.#controlsLabel) {
             this.targetInput.setCustomValidity("This file system name is reserved.");

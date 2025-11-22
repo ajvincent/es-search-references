@@ -75,7 +75,7 @@ export abstract class TreeRowView {
   }
 
   public prependRow(rowView: TreeRowView): void {
-    this.rowElement!.insertRow(rowView.rowElement!, this.#childRowViews[0]?.rowElement);
+    this.rowElement.insertRow(rowView.rowElement, this.#childRowViews[0]?.rowElement);
     this.#childRowViews.unshift(rowView);
   }
 
@@ -84,7 +84,7 @@ export abstract class TreeRowView {
     const newLabel: string = rowView.primaryLabel;
     let index = 0;
 
-    let lastChildRow = this.#childRowViews.at(-1);
+    const lastChildRow = this.#childRowViews.at(-1);
     if (!lastChildRow || lastChildRow.primaryLabel.localeCompare(newLabel) < 0) {
       this.addRow(rowView);
       return;
@@ -101,7 +101,7 @@ export abstract class TreeRowView {
     }
 
     this.#childRowViews.splice(index, 0, rowView);
-    this.rowElement!.insertRow(rowView.rowElement!, referenceRow?.rowElement);
+    this.rowElement.insertRow(rowView.rowElement, referenceRow?.rowElement);
   }
 
   public removeRow(rowView: TreeRowView): void {
@@ -113,16 +113,16 @@ export abstract class TreeRowView {
   }
 
   public addRow(rowView: TreeRowView): void {
-    this.rowElement!.addRow(rowView.rowElement!);
+    this.rowElement.addRow(rowView.rowElement);
     this.#childRowViews.push(rowView);
   }
 
   public get isCollapsed(): boolean {
-    return this.rowElement!.isCollapsed;
+    return this.rowElement.isCollapsed;
   }
 
   public toggleCollapsed(): void {
-    this.rowElement!.toggleCollapsed();
+    this.rowElement.toggleCollapsed();
   }
 
   #handleLabelClick(event: MouseEvent): void {

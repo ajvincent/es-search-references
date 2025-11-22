@@ -28,12 +28,12 @@ import {
 describe("FileEditorMapView", () => {
   const dirPromise = getTempDirAndCleanup("codemirror_FileEditorMapView");
   const pathToTempDir = getResolvedTempDirPath("codemirror_FileEditorMapView");
-  let tempDir: FileSystemDirectoryHandle;
   let webFS: OPFSWebFileSystemIfc;
   let fieldset: HTMLFieldSetElement;
 
   beforeAll(async () => {
-    tempDir = await dirPromise;
+    await dirPromise;
+
     const frontEnd: OPFSFrontEnd = await OPFSFrontEnd.build(pathToTempDir);
     const uuid = await frontEnd.buildEmpty("FileEditorMapView");
     webFS = await frontEnd.getWebFS(uuid);

@@ -17,12 +17,10 @@ import {
 
 describe("OPFS/WebFileSystem", () => {
   const dirPromise = getTempDirAndCleanup("opfs_WebFileSystem");
-  let tempDir: FileSystemDirectoryHandle;
-
   let WFS: OPFSWebFileSystemIfc;
 
   beforeAll(async () => {
-    tempDir = await dirPromise;
+    await dirPromise;
   });
 
   it("can preserve and echo an index", async () => {

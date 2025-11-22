@@ -49,6 +49,8 @@ export class SearchDriver {
   {
     const config = new SearchLogsConfiguration;
     const inputs = new WebGuestRealmInputs(pathToFile, this.#fileMap);
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const allSearches: ReadonlyMap<string, dagre.graphlib.Graph | null> = await runSearchesInGuestEngine(inputs, config);
 
     const resultsMap = new DefaultMap<string, SearchResults>(() => new SearchResults);

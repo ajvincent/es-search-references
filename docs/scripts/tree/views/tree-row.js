@@ -60,7 +60,7 @@ export class TreeRowView {
         let referenceRow;
         const newLabel = rowView.primaryLabel;
         let index = 0;
-        let lastChildRow = this.#childRowViews.at(-1);
+        const lastChildRow = this.#childRowViews.at(-1);
         if (!lastChildRow || lastChildRow.primaryLabel.localeCompare(newLabel) < 0) {
             this.addRow(rowView);
             return;

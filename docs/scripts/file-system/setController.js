@@ -86,7 +86,7 @@ export class FileSystemSetController {
             await this.getFileEntries();
             this.view.fileUploadPicker.setCustomValidity("");
         }
-        catch (ex) {
+        catch {
             this.view.fileUploadPicker.setCustomValidity("ZIP file is not valid for upload.  Check the contents of the ZIP file to ensure they match the specification below.");
         }
         finally {

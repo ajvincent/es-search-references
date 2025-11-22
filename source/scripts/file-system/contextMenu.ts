@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import "../../lib/packages/ctxmenu.js";
 
 import type {
@@ -86,7 +87,7 @@ export class FileSystemContextMenu {
     const treeRows: HTMLElement = this.#controller.getTreeRowsElement();
     treeRows.addEventListener(
       "click",
-      event => this.#hideContextMenus(event),
+      () => this.#hideContextMenus(),
       FileSystemContextMenu.#CAPTURE_PASSIVE
     );
   }
@@ -212,14 +213,14 @@ export class FileSystemContextMenu {
   readonly #cutItem: CTXMAction = {
     text: "Cut",
     disabled: true,
-    action: async (ev: MouseEvent) => {
+    action: async () => {
       await this.#controller.copyToClipboard(this.#showArguments!.pathToFile, true);
     },
   };
 
   readonly #copyItem: CTXMAction = {
     text: "Copy",
-    action: async (ev: MouseEvent) => {
+    action: async () => {
       await this.#controller.copyToClipboard(this.#showArguments!.pathToFile, false);
     },
   };
@@ -227,7 +228,7 @@ export class FileSystemContextMenu {
   readonly #pasteItem: CTXMAction = {
     text: "Paste",
     disabled: true,
-    action: async (ev: MouseEvent) => {
+    action: async () => {
       const {
         pathToFile,
         clipboardContentFileName,
@@ -242,7 +243,7 @@ export class FileSystemContextMenu {
   readonly #deleteItem: CTXMAction = {
     text: "Delete",
     disabled: true,
-    action: async (ev) => {
+    action: async () => {
       await this.#controller.deleteFile(this.#showArguments!.pathToFile);
     },
   }
@@ -269,7 +270,7 @@ export class FileSystemContextMenu {
 
   #renameFile(newFileName: string): void {
     window.ctxmenu.hide();
-    this.#controller.renameFile(this.#showArguments!.pathToFile, newFileName);
+    void this.#controller.renameFile(this.#showArguments!.pathToFile, newFileName);
   }
 
   #contextMenuConfig: CTXConfig = {
@@ -309,7 +310,7 @@ export class FileSystemContextMenu {
     );
   }
 
-  #hideContextMenus(event?: MouseEvent): void {
+  #hideContextMenus(): void {
     // do nothing (for now)
   }
 }

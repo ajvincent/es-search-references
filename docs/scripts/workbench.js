@@ -28,9 +28,11 @@ class Workbench_Base {
     constructor(frontEnd) {
         this.#frontEnd = frontEnd;
         this.#displayElement = document.getElementById("workbench");
-        this.#fsSelector = new FileSystemSelectorView(document.getElementById("workspace-selector"), uuid => this.#onWorkspaceSelect(uuid), () => this.#onFileSystemControlsSelect());
+        this.#fsSelector = new FileSystemSelectorView(document.getElementById("workspace-selector"), uuid => {
+            void this.#onWorkspaceSelect(uuid);
+        }, () => this.#onFileSystemControlsSelect());
         if (document.readyState === "complete")
-            Promise.resolve().then(() => this.#initialize());
+            void Promise.resolve().then(() => this.#initialize());
         else
             window.onload = () => this.#initialize();
     }
@@ -152,7 +154,7 @@ class Workbench_Base {
         const url = URL.createObjectURL(blob);
         const { promise, resolve } = Promise.withResolvers();
         const form = document.getElementById("exportFileForm");
-        form.onsubmit = event => resolve();
+        form.onsubmit = () => resolve();
         const downloadLink = document.getElementById("downloadZipLink");
         downloadLink.href = url;
         const dialog = document.getElementById("exportFileDialog");

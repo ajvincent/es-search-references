@@ -31,7 +31,10 @@ const FileSystemUtilities = {
     ) => Promisable<void>
   ): Promise<void>
   {
-    for await (let [key, value] of directory.entries()) {
+    for await (const entry of directory.entries()) {
+      let key: string = entry[0];
+      const value: FileSystemHandle = entry[1];
+
       if (excludeDelimiter)
         key = pathToCurrentDirectory + key;
       else

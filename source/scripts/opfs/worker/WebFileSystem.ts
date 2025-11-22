@@ -43,7 +43,7 @@ implements OPFSWebFileSystemIfc
       topDir.getDirectoryHandle("urls", { create: true })
     ]);
 
-    let rootDir = await WorkerGlobal.navigator.storage.getDirectory();
+    const rootDir = await WorkerGlobal.navigator.storage.getDirectory();
     const clipboardDir = await this.#getDirectoryDeep(
       rootDir,
       this[SEARCH_PARAMS].get("pathToClipboardDir")!.split("/"),
@@ -84,7 +84,9 @@ implements OPFSWebFileSystemIfc
   }
 
   static #fileEntryComparator(
-    a: [string, FileSystemHandle], b: [string, FileSystemHandle]
+    this: void,
+    a: [string, FileSystemHandle],
+    b: [string, FileSystemHandle]
   ): number
   {
     return a[0].localeCompare(b[0]);
@@ -131,7 +133,7 @@ implements OPFSWebFileSystemIfc
     dirRecord: TopDirectoryRecord
   ): Promise<void>
   {
-    let promisesSet = new Set<Promise<void>>;
+    const promisesSet = new Set<Promise<void>>;
     promisesSet.add(this.#addRecordsRecursive(this.#packagesDir, dirRecord.packages, ""));
     promisesSet.add(this.#addRecordsRecursive(this.#urlsDir.rawDirectory, dirRecord.urls, ""));
 
@@ -300,7 +302,7 @@ implements OPFSWebFileSystemIfc
     try {
       child = await sourceDirHandle.getDirectoryHandle(sourceLeafName, { create: false });
     }
-    catch (ex) {
+    catch {
       child = await sourceDirHandle.getFileHandle(sourceLeafName, { create: false });
     }
 

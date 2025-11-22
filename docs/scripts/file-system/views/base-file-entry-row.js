@@ -14,7 +14,7 @@ export class BaseFileEntryRowView extends TreeRowView {
         this.addCells();
         if (fsControllerCallbacks) {
             this.rowElement.addEventListener("contextmenu", event => {
-                fsControllerCallbacks.showFSContextMenu(event, this.#fullPath, isDirectory);
+                void fsControllerCallbacks.showFSContextMenu(event, this.#fullPath, isDirectory);
             });
         }
     }

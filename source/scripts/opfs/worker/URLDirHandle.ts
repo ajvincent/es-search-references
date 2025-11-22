@@ -19,10 +19,7 @@ export class URLDirHandle implements FileSystemDirectoryHandle {
     throw new Error(`name must end with "://"`);
   }
 
-  getFileHandle(
-    name: string,
-    options?: FileSystemGetFileOptions
-  ): Promise<FileSystemFileHandle>
+  getFileHandle(): Promise<FileSystemFileHandle>
   {
     throw new Error("You can't get a file handle from a URL directory.  These represent protocols.");
   }

@@ -19,17 +19,14 @@ import type {
 describe("OPFS/FrontEnd", () => {
   const dirPromise = getTempDirAndCleanup("opfs_FrontEnd");
   const pathToTempDir = getResolvedTempDirPath("opfs_FrontEnd");
-  let tempDir: FileSystemDirectoryHandle;
   let frontEnd: OPFSFrontEnd;
 
   beforeAll(async () => {
-    tempDir = await dirPromise;
+    await dirPromise;
     frontEnd = await OPFSFrontEnd.build(pathToTempDir);
   });
 
   it("generally works", async () => {
-    const frontEnd: OPFSFrontEnd = await OPFSFrontEnd.build(pathToTempDir);
-
     await expectAsync(
       frontEnd.getAvailableSystems().then(records => Reflect.ownKeys(records).length)
     ).toBeResolvedTo(0);

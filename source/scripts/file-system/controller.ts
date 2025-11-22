@@ -134,7 +134,9 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
         rootId, isReadonly, codeMirrorPanelsElement, webFS, callback
       );
     }
-    this.#fileThrottle = new ThrottleTimer(250, this.#saveThrottleCallback.bind(this));
+    this.#fileThrottle = new ThrottleTimer(250, () => {
+      void this.#saveThrottleCallback();
+    });
   }
 
   dispose(): void {
@@ -160,7 +162,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
       map.set(pathToFile, this.#webFS.writeFileDeep(pathToFile, contents));
     }
     await map.allResolved();
-    console.log("at " + new Date() + ", wrote files: " + JSON.stringify(allPaths));
+    console.log("at " + new Date().toLocaleString() + ", wrote files: " + JSON.stringify(allPaths));
   }
 
   #fileCheckToggled(pathToFile: string, isChecked: boolean): void {
@@ -171,14 +173,14 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   }
 
   #addFileEventHandlers(fullPath: string, view: FileRowView): void {
-    view.checkboxElement!.onclick = (ev: MouseEvent): void => {
+    view.checkboxElement!.onclick = (): void => {
       this.#fileCheckToggled(fullPath, view.checkboxElement!.checked);
     };
     view.radioElement!.onclick = (ev: Event): void => {
-      this.#selectFile(fullPath, ev);
+      void this.#selectFile(fullPath, ev);
     };
 
-    view.rowElement!.onclick = (ev: MouseEvent): void => {
+    view.rowElement.onclick = (ev: MouseEvent): void => {
       ev.stopPropagation();
     }
   }
@@ -192,7 +194,8 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
       event.stopPropagation();
     }
 
-    await this.#fileThrottle.flush();
+    this.#fileThrottle.clear();
+    await this.#saveThrottleCallback();
 
     if (!this.editorMapView.hasEditorForPath(fullPath)) {
       const forceReadonly: boolean = fullPath.startsWith(ClipboardController.rowName);
@@ -218,7 +221,7 @@ export class FileSystemController implements BaseView, FSControllerCallbacksIfc 
   ): void
   {
     this.#fileSystemView.showFile(specifier);
-    this.editorMapView!.scrollToLine(lineNumber);
+    this.editorMapView.scrollToLine(lineNumber);
   }
 
   async updateSelectedFile(): Promise<void> {

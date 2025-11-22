@@ -137,7 +137,7 @@ export class FileSystemView<
         if (parentView)
           parentView.addRow(view);
         else
-          this.#treeRowsElement.append(view.rowElement!);
+          this.#treeRowsElement.append(view.rowElement);
       }
     } else if (parentView && this.#fileFilter)
       this.#fileToRowMap.delete(parentView.fullPath, true);
@@ -246,11 +246,6 @@ export class FileSystemView<
     newRecord: DirectoryRecord | null
   ): void
   {
-    let pathToFile: string = currentDirectory;
-    if (currentDirectory.endsWith("://") === false)
-      pathToFile += "/";
-    pathToFile += leafName;
-
     const isDirectory: boolean = Boolean(newRecord);
     const row: FileView | DirectoryView = this.addNewFile(currentDirectory, leafName, isDirectory);
     if (newRecord) {

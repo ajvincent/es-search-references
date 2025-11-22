@@ -61,7 +61,7 @@ export class OPFSFrontEnd {
             throw new Error("this front end is dead");
         }
         this.#isLive = false;
-        let promises = new Set;
+        const promises = new Set;
         for (const webFS of this.#webFsMap.values()) {
             promises.add(webFS.terminate());
         }

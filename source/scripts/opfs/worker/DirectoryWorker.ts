@@ -33,7 +33,9 @@ export class DirectoryWorker<Type> {
   }
 
   constructor() {
-    WorkerGlobal.onmessage = event => this.#callAsync(event.data);
+    WorkerGlobal.onmessage = (
+      event: MessageEvent<RequestMessageUnion<Type>>
+    ) => this.#callAsync(event.data);
   }
 
   // Worker support
@@ -52,7 +54,8 @@ export class DirectoryWorker<Type> {
       }
 
       // @ts-expect-error assume the service exists
-      const result = await this[requestMessage.serviceName](...requestMessage.parameters);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+      const result: string = await this[requestMessage.serviceName](...requestMessage.parameters);
 
       // @ts-expect-error merging the types back together is troublesome, but this works for each type... I think
       const fulfilledMessage: FulfillMessageUnion<Type> = {
@@ -64,7 +67,7 @@ export class DirectoryWorker<Type> {
       WorkerGlobal.postMessage(fulfilledMessage);
     }
     catch (ex) {
-      // @ts-expect-error
+      // @ts-expect-error we've formatted this correctly as far as I can tell
       const rejectedMessage: RejectMessageUnion<Type> = {
         serviceName: requestMessage.serviceName,
         uuid: requestMessage.uuid,

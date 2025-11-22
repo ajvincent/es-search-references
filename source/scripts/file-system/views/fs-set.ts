@@ -83,7 +83,7 @@ export class FileSystemSetView implements BaseView {
     this.#sourceSelectorView = new FileSystemSelectorView(
       this.sourceSelector,
       (uuid: string) => {
-
+        void uuid;
       },
       () => null
     );
@@ -97,7 +97,7 @@ export class FileSystemSetView implements BaseView {
   }
 
   handleActivated(): void {
-    this.updateExistingSystemSelector();
+    void this.updateExistingSystemSelector();
   };
 
   async #handleOperationSelect(event: Event): Promise<void> {
@@ -171,7 +171,7 @@ export class FileSystemSetView implements BaseView {
     return value as unknown as ValidFileOperations;
   }
 
-  #customValidateTarget(event: Event): void {
+  #customValidateTarget(): void {
     const { value } = this.targetInput;
     if (value === FileSystemSetView.#referenceFSLabel || value === FileSystemSetView.#controlsLabel) {
       this.targetInput.setCustomValidity("This file system name is reserved.");

@@ -8,7 +8,7 @@ export interface FSControllerCallbacksIfc {
     event: MouseEvent,
     pathToFile: string,
     isDirectory: boolean
-  ): void;
+  ): Promise<void>;
 
   addNewFile(
     currentDirectory: string,

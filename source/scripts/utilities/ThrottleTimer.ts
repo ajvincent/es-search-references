@@ -32,7 +32,7 @@ export class ThrottleTimer {
     this.#isRunning = false;
   }
 
-  #handleTimeout = () => {
+  #handleTimeout = (): void => {
     this.#isRunning = false;
     this.#clientCallback();
   }

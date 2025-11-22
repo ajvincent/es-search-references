@@ -114,7 +114,7 @@ export class OPFSFrontEnd {
     }
     this.#isLive = false;
 
-    let promises = new Set<Promise<void>>;
+    const promises = new Set<Promise<void>>;
     for (const webFS of this.#webFsMap.values()) {
       promises.add(webFS.terminate());
     }

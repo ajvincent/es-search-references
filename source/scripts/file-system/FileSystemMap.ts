@@ -76,14 +76,18 @@ implements FileSystemWeakKey
   }
 
   static #fileEntryComparator(
-    a: [string, unknown], b: [string, unknown]
+    this: void,
+    a: [string, unknown],
+    b: [string, unknown]
   ): number
   {
     return a[0].localeCompare(b[0]);
   }
 
   static #topLevelEntryComparator(
-    a: [string, unknown], b: [string, unknown]
+    this: void,
+    a: [string, unknown],
+    b: [string, unknown]
   ): number
   {
     const keyA = a[0], keyB = b[0];
@@ -143,7 +147,8 @@ implements FileSystemWeakKey
   {
     const stack: FileSystemWeakKey[] = [this];
 
-    let currentObject: (FileSystemWeakKey | this) = this;
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let currentObject: FileSystemWeakKey = this;
     for (let i = 0; i < sequence.length; i++) {
       const localName: string = sequence[i];
       let nextKey: FileSystemWeakKey | undefined = this.#descendantsMap.get(currentObject, localName);
@@ -181,7 +186,7 @@ implements FileSystemWeakKey
       throw new Error(`There are descendants of "${key}".  Use forceRecursive to clear them all out.`);
     }
 
-    let fileData: LocalFileData<V> | undefined = this.#fileDataMap.get(lastKey);
+    const fileData: LocalFileData<V> | undefined = this.#fileDataMap.get(lastKey);
 
     if (!this.#fileDataMap.delete(lastKey))
       return false;
@@ -251,8 +256,10 @@ implements FileSystemWeakKey
   }
 
   * values(): MapIterator<V> {
-    for (const [key, value] of this[Symbol.iterator]())
+    for (const [key, value] of this[Symbol.iterator]()) {
+      void key;
       yield value;
+    }
   }
 
   [Symbol.iterator](): MapIterator<[string, V]> {

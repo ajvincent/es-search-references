@@ -191,7 +191,7 @@ export class OutputController {
     this.#tabKeys.add(tabKey);
 
     const hash = JSON.stringify({pathToFile, searchKey, tabKey});
-    this.#reportPanels!.addPanel(hash, view);
+    this.#reportPanels.addPanel(hash, view);
 
     if (!this.#selected.pathToFile) {
       this.#selected.pathToFile = pathToFile;

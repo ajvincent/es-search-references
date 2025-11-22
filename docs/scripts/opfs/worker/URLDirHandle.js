@@ -9,7 +9,7 @@ export class URLDirHandle {
             return this.rawDirectory.getDirectoryHandle(name.substring(0, name.length - 3), options);
         throw new Error(`name must end with "://"`);
     }
-    getFileHandle(name, options) {
+    getFileHandle() {
         throw new Error("You can't get a file handle from a URL directory.  These represent protocols.");
     }
     removeEntry(name, options) {

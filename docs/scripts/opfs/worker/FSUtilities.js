@@ -9,7 +9,9 @@ const FileSystemUtilities = {
         await writable.close();
     },
     directoryTraversal: async function (pathToCurrentDirectory, excludeDelimiter, directory, callback) {
-        for await (let [key, value] of directory.entries()) {
+        for await (const entry of directory.entries()) {
+            let key = entry[0];
+            const value = entry[1];
             if (excludeDelimiter)
                 key = pathToCurrentDirectory + key;
             else

@@ -7,7 +7,11 @@ import type {
 } from "./svg-graph.js";
 
 export class GraphControlsView implements BaseView {
-  static #getGraphNodeOption(nodeId: string): HTMLOptionElement {
+  static #getGraphNodeOption(
+    this: void,
+    nodeId: string
+  ): HTMLOptionElement
+  {
     return new Option(nodeId, nodeId);
   }
 

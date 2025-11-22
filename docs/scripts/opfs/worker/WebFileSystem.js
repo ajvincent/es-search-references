@@ -12,7 +12,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
             topDir.getDirectoryHandle("packages", { create: true }),
             topDir.getDirectoryHandle("urls", { create: true })
         ]);
-        let rootDir = await WorkerGlobal.navigator.storage.getDirectory();
+        const rootDir = await WorkerGlobal.navigator.storage.getDirectory();
         const clipboardDir = await this.#getDirectoryDeep(rootDir, this[SEARCH_PARAMS].get("pathToClipboardDir").split("/"), true);
         const clipboard = new FileSystemClipboard(clipboardDir);
         void (clipboard.flushOtherDirectories());
@@ -62,7 +62,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
     }
     // OPFSWebFileSystemIfc
     async importDirectoryRecord(dirRecord) {
-        let promisesSet = new Set;
+        const promisesSet = new Set;
         promisesSet.add(this.#addRecordsRecursive(this.#packagesDir, dirRecord.packages, ""));
         promisesSet.add(this.#addRecordsRecursive(this.#urlsDir.rawDirectory, dirRecord.urls, ""));
         await Promise.all(promisesSet);
@@ -156,7 +156,7 @@ export class OPFSWebFileSystemWorker extends DirectoryWorker {
         try {
             child = await sourceDirHandle.getDirectoryHandle(sourceLeafName, { create: false });
         }
-        catch (ex) {
+        catch {
             child = await sourceDirHandle.getFileHandle(sourceLeafName, { create: false });
         }
         if (child.kind === "directory") {

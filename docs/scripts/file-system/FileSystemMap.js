@@ -64,6 +64,7 @@ export class FileSystemMap {
     }
     #getPathQueue(sequence, mustCreate) {
         const stack = [this];
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
         let currentObject = this;
         for (let i = 0; i < sequence.length; i++) {
             const localName = sequence[i];
@@ -98,7 +99,7 @@ export class FileSystemMap {
         if (!forceRecursive && this.#descendantsMap.hasStrongKeys(lastKey)) {
             throw new Error(`There are descendants of "${key}".  Use forceRecursive to clear them all out.`);
         }
-        let fileData = this.#fileDataMap.get(lastKey);
+        const fileData = this.#fileDataMap.get(lastKey);
         if (!this.#fileDataMap.delete(lastKey))
             return false;
         if (fileData)
@@ -157,8 +158,10 @@ export class FileSystemMap {
         }
     }
     *values() {
-        for (const [key, value] of this[Symbol.iterator]())
+        for (const [key, value] of this[Symbol.iterator]()) {
+            void key;
             yield value;
+        }
     }
     [Symbol.iterator]() {
         return this.#recursiveEntries(this, "");

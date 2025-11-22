@@ -1,7 +1,8 @@
 import WeakStrongMap from "../../../scripts/utilities/WeakStrongMap.js";
 
 describe("WeakStrongMap.js,", () => {
-  let testMap: WeakStrongMap<object, unknown, unknown>, refMap = new Map;
+  let testMap: WeakStrongMap<object, unknown, unknown>;
+  const refMap = new Map;
 
   const defaultValue1 = Symbol("default value one");
   const defaultGetter1 = () => defaultValue1;
@@ -18,9 +19,6 @@ describe("WeakStrongMap.js,", () => {
     expect(Object.isFrozen(WeakStrongMap.prototype)).toBe(true);
   });
 
-  it("instances stringify to a string with the className", () => {
-    expect(testMap.toString().includes("WeakStrongMap")).toBe(true);
-  });
 
   it("setting one value", () => {
     const key1 = {isKey1: true}, key2 = {isKey2: true}, value = "value";

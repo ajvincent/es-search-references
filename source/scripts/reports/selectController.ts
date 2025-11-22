@@ -83,7 +83,7 @@ export class ReportSelectController {
     const view = new SearchKeyRowView(fileRowView.depth + 1, searchKey);
     fileRowView.addRow(view);
 
-    view.rowElement!.onclick = this.#handleSearchKeyClick.bind(this, fileKey, searchKey, view);
+    view.rowElement.onclick = this.#handleSearchKeyClick.bind(this, fileKey, searchKey, view);
   }
 
   #handleSearchKeyClick(

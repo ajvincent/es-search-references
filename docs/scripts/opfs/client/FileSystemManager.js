@@ -24,6 +24,6 @@ export class OPFSFileSystemManagerClientImpl extends DirectoryClient {
     }
     async terminate() {
         await this[REQUEST_ASYNC_METHOD]("terminate", []);
-        super.terminate();
+        await super.terminate();
     }
 }

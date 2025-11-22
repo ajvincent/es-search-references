@@ -16,6 +16,7 @@ export class SearchDriver {
     async #runURL(pathToFile) {
         const config = new SearchLogsConfiguration;
         const inputs = new WebGuestRealmInputs(pathToFile, this.#fileMap);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const allSearches = await runSearchesInGuestEngine(inputs, config);
         const resultsMap = new DefaultMap(() => new SearchResults);
         allSearches.forEach((graphOrNull, key) => {

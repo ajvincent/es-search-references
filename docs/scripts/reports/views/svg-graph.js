@@ -24,7 +24,7 @@ export class SVGGraphView {
         this.#graphicsElement = this.displayElement.querySelector(".graph");
         const { promise, resolve } = Promise.withResolvers();
         this.handleActivated = resolve;
-        promise.then(() => this.#createRenderGraph());
+        void promise.then(() => this.#createRenderGraph());
     }
     dispose() {
         this.displayElement.remove();

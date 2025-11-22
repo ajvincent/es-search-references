@@ -41,7 +41,7 @@ export class ClipboardController {
     #clearItem = {
         text: "Clear Clipboard",
         disabled: true,
-        action: async (ev) => {
+        action: async () => {
             await this.#webFS.clearClipboard();
             await this.rebuild();
         }

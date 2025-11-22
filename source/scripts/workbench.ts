@@ -49,7 +49,6 @@ import {
 } from "./opfs/client/ProjectDir.js";
 
 import type {
-  FileSystemsRecords,
   UUID
 } from "./opfs/types/messages.js";
 
@@ -98,12 +97,14 @@ class Workbench_Base {
 
     this.#fsSelector = new FileSystemSelectorView(
       document.getElementById("workspace-selector") as HTMLSelectElement,
-      uuid => this.#onWorkspaceSelect(uuid),
+      uuid => {
+        void this.#onWorkspaceSelect(uuid);
+      },
       () => this.#onFileSystemControlsSelect(),
     );
 
     if (document.readyState === "complete")
-      Promise.resolve().then(() => this.#initialize());
+      void Promise.resolve().then(() => this.#initialize());
     else
       window.onload = () => this.#initialize();
   }
@@ -165,7 +166,7 @@ class Workbench_Base {
 
   #attachEvents(): void {
     document.getElementById("runSearchesButton")!.onclick = this.#runSearches.bind(this);
-    const tabs = Array.from(document.querySelectorAll(OutputController.tabsSelector)) as HTMLElement[];
+    const tabs: HTMLElement[] = Array.from(document.querySelectorAll(OutputController.tabsSelector));
     for (const tab of tabs) {
       tab.onclick = this.#selectOutputReportTab.bind(this, tab.dataset.tabkey!);
     }
@@ -268,7 +269,7 @@ class Workbench_Base {
 
     const { promise, resolve } = Promise.withResolvers<void>();
     const form = document.getElementById("exportFileForm") as HTMLFormElement;
-    form.onsubmit = event => resolve();
+    form.onsubmit = () => resolve();
 
     const downloadLink = document.getElementById("downloadZipLink") as HTMLAnchorElement;
     downloadLink.href = url;

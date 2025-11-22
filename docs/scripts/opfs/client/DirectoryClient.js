@@ -18,13 +18,13 @@ export class DirectoryClient {
         return promise;
     }
     #worker;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     #uuidToResolversMap = new Map;
     constructor(worker) {
         this.#worker = worker;
-        this.#worker.onmessage = event => this.#processResponse(event.data);
+        this.#worker.onmessage = (event) => this.#processResponse(event.data);
     }
     [REQUEST_ASYNC_METHOD](serviceName, parameters) {
-        // @ts-expect-error
         const message = {
             serviceName,
             uuid: window.crypto.randomUUID(),
@@ -54,5 +54,6 @@ export class DirectoryClient {
             }
             this.#uuidToResolversMap.clear();
         }
+        return Promise.resolve();
     }
 }

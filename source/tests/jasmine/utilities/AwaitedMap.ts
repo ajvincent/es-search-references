@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/prefer-promise-reject-errors */
+
 import {
   AwaitedMap,
   AwaitedMapError,

@@ -1,7 +1,6 @@
 import {
   EnsureStyleRules
 } from "./EnsureStyleRules.js";
-let hasAddedStylesheet = false;
 
 function buildFieldsetStylesheet() {
   EnsureStyleRules(`

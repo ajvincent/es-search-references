@@ -45,7 +45,9 @@ export class FileSystemController {
             const callback = this.#docChangedCallback.bind(this);
             this.editorMapView = new FileEditorMapView(rootId, isReadonly, codeMirrorPanelsElement, webFS, callback);
         }
-        this.#fileThrottle = new ThrottleTimer(250, this.#saveThrottleCallback.bind(this));
+        this.#fileThrottle = new ThrottleTimer(250, () => {
+            void this.#saveThrottleCallback();
+        });
     }
     dispose() {
         this.displayElement.remove();
@@ -67,7 +69,7 @@ export class FileSystemController {
             map.set(pathToFile, this.#webFS.writeFileDeep(pathToFile, contents));
         }
         await map.allResolved();
-        console.log("at " + new Date() + ", wrote files: " + JSON.stringify(allPaths));
+        console.log("at " + new Date().toLocaleString() + ", wrote files: " + JSON.stringify(allPaths));
     }
     #fileCheckToggled(pathToFile, isChecked) {
         if (isChecked)
@@ -76,11 +78,11 @@ export class FileSystemController {
             this.#filesCheckedSet.delete(pathToFile);
     }
     #addFileEventHandlers(fullPath, view) {
-        view.checkboxElement.onclick = (ev) => {
+        view.checkboxElement.onclick = () => {
             this.#fileCheckToggled(fullPath, view.checkboxElement.checked);
         };
         view.radioElement.onclick = (ev) => {
-            this.#selectFile(fullPath, ev);
+            void this.#selectFile(fullPath, ev);
         };
         view.rowElement.onclick = (ev) => {
             ev.stopPropagation();
@@ -90,7 +92,8 @@ export class FileSystemController {
         if (event) {
             event.stopPropagation();
         }
-        await this.#fileThrottle.flush();
+        this.#fileThrottle.clear();
+        await this.#saveThrottleCallback();
         if (!this.editorMapView.hasEditorForPath(fullPath)) {
             const forceReadonly = fullPath.startsWith(ClipboardController.rowName);
             await this.editorMapView.addEditorForPath(fullPath, forceReadonly);

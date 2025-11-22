@@ -56,7 +56,7 @@ export class SVGGraphView implements BaseView, SVGGraphViewIfc {
     const { promise, resolve } = Promise.withResolvers<void>();
     this.handleActivated = resolve;
 
-    promise.then(() => this.#createRenderGraph());
+    void promise.then(() => this.#createRenderGraph());
   }
 
   dispose(): void {

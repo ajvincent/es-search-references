@@ -105,7 +105,7 @@ export class FileSystemSetController {
   }
 
   public async doFileSystemClone(): Promise<void> {
-    const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
+    const sourceUUID: UUID = this.getSourceFileSystem().substring(4) as UUID;
     const newDescription: string = this.getTargetFileDescriptor();
 
     const sourceFS: OPFSWebFileSystemIfc = await this.#fsFrontEnd.getWebFS(sourceUUID);
@@ -117,7 +117,7 @@ export class FileSystemSetController {
   }
 
   public async doFileSystemRename(): Promise<void> {
-    const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
+    const sourceUUID: UUID = this.getSourceFileSystem().substring(4) as UUID;
     const newDescription = this.getTargetFileDescriptor();
     await this.#fsFrontEnd.setDescription(sourceUUID, newDescription);
   }
@@ -153,7 +153,7 @@ export class FileSystemSetController {
       await this.getFileEntries();
       this.view.fileUploadPicker.setCustomValidity("");
     }
-    catch (ex) {
+    catch {
       this.view.fileUploadPicker.setCustomValidity(
         "ZIP file is not valid for upload.  Check the contents of the ZIP file to ensure they match the specification below."
       );
@@ -164,12 +164,12 @@ export class FileSystemSetController {
   }
 
   async getFileEntries(): Promise<TopDirectoryRecord> {
-    const zipFile: File = this.view.fileUploadPicker.files![0]!;
+    const zipFile: File = this.view.fileUploadPicker.files![0];
     return await ZipUtilities.extractFromZip(zipFile);
   }
 
   async getExportedFilesZip(): Promise<File> {
-    const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
+    const sourceUUID: UUID = this.getSourceFileSystem().substring(4) as UUID;
     const sourceFS: OPFSWebFileSystemIfc = await this.#fsFrontEnd.getWebFS(sourceUUID);
     const topRecord: TopDirectoryRecord = await sourceFS.exportDirectoryRecord();
 
@@ -177,7 +177,7 @@ export class FileSystemSetController {
   }
 
   async doFileSystemDelete(): Promise<void> {
-    const sourceUUID: UUID = this.getSourceFileSystem()!.substring(4) as UUID;
+    const sourceUUID: UUID = this.getSourceFileSystem().substring(4) as UUID;
     await this.#fsFrontEnd.getWebFS(sourceUUID);
     await this.#fsFrontEnd.removeWebFS(sourceUUID);
   }

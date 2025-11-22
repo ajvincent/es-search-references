@@ -12,6 +12,7 @@
   },
   "scripts": {
     "clean": "rm -rf dist Gulpfile.js docs/tests",
+    "eslint": "npx eslint source/scripts source/tests",
     "jasmine": "npx jasmine-browser-runner runSpecs",
     "jasmine-debug": "npx jasmine-browser-runner serve",
     "tsc-buildsystem": "echo $PWD && tsc --project ./tsconfig-gulp.json",
@@ -42,6 +43,7 @@
     "fflate": "^0.8.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@rollup/plugin-commonjs": "^28.0.3",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.2",
@@ -51,6 +53,7 @@
     "@types/gulp": "^4.0.17",
     "@types/jasmine": "^5.1.8",
     "@types/node": "^22.18.1",
+    "eslint": "^9.39.1",
     "express": "^5.1.0",
     "gulp": "^5.0.0",
     "gulp-replace": "^1.1.4",
@@ -60,6 +63,7 @@
     "rollup-plugin-dts": "^6.2.1",
     "tslib": "^2.8.1",
     "type-fest": "^4.40.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.47.0"
   }
 }

@@ -40,6 +40,7 @@ export class DirectoryClient<Type>
   }
 
   readonly #worker: Worker;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly #uuidToResolversMap = new Map<UUID, Record<"resolve" | "reject", (value: any) => void>>;
 
   protected constructor(
@@ -47,7 +48,9 @@ export class DirectoryClient<Type>
   )
   {
     this.#worker = worker;
-    this.#worker.onmessage = event => this.#processResponse(event.data);
+    this.#worker.onmessage = (
+      event: MessageEvent<FulfillMessageUnion<Type> | RejectMessageUnion<Type>>
+    ) => this.#processResponse(event.data);
   }
 
   protected [REQUEST_ASYNC_METHOD]<ServiceName extends keyof Type>(
@@ -55,8 +58,8 @@ export class DirectoryClient<Type>
     parameters: WorkerUnionExtract<Type, RequestMessageUnion<Type>, ServiceName>["parameters"]
   ): Promise<WorkerUnionExtract<Type, FulfillMessageUnion<Type>, ServiceName>["result"]>
   {
-    // @ts-expect-error
-    const message: WorkerUnionExtract<Type, RequestMessageUnion<Type>, typeof serviceName> = {
+
+    const message = {
       serviceName,
       uuid: window.crypto.randomUUID(),
       parameters,
@@ -83,7 +86,7 @@ export class DirectoryClient<Type>
     }
   }
 
-  public terminate(): void {
+  public terminate(): Promise<void> {
     this.#worker.terminate();
     if (this.#uuidToResolversMap.size) {
       const err = new Error("worker terminated");
@@ -92,6 +95,7 @@ export class DirectoryClient<Type>
       }
       this.#uuidToResolversMap.clear();
     }
+    return Promise.resolve();
   }
 }
 

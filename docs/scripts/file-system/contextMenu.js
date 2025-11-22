@@ -1,4 +1,5 @@
 var _a;
+/* eslint-disable @typescript-eslint/no-misused-promises */
 import "../../lib/packages/ctxmenu.js";
 export class FileSystemContextMenu {
     static #CAPTURE_PASSIVE = Object.freeze({
@@ -53,7 +54,7 @@ export class FileSystemContextMenu {
             this.#deleteItem,
         ];
         const treeRows = this.#controller.getTreeRowsElement();
-        treeRows.addEventListener("click", event => this.#hideContextMenus(event), _a.#CAPTURE_PASSIVE);
+        treeRows.addEventListener("click", () => this.#hideContextMenus(), _a.#CAPTURE_PASSIVE);
     }
     #siblingNameInUse(localName) {
         if (this.#showArguments.pathIsProtocol)
@@ -147,20 +148,20 @@ export class FileSystemContextMenu {
     #cutItem = {
         text: "Cut",
         disabled: true,
-        action: async (ev) => {
+        action: async () => {
             await this.#controller.copyToClipboard(this.#showArguments.pathToFile, true);
         },
     };
     #copyItem = {
         text: "Copy",
-        action: async (ev) => {
+        action: async () => {
             await this.#controller.copyToClipboard(this.#showArguments.pathToFile, false);
         },
     };
     #pasteItem = {
         text: "Paste",
         disabled: true,
-        action: async (ev) => {
+        action: async () => {
             const { pathToFile, clipboardContentFileName, clipboardContentIsDir } = this.#showArguments;
             await this.#controller.copyFromClipboard(pathToFile, clipboardContentFileName, clipboardContentIsDir);
         },
@@ -168,7 +169,7 @@ export class FileSystemContextMenu {
     #deleteItem = {
         text: "Delete",
         disabled: true,
-        action: async (ev) => {
+        action: async () => {
             await this.#controller.deleteFile(this.#showArguments.pathToFile);
         },
     };
@@ -189,7 +190,7 @@ export class FileSystemContextMenu {
     };
     #renameFile(newFileName) {
         window.ctxmenu.hide();
-        this.#controller.renameFile(this.#showArguments.pathToFile, newFileName);
+        void this.#controller.renameFile(this.#showArguments.pathToFile, newFileName);
     }
     #contextMenuConfig = {
         onHide: () => this.#hideContextMenus(),
@@ -211,7 +212,7 @@ export class FileSystemContextMenu {
         this.#renameItem.disabled = isReadOnly || isReservedName;
         window.ctxmenu.show(this.#menuDefinition, showArgs.event, this.#contextMenuConfig);
     }
-    #hideContextMenus(event) {
+    #hideContextMenus() {
         // do nothing (for now)
     }
 }

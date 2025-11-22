@@ -45,7 +45,7 @@ implements FileSystemValue
       this.rowElement.addEventListener(
         "contextmenu",
         event => {
-          fsControllerCallbacks.showFSContextMenu(event, this.#fullPath, isDirectory);
+          void fsControllerCallbacks.showFSContextMenu(event, this.#fullPath, isDirectory);
         }
       );
     }
@@ -76,12 +76,12 @@ implements FileSystemValue
   }
 
   public registerCollapseClick(): void {
-    this.rowElement!.onclick = this.#toggleCollapsed.bind(this);
+    this.rowElement.onclick = this.#toggleCollapsed.bind(this);
   }
 
   #toggleCollapsed(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    this.rowElement!.toggleCollapsed();
+    this.rowElement.toggleCollapsed();
   }
 }
