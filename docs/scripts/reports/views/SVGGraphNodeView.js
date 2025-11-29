@@ -7,12 +7,6 @@ export const SVGGraphPopupLocation = {
     height: 100,
 };
 export class SVGGraphNodeView {
-    static popupLocation = {
-        x: -150,
-        y: 60,
-        width: 360,
-        height: 100,
-    };
     static #iconAndIsStrongMap = new Map([
         [JSGraphConstants.BuiltInJSTypeName.Object, ["{}", true]],
         [JSGraphConstants.BuiltInJSTypeName.Array, ["[]", true]],
@@ -136,7 +130,10 @@ export class SVGGraphNodeView {
     }
     #buildNameElm(edge) {
         const nameElm = document.createElement("span");
-        nameElm.append(edge.name);
+        let name = edge.name;
+        if (this.#graphView.graph)
+            name = this.#graphView.graph.edge(edge).label ?? edge.name;
+        nameElm.append(name);
         nameElm.classList.add("edge");
         const { isStrongReference } = this.#graphView.graph.edge(edge);
         if (!isStrongReference) {

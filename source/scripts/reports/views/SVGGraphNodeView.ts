@@ -25,13 +25,6 @@ export const SVGGraphPopupLocation: Record<"width" | "height" | "x" | "y", numbe
 };
 
 export class SVGGraphNodeView {
-  static readonly popupLocation: Record<"width" | "height" | "x" | "y", number> = {
-    x: -150,
-    y: 60,
-    width: 360,
-    height: 100,
-  };
-
   static readonly #iconAndIsStrongMap: ReadonlyMap<JSGraphConstants.BuiltInJSTypeName, IconAndIsStrongRef> = new Map([
     [JSGraphConstants.BuiltInJSTypeName.Object, ["{}", true]],
     [JSGraphConstants.BuiltInJSTypeName.Array, ["[]", true]],
@@ -183,7 +176,10 @@ export class SVGGraphNodeView {
 
   #buildNameElm(edge: dagre.Edge): HTMLSpanElement {
     const nameElm: HTMLSpanElement = document.createElement("span");
-    nameElm.append(edge.name!);
+    let name: string = edge.name!;
+    if (this.#graphView.graph)
+      name = this.#graphView.graph.edge(edge).label as string ?? edge.name;
+    nameElm.append(name);
     nameElm.classList.add("edge");
 
     const { isStrongReference } = this.#graphView.graph.edge(edge);
