@@ -93,6 +93,10 @@
   font-weight: bold;
 }
 
+.svg-node-overlay > .className.isClassLink::after {
+  content: "*"
+}
+
 .svg-node-overlay > in-edges,
 .svg-node-overlay > in-edges > *,
 .svg-node-overlay > out-edges,

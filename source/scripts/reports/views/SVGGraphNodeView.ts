@@ -144,7 +144,7 @@ export class SVGGraphNodeView {
     if (this.#node.metadata) {
       classElement.append(this.#node.metadata.derivedClassName);
       if (this.#node.metadata.classSpecifier) {
-        classElement.classList.add("isLink");
+        classElement.classList.add("isClassLink");
         classElement.onclick = event => this.#handleClassNameClick(event);
       }
     }
