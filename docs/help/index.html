@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Search for Object References Help Page</title>
+  <link type="text/css" href="index.css" rel="stylesheet">
+</head>
+<body>
+  <h1>Search for Object References Help Page</h1>
+  <section>
+    <h2>Table of contents</h2>
+    <ul>
+      <li><a href="#what-does-this-do">What does this tool do?</a></li>
+      <li><a href="#file-system-use">The lower half: interacting with files</a>
+        <ul>
+          <li><a href="#uploading-new-filesystems">
+            Uploading file systems and downloading saved ones
+          </a></li>
+          <li><a href="#modifying-existing-files">
+            Modifying an existing file system
+          </a></li>
+        </ul>
+      </li>
+      <li><a href="#search-results">The upper half: viewing the search results</a>
+        <ul>
+          <li><a href="#internal-tuples">Internal tuples</a></li>
+          <li><a href="#navigation">Navigation</a></li>
+        </ul>
+      </li>
+
+      <li><a href="#faq">Frequently Asked Questions</a></li>
+      <li><a href="#source-links">Source code links</a></li>
+    </ul>
+  </section>
+  <section id="what-does-this-do">
+    <h2>What does this tool do?</h2>
+    <p>Suppose you have a moderately complex JavaScript library with no
+dependencies outside the core JavaScript language (no DOM, no NodeJS
+constructs, et cetera).  However, when you run your code, you notice
+<em>something</em> is holding one of your objects alive.  How can you see the
+connections?  Obviously you could read the code, but past a certain level of
+complexity this might get hard.</p>
+
+    <p>It gets more interesting with <em>strong</em> and <em>weak</em>
+references.  Strong references are ordinary ones - you look them up and the
+property exists.  Weak references you can look up... if you have strong
+references to all the necessary keys.  We most commonly see weak references via
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap#why_weakmap">
+  WeakMap
+</a> and
+<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet">
+  WeakSet
+</a>.</p>
+
+    <p>This project tries to provide a partial solution.  It lets you run your
+code <em>in another JavaScript engine, </em>
+<a href="https://engine262.js.org/">engine262</a>.  There's also an additional
+built-in function we provide to engine262, <code>searchReferences()</code>,
+which traces references in your code from one set of objects you pass in to
+another object.  In other words, you can get a snapshot of your objects and their
+connections to other objects.</p>
+    <p>The real beauty is that I generate a <em>graph</em> of the
+objects and their properties for each call to <code>searchReferences()</code>,
+using <a href="https://github.com/dagrejs/graphlib">graphlib from dagrejs</a>.
+I then use <a href="https://github.com/dagrejs/dagre">dagre</a> and
+<a href="https://github.com/dagrejs/dagre-d3">dagre-d3</a> to build a SVG
+rendering of this graph for you to navigate.</p>
+    <div><a href="./images/sample-run.png">
+      <img src="./images/sample-run.png" class="screenshot">
+    </a></div>
+  </section>
+
+  <section id="file-system-use">
+    <h2>The lower half: interacting with files</h2>
+    <a href="./images/lower-half.png"><img src="./images/lower-half.png" class="screenshot"></a>
+    <p>I built out a custom file system, representing both URL's and files,
+using the <a href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system">
+Origin private file system</a>.  The left side panel is your view of the file system.
+The radio buttons let you select a file to view and/or edit on the right side with
+<a href="https://codemirror.net">CodeMirror</a>.  The checkboxes on the left are
+how you actually select files to run through engine262.</p>
+
+  <p>The arguments to <code>searchReferences</code> are as follows:</p>
+  <div id="searchReferences-typescript"></div>
+  <p>Once you have the files as you want them, ensure the top-level files
+you wish to run, with calls to <code>searchReferences()</code>, you've checked
+in the first column.  Finally, click on the "Run Searches!" button above the
+CodeMirror editor to actually run your code through engine262.</p>
+  </section>
+
+  <section id="uploading-new-filesystems">
+    <h3>Uploading new file systems and downloading saved ones</h3>
+    <div><img src="./images/fs-controls-start.png" class="img-border"></div>
+    <p>This tool accepts ZIP files which contain "packages" and "urls"
+directories.  Files under "packages" become named package files, and directories
+under "urls" become URL's.  The mapping is simple:
+    </p>
+    <ul>
+      <li>packages/cars/red.js =&gt; cars/red.js</li>
+      <li>urls/one/two/three.js =&gt; one://two/three.js</li>
+    </ul>
+
+    <p>We treat all files as ECMAScript modules, so use the <code>import</code>
+syntax to import modules.  You should have this line in your search scripts:</p>
+    <div><code>import "es-search-references/guest";</code></div>
+
+    <p>Every file system has a key, which you can pick from the middle-left
+select element.  Within the "File system controls" key you'll find the controls for
+manipulating whole file systems.  The available commands are:</p>
+    <ul>
+      <li>Build: build an entirely new file system from scratch</li>
+      <li>Clone: fork an existing file system</li>
+      <li>Upload: upload a ZIP file in the above format to import a file system</li>
+      <li>Rename: rename a file system key</li>
+      <li>Export: download a ZIP file in the above format</li>
+      <li>Delete: delete an existing file system</li>
+    </ul>
+  </section>
+
+  <section id="modifying-existing-files">
+    <h3>Modifying an existing file system</h3>
+    <div><img src="./images/fs-contextmenu.png"></div>
+    <p>Here you have a context menu (thanks to the
+<a href="https://github.com/nkappler/ctxmenu">ctxmenu</a> library) for
+manipulating files.  I think it's self-explanatory.</p>
+    <p>At the bottom you may notice a "(clipboard)" section.  This is a
+clipboard of files available across all file systems.  You can't run files in
+the clipboard, but you can still view them.  The clipboard offers a single
+context menu option, "Clear clipboard".
+    </p>
+  </section>
+
+  <section id="search-results">
+    <h2>The upper half:  navigating the results</h2>
+    <div><a href="./images/results-basic.png">
+      <img src="./images/results-basic.png" class="screenshot">
+    </a></div>
+
+    <p>For every call to <code>searchReferences()</code>, there will be a report
+available in the upper half, which I organize first by file, then by search key.
+Clicking on one will show the graph in the first tab.  If there are no direct
+references, the graph tab will simply say <code>(null)</code>.</p>
+
+    <p>Objects appear as nodes in this graph, and the references are edges.  I
+illustrate strong references via solid black arrows in the directed graph, and
+weak references by dashed gray arrows.  The weak reference arrows are most
+interesting when you're looking for strong references only.  They mean two
+things:</p>
+
+    <ol type="1">
+      <li>From the held values, <em>at least one</em> strong reference path
+exists to the arrow's target.</li>
+      <li>From the target, <em>at least one</em> strong reference path exists to
+the actual target value.</li>
+    </ol>
+
+    <p>The target value always has the key <code>target:0</code> and the held
+values array always has the key <code>heldValues:1</code>.  You may note these
+are also the only nodes with double outlines, as the start and end states of the
+graph.  Other real objects in the graph are circular nodes.</p>
+
+  </section>
+
+  <section id="internal-tuples">
+    <h3>Internal tuples</h3>
+    <p>When you see a <em>square</em> node, that means it's one I made up to fit
+a value or rule into the confines of graph theory to illustrate a purpose.  In
+the class private fields example above, the code we run has the following
+source:</p>
+
+    <div id="privateClassFields-sample"></div>
+
+    <p>At first, you may think "there's no need for that:  you could just go
+from object:2 to the target via <code>#owner</code>."  But the
+<a href="https://tc39.es/ecma262/">ECMASCript specification</a>, which engine262
+follows closely, sees it differently.  There, <code>#owner</code> is itself a
+private name which belongs <em>to the <code>Vehicle</code> class</em>, not to
+the <code>hisBike</code> value.  Nothing in JavaScript prevents me from defining
+a <code>Bicycle</code> class with its own <code>#owner</code> field.  The
+private names keep them separate.</p>
+
+<p>But the <em>tuple</em> I describe at <code>privateFieldTuple:4</code> is an
+artificial one, because in graph theory, edges go from one node to another.  I
+do this to illustrate that <em>two</em> values <em>jointly</em> hold the target,
+as a tuple: <code>(object:2, privateName:3)</code>.  If we remove one of them
+from the graph, we lose the strong reference to the target.</p>
+
+<p>WeakMaps offer a better example of this:  you need to hold both the key
+<em>and the WeakMap itself</em> to hold a reference to the value.</p>
+  </section>
+
+  <section id="navigation">
+    <h3>Navigation</h3>
+    <p>The graph's nodes can be pretty far apart.  To help you in navigating
+between nodes, I added a couple supporting features.</p>
+    <p>Clicking on a node will open a pop-up like this:</p>
+    <div><img src="./images/graph-navigation.png"></div>
+    <p>The popup summarizes both what objects hold references to the current
+object and what objects the current object holds references to.  In this
+screenshot, the node at <code>heldValues:1</code> has as its "1" property the
+object we're looking at.  Likewise, <code>this.target === target</code>.  The
+hyperlinks provide shortcuts to jump to other nodes in the graph.</p>
+
+    <p>At the top center of the popup, you'll find the class constructor's name
+in bold.  If the class is one we can directly show in the editor panels below,
+the class name will have an asterisk after it.  If it's a class you created and
+you do <em>not</em> see an asterisk, ensure your class has an explicit
+<em>constructor()</em> method on it.  (I can't identify the source of classes
+with a default constructor at this time.)</p>
+
+    <p>In the lower right corner you will see a "Zoom &amp; Legend" popup.</p>
+    <div><img src="./images/zoom-legend.png"></div>
+
+    <p>This provides a fast way to jump to nodes in the graph, as well as a
+rudimentary zoom capability and a legend of icons which tell you the node's
+object type at a glance.  If you click on the button at the top left of the
+popup, you can collapse the popup so it's not in the way.  The button remains
+there with a different icon to let you re-expand the popup.</p>
+  </section>
+
+  <section id="faq">
+    <h2>Frequently Asked Questions</h2>
+    <h3>Why no DOM support or browser API support?</h3>
+    <p>This is a fundamental limitation of running the search inside engine262,
+which has no comprehension (deliberately) of DOM or browser API's.  In theory,
+if you could load a DOM engine into engine262, you could... but I'm pretty sure
+a references graph would be hopelessly complex and dreadfully slow to search.
+(Engine262 is deliberately not engineered to be fast, but to be faithful to the
+ECMA-262 specification.)</p>
+
+    <p>Could you do this natively in a browser, without running it in engine262?
+I suppose so, partially.  But to do so would require <em>rewriting</em> your
+code to trap <em>every</em> object class to record how it stores properties,
+map keys and values, private class fields, etc... and it wouldn't give you any
+insight into how a <em>browser</em> holds your JS values (as an event listener,)
+for example.</p>
+
+    <p>Could a browser provide API's to generate this information via a
+debugging protocol?  Nothing prevents that, but I think the major browser
+vendors would be skeptical.  Awesome for debugging... high costs to initial
+implementation and probably to maintain.</p>
+
+    <h3>Why no NodeJS API support?</h3>
+    <p>Same answer, same reason.  Who wants to implement that?</p>
+
+    <h3>I selected the file.  Why am I not seeing the search reports?</h3>
+    <ul>
+      <li>Did you select it for <em>editing</em> (the right-side radio buttons)
+or for <em>executing</em> in engine262 (the left-side checkboxes)?  I make this
+mistake all the time.</li>
+      <li>Did you select a file that actually calls
+<code>searchReferences()</code>?  Sometimes I select an implementation module
+instead of the testing module I intended to run.</li>
+      <li>Did your code throw an exception somewhere?  I don't have great
+support for reporting exceptions from engine262 at this time.</li>
+    </ul>
+    <p>Did you select it for <em>editing</em> (the right-side radio buttons) or
+for <em>executing</em> in engine262 (the left-side checkboxes)?  I make this
+mistake all the time.</p>
+
+    <h3>I can't edit the files.  Why?</h3>
+    <p>Some files are read-only on purpose:</p>
+    <ul>
+      <li><code>es-search-references/guest</code>.  This is the canonical file
+which defines the <code>searchReferences()</code> function.</li>
+      <li>Any file in the "Reference-spec file system".  These are read-only,
+and I intend them as examples to show you how the tool works.  You can clone
+this file system to create an editable version at any time.
+      </li>
+      <li>Any file in the clipboard.  They're read-only so you can't
+accidentally alter them before pasting into a live file system.</li>
+    </ul>
+
+    <h3>Are my files sent anywhere outside of my computer?</h3>
+    <p><strong>No!</strong>  All files I keep in <em>local storage</em> via the
+<a href="https://developer.mozilla.org/en-US/docs/Web/API/File_System_API/Origin_private_file_system">
+Origin private file system</a>.  There are no HTTP POST requests, no fetch(),
+and the only Web workers I use here are to access the OPFS in the background.
+There's also no AI tooling in use here.
+    </p>
+
+    <p>So you can safely use this in a corporate environment.  Your files
+aren't going anywhere.</p>
+
+    <h3>How do I clear everything in local storage, and go back to a clean slate?</h3>
+    <p>Use the "Reset the world" link on the main page.  This will take you to a separate
+web page, which wipes out the local storage I've saved and any OPFS files.</p>
+    <p>Bots, AI's, and especially
+<a href="https://ghostintheshell.fandom.com/wiki/Tachikoma">tachikomas</a>,
+should think twice, thrice, and even four times before using this feature.</p>
+  </section>
+
+  <section id="source-links">
+    <h2>Source code links</h2>
+    <ul>
+      <li>
+        <a href="https://github.com/ajvincent/es-membrane/tree/master/projects/search-references">
+          The search-references core implementation, using engine262 and graphlib
+        </a>
+        <ul>
+          <li>fixtures, reference-spec: sample files to build out this toolkit</li>
+          <li>source/engine262-tools: invoking engine262, providing the
+            <code>searchReferences()</code> function</li>
+          <li>source/graph-analysis: transforming engine262 objects into graph nodes and edges</li>
+          <li>source/public: shippable API entry points</li>
+        </ul>
+      </li>
+      <li>
+        <a href="https://github.com/ajvincent/es-search-references">
+          The website code backing this project
+        </a>
+        <ul>
+          <li>source/scripts/file-system, source/opfs: the file system implementations</li>
+          <li>source/scripts/codemirror: Integrating CodeMirror into the file editing utilities</li>
+          <li>source/scripts/search: the actual search driver and supporting tooling</li>
+          <li>source/scripts/reports: visualizations of the results via dagre, dagre-d3</li>
+          <li>source/scripts/workbench: the overall coordinator of the various parts</li>
+        </ul>
+      </li>
+    </ul>
+
+    <p>Tools I used in this project:</p>
+    <ul>
+      <li><a href="https://engine262.js.org/">engine262</a></li>
+      <li><a href="https://www.npmjs.com/package/graphlib">graphlib</a></li>
+      <li><a href="import-meta-resolve">import-meta-resolve</a> for resolving package paths</li>
+      <li><a href="https://www.typescriptlang.org/">TypeScript</a> and
+        <a href="https://www.npmjs.com/package/type-fest">type-fest</a> for safety checks</li>
+      <li><a href="https://github.com/rollup/rollup">Rollup</a> and
+        <a href="https://www.npmjs.com/package/rollup-plugin-dts">rollup-plugin-dts</a> for bundling</li>
+      <li><a href="https://gulpjs.com">GulpJS 5</a> build system</li>
+      <li><a href="https://codemirror.net">CodeMirror</a> for source code editing in the webpage</li>
+      <li><a href="https://www.npmjs.com/package/fflate">fflate</a> for ZIP compression and decompression of filesystems</li>
+      <li><a href="https://eslint.org/">ESLint</a> and <a href="https://typescript-eslint.io/">typescript-eslint</a> for static code checks</li>
+      <li><a href="https://www.npmjs.com/package/express">Express</a> for localhost development</li>
+      <li><a href="https://github.com/jasmine/jasmine-browser-runner/">Jasmine</a> for feature testing</li>
+    </ul>
+
+    <p>Thank you to all these projects for providing great tools for building other tools like this one!</p>
+  </section>
+
+  <script type="module" src="index.js"></script>
+</body>
+</html>

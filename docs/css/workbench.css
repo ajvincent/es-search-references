@@ -8,6 +8,12 @@ body {
   font-family: Verdana, Geneva, Tahoma, sans-serif;
 }
 
+.help-icon {
+  width: 36px;
+  height: 36px;
+  vertical-align: text-top;
+}
+
 #workbench {
   min-width: 1040px;
   display: grid;

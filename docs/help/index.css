@@ -1,0 +1,22 @@
+body {
+  background-color: #ffff00;
+  font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+.screenshot {
+  width: 900px;
+}
+
+#searchReferences-typescript {
+  width: 900px;
+}
+
+.cm-editor .cm-content {
+  background-color: #ffffff;
+}
+
+.img-border {
+  border-color: #000000;
+  border-width: 1px;
+  border-style: solid;
+}
