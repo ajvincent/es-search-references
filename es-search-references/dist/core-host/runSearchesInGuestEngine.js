@@ -1,4 +1,4 @@
-import * as GuestEngine from '@engine262/engine262';
+import * as GuestEngine from '@magic-works/engine262';
 import graphlib from '@dagrejs/graphlib';
 
 function* EnsureTypeOrThrow(guestEvaluator) {
