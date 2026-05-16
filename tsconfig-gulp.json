@@ -1,17 +1,25 @@
 {
   "compilerOptions": {
-    "lib": ["ES2024"],
+    "lib": [
+      "ES2024",
+      "ESNext.AsyncIterable",
+      "ESNext.Iterator"
+    ],
     "module": "NodeNext",
     "target": "ES2024",
     "moduleResolution": "NodeNext",
     "declaration": false,
 
     "baseUrl": ".",
+    "types": [
+      "jasmine",
+      "node",
+    ]
   },
 
   "include": [
     "./Gulpfile.ts",
   ],
 
-  "extends": "@tsconfig/node22/tsconfig.json"
+  "extends": "@tsconfig/node24/tsconfig.json"
 }

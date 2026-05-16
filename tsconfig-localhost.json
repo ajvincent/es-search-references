@@ -1,6 +1,10 @@
 {
   "compilerOptions": {
-    "lib": ["ES2024"],
+    "lib": [
+      "ES2024",
+      "ESNext.AsyncIterable",
+      "ESNext.Iterator"
+    ],
     "module": "NodeNext",
     "target": "ES2024",
     "moduleResolution": "NodeNext",
@@ -10,14 +14,22 @@
 
     "baseUrl": ".",
     "rootDir": ".",
-    "outDir": "dist"
+    "outDir": "dist",
+    "types": [
+      "node",
+    ]
   },
 
   "include": [
     "fixtures/**/*.ts",
     "reference-spec/**/*.ts",
     "source/localhost/*.ts",
+    "source/updates/*.ts",
   ],
 
-  "extends": "@tsconfig/node22/tsconfig.json"
+  "paths": {
+    "#build-utilities/*": "./build-utilities/*"
+  },
+
+  "extends": "@tsconfig/node24/tsconfig.json"
 }

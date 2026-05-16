@@ -269,7 +269,7 @@ implements FileSystemWeakKey
   * #recursiveEntries(
     parentKey: FileSystemWeakKey,
     parentPath: string,
-  ): IterableIterator<[string, V]>
+  ): MapIterator<[string, V]>
   {
     const entries: [string, FileSystemWeakKey][] = Array.from(
       this.#descendantsMap.entriesFor(parentKey)

@@ -1,5 +1,6 @@
-import * as GuestEngine from '@magic-works/engine262';
-import graphlib from '@dagrejs/graphlib';
+import * as GuestEngine from '@engine262/engine262';
+import * as graphlib from '@dagrejs/graphlib';
+import { alg } from '@dagrejs/graphlib';
 
 function* EnsureTypeOrThrow(guestEvaluator) {
     const guestType = yield* guestEvaluator;
@@ -12,10 +13,10 @@ function* EnsureTypeOrThrow(guestEvaluator) {
 
 function* convertArrayValueToArrayOfValues(arrayValue) {
     if (arrayValue.type !== "Object") {
-        throw GuestEngine.Throw('TypeError', "Raw", "Expected an Array object");
+        throw GuestEngine.Throw.TypeError("Expected an Array object");
     }
     if (!GuestEngine.isArrayExoticObject(arrayValue)) {
-        throw GuestEngine.Throw('TypeError', "Raw", "Expected an Array exotic object");
+        throw GuestEngine.Throw.TypeError("Expected an Array exotic object");
     }
     return yield* GuestEngine.CreateListFromArrayLike(arrayValue, undefined);
 }
@@ -352,7 +353,11 @@ class ObjectGraphImpl {
         this.#idToWeakKeyMap.set(nodeId, privateName);
         const nodeMetadata = {
             metadata: {
-                description
+                builtInJSTypeName: BuiltInJSTypeName.PrivateName,
+                derivedClassName: "",
+                description,
+                classSpecifier: null,
+                classLineNumber: null,
             }
         };
         this.#graph.setNode(nodeId, nodeMetadata);
@@ -417,7 +422,7 @@ class ObjectGraphImpl {
         return edgeId;
     }
     #hasSymbolKeyEdge(edge) {
-        return this.#graph.edgeAsObj(edge).edgeType === EdgePrefix.HasSymbolAsKey;
+        return this.#graph.edge(edge).edgeType === EdgePrefix.HasSymbolAsKey;
     }
     definePropertyOrGetter(parentObject, relationshipName, childObject, metadata, isGetter) {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
@@ -631,6 +636,7 @@ class ObjectGraphImpl {
                 edgeIdToJointOwnersMap = this.#edgeIdToJointOwnersMap_Weak;
             }
             if (edgeIdToJointOwnersMap) {
+                this.#removeCycles();
                 this.#summarizeGraphToTarget(edgeIdToJointOwnersMap);
                 this.#summarizeGraphFromHeldValues();
             }
@@ -642,6 +648,18 @@ class ObjectGraphImpl {
         catch (ex) {
             this.#state = ObjectGraphState.Error;
             throw ex;
+        }
+    }
+    #removeCycles() {
+        const allCycles = graphlib.alg.findCycles(this.#graph);
+        for (const cycle of allCycles) {
+            let wNodeId = cycle.pop();
+            if (wNodeId === this.#heldValuesId)
+                wNodeId = cycle.pop() ?? wNodeId;
+            const vNodeId = cycle.pop() ?? wNodeId;
+            for (const edge of this.#graph.inEdges(vNodeId, wNodeId)) {
+                this.#graph.removeEdge(edge);
+            }
         }
     }
     #summarizeGraphToTarget(edgeIdToJointOwnersMap) {
@@ -917,7 +935,9 @@ class GuestObjectGraphImpl {
 function buildObjectMetadata(builtInJSTypeName, derivedClassName) {
     return {
         builtInJSTypeName,
-        derivedClassName
+        derivedClassName,
+        classSpecifier: null,
+        classLineNumber: null,
     };
 }
 
@@ -1086,7 +1106,7 @@ class GraphBuilder {
                 if (slots.has("ScriptOrModule")) {
                     const ScriptOrModule = Reflect.get(classObject, "ScriptOrModule");
                     if (ScriptOrModule instanceof GuestEngine.NullValue === false)
-                        objectMetadata.classSpecifier = ScriptOrModule?.HostDefined?.specifier;
+                        objectMetadata.classSpecifier = ScriptOrModule?.HostDefined?.specifier ?? null;
                 }
                 if (slots.has("ECMAScriptCode")) {
                     const ECMAScriptCode = Reflect.get(classObject, "ECMAScriptCode");
@@ -1335,12 +1355,8 @@ class GraphBuilder {
             Array.isArray(guestObject.HostCapturedValues)) {
             yield* this.#addInternalSlotIfList(guestObject, "HostCapturedValues");
         }
-        if (internalSlots.has("UnderlyingIterator")) {
-            const UnderlyingRecord = Reflect.get(guestObject, "UnderlyingIterator");
-            const guestRecord = GuestEngine.OrdinaryObjectCreate.from(UnderlyingRecord);
-            yield* this.#defineGraphNode(guestRecord, false, `internal slot object: UnderlyingIterator`);
-            const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.InternalSlot);
-            this.#guestObjectGraph.defineInternalSlot(guestObject, `[[UnderlyingIterator]]`, guestRecord, true, edgeRelationship);
+        if (internalSlots.has("UnderlyingIterators")) {
+            yield* this.#addInternalUnderlyingIterators(guestObject);
         }
         if (guestObject.ConstructedBy?.length > 0) {
             yield* this.#addInternalSlotIfList(guestObject, "ConstructedBy");
@@ -1374,6 +1390,16 @@ class GraphBuilder {
         yield* this.#defineGraphNode(guestArray, false, "internal slot:" + slotName);
         const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.InternalSlot);
         this.#guestObjectGraph.defineInternalSlot(promiseObject, `[[${slotName}]]`, guestArray, true, edgeRelationship);
+    }
+    *#addInternalUnderlyingIterators(parentObject) {
+        const records = Reflect.get(parentObject, "UnderlyingIterators");
+        if (records === undefined)
+            return;
+        const iterators = records.map(r => r.Iterator).filter(Boolean);
+        const guestArray = GuestEngine.CreateArrayFromList(iterators);
+        yield* this.#defineGraphNode(guestArray, false, "internal slot: UnderlyingIterators");
+        const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.InternalSlot);
+        this.#guestObjectGraph.defineInternalSlot(parentObject, `[[UnderlyingIterators]]`, guestArray, true, edgeRelationship);
     }
     *#addInternalFinalizationCell(registry, cell) {
         let WeakRefTarget;
@@ -1467,6 +1493,7 @@ class GraphBuilder {
 }
 _a = GraphBuilder;
 
+//#region preamble
 //#endregion preamble
 class SearchDriver {
     #strongReferencesOnly;
@@ -1520,7 +1547,7 @@ callback) {
         catch (ex) {
             if (ex instanceof GuestEngine.ThrowCompletion)
                 return ex;
-            return GuestEngine.Throw("Error", "Raw", "HostDefinedError: " + String(ex));
+            return GuestEngine.Throw.Error("HostDefinedError: " + String(ex));
         }
     }
     const builtInName = GuestEngine.Value(name);
@@ -1534,7 +1561,7 @@ function* defineSearchReferences(realm, searchResultsMap, searchConfiguration) {
         void (guestNewTarget);
         const searchArgs = yield* EnsureTypeOrThrow(extractSearchParameters(guestArguments));
         if (searchResultsMap.has(searchArgs.resultsKey)) {
-            throw GuestEngine.Throw("Error", "Raw", `You already have a search with the results key ${JSON.stringify(searchArgs.resultsKey)}`);
+            throw GuestEngine.Throw.Error(`You already have a search with the results key $1`, JSON.stringify(searchArgs.resultsKey));
         }
         const searchDriver = new SearchDriver(searchArgs.targetValue, searchArgs.heldValuesArray, searchArgs.strongReferencesOnly, realm, searchArgs.resultsKey, searchConfiguration);
         const graphOrNull = yield* searchDriver.run();
@@ -1545,21 +1572,21 @@ function* defineSearchReferences(realm, searchResultsMap, searchConfiguration) {
 function* extractSearchParameters(guestArguments) {
     const [resultsKeyGuest, targetValue, heldValuesArrayGuest, strongRefsGuest] = guestArguments;
     if (resultsKeyGuest?.type !== "String") {
-        throw GuestEngine.Throw("TypeError", "Raw", "resultsKey is not a string");
+        throw GuestEngine.Throw.TypeError("resultsKey is not a string");
     }
     if (targetValue?.type !== "Object" && targetValue?.type !== "Symbol") {
-        throw GuestEngine.Throw("TypeError", "NotAWeakKey", targetValue);
+        throw GuestEngine.Throw.TypeError("$1 is not an object or a symbol", targetValue);
     }
     if (heldValuesArrayGuest.type !== "Object") {
-        throw GuestEngine.Throw('TypeError', "Raw", "Expected an Array object");
+        throw GuestEngine.Throw.TypeError("Expected an Array object");
     }
     const heldValuesRaw = yield* EnsureTypeOrThrow(convertArrayValueToArrayOfValues(heldValuesArrayGuest));
     for (let i = 0; i < heldValuesRaw.length; i++) {
         if (heldValuesRaw[i].type !== "Object" && heldValuesRaw[i].type !== "Symbol")
-            throw GuestEngine.Throw("TypeError", "NotAWeakKey", heldValuesRaw[i]);
+            throw GuestEngine.Throw.TypeError("$1 is not an object or a symbol", heldValuesRaw[i]);
     }
     if (strongRefsGuest?.type !== "Boolean")
-        throw GuestEngine.Throw("TypeError", "Raw", "strongReferencesOnly is not a boolean");
+        throw GuestEngine.Throw.TypeError("strongReferencesOnly is not a boolean");
     return {
         resultsKey: resultsKeyGuest.stringValue(),
         targetValue,
@@ -1604,7 +1631,7 @@ class RealmHostDefined {
     }
     registerHostPromise(p) {
         this.#pendingHostPromises.add(p);
-        p.finally(() => this.#pendingHostPromises.delete(p));
+        void p.finally(() => this.#pendingHostPromises.delete(p));
     }
     hasPendingPromises() {
         return this.#pendingHostPromises.size > 0;
@@ -1627,12 +1654,7 @@ class RealmHostDefined {
     randomSeed;
 }
 
-/*
-import {
-  convertGuestPromiseToVoidHostPromise
-} from "./HostPromiseForGuestPromise.js";
-*/
-async function runInRealm(inputs) {
+function runInRealm(inputs) {
     const contents = inputs.contentsGetter(inputs.startingSpecifier);
     const realmDriver = new RealmDriver(inputs);
     const agent = new GuestEngine.Agent({
@@ -1642,10 +1664,31 @@ async function runInRealm(inputs) {
         },
         // ensureCanCompileStrings() {},
         // hasSourceTextAvailable() {},
-        loadImportedModule(referrer, specifier, attributes, hostDefined, finish) {
-            const moduleOrThrow = realmDriver.resolveModule(specifier, referrer);
-            finish(moduleOrThrow);
+        hostHooks: {
+            HostLoadImportedModule(referrer, moduleRequest, hostDefined, payload) {
+                if (referrer instanceof GuestEngine.SourceTextModuleRecord) {
+                    const specifier = moduleRequest.Specifier;
+                    const moduleOrThrow = realmDriver.resolveModule(specifier, referrer);
+                    GuestEngine.FinishLoadingImportedModule(referrer, moduleRequest, payload, moduleOrThrow);
+                    return;
+                }
+                throw new Error("uh, what do we do here?");
+            },
+            /*
+            HostPromiseRejectionTrackers: new Set([
+              (promise: GuestEngine.PromiseObject, operation: "reject" | "handle") => {
+                realmDriver.hostDefined.promiseRejectionTracker(promise, operation);
+              }
+            ]),
+            */
         },
+        /*
+        uncaughtExceptionTrackers: new Set([
+          (error: GuestEngine.Value) => {
+            void error;
+          }
+        ]),
+        */
         // onNodeEvaluation() {},
         // features: [],
     });
@@ -1661,11 +1704,19 @@ async function runInRealm(inputs) {
             module = module.Value;
         if (module instanceof GuestEngine.SourceTextModuleRecord) {
             realmDriver.registerMainModule(specifier, module);
-            return realm.evaluateModule(module, specifier);
+            return realm.evaluateModule(module, specifier, (completion) => {
+                if (completion instanceof GuestEngine.ThrowCompletion) ;
+                else {
+                    const promiseObj = GuestEngine.ValueOfNormalCompletion(completion);
+                    GuestEngine.PerformPromiseThen(promiseObj, GuestEngine.Value.undefined, GuestEngine.CreateBuiltinFunction.from((error = GuestEngine.Value.undefined) => {
+                        realmDriver.trackedPromises.add(promiseObj);
+                    }));
+                }
+            });
         }
     });
     //await realmDriver.moduleCompleted;
-    return realm.scope(() => realmDriver.finalizeResults());
+    return Promise.resolve(realm.scope(() => realmDriver.finalizeResults()));
 }
 class RealmDriver {
     #realmInputs;
@@ -1785,6 +1836,55 @@ class LoggingConfiguration {
     }
 }
 
+class NodeAndEdge {
+    static comparator(a, b) {
+        let diff = a.length - b.length;
+        for (let i = 0; diff === 0 && i < a.length; i++) {
+            const aIndex = a[i].nodeIndex, bIndex = b[i].nodeIndex;
+            diff = aIndex - bIndex;
+        }
+        return diff;
+    }
+    nodeIndex;
+    nextEdgeLabel;
+    constructor(nodeIndex) {
+        this.nodeIndex = nodeIndex;
+    }
+    clone() {
+        const { nodeIndex, nextEdgeLabel } = this;
+        return nextEdgeLabel === undefined ? { nodeIndex } : { nodeIndex, nextEdgeLabel };
+    }
+}
+function pathsToTarget(graph) {
+    if (graph === null)
+        return [];
+    if (alg.isAcyclic(graph) === false)
+        throw new Error("graph has a cycle");
+    const nodeStack = [];
+    const values = Array.from(yieldPaths(graph, "heldValues:1", nodeStack));
+    values.sort(NodeAndEdge.comparator);
+    return values;
+}
+function* yieldPaths(graph, nextNodeId, stack) {
+    const id = parseInt(/:(\d+)$/.exec(nextNodeId)[1]);
+    const next = new NodeAndEdge(id);
+    stack.push(next);
+    if (nextNodeId === "target:0") {
+        const result = stack.map(n => n.clone());
+        result.shift();
+        yield result;
+    }
+    else {
+        for (const edge of graph.outEdges(nextNodeId)) {
+            const edgeLabel = graph.edge(edge);
+            next.nextEdgeLabel = edgeLabel.label;
+            yield* yieldPaths(graph, edge.w, stack);
+            next.nextEdgeLabel = undefined;
+        }
+    }
+    stack.pop();
+}
+
 async function runSearchesInGuestEngine(inputs, searchConfiguration) {
     const graphs = new Map;
     const realmInputs = new SearchGuestRealmInputs(inputs, graphs, searchConfiguration);
@@ -1817,4 +1917,4 @@ class SearchGuestRealmInputs {
     }
 }
 
-export { constants as JSGraphConstants, LoggingConfiguration, runSearchesInGuestEngine };
+export { constants as JSGraphConstants, LoggingConfiguration, pathsToTarget, runSearchesInGuestEngine };

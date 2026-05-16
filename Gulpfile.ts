@@ -36,7 +36,7 @@ async function buildLocalhost(): Promise<void> {
 
 function installEngine262(): Promise<void> {
   return fs.cp(
-    path.join(projectRoot, "node_modules/@magic-works/engine262/lib/engine262.mjs"),
+    path.join(projectRoot, "node_modules/@engine262/engine262/lib/engine262.mjs"),
     path.join(projectRoot, "docs/lib/packages/engine262.mjs")
   );
 }
@@ -50,12 +50,13 @@ function installFFlate(): Promise<void> {
 
 function installSearchReferencesJs() {
   return src("es-search-references/dist/core-host/runSearchesInGuestEngine.js")
-    .pipe(replace("@magic-works/engine262", "./engine262.mjs"))
+    .pipe(replace("@engine262/engine262", "./engine262.mjs"))
     .pipe(replace(
-      `import graphlib from '@dagrejs/graphlib';\n`,
+      `import * as graphlib from '@dagrejs/graphlib';\nimport { alg } from '@dagrejs/graphlib';`,
       `
 import { dagre } from "./dagre-imports.js";
 const { graphlib } = dagre;
+const { alg } = graphlib;
       `.trim() + "\n"
     ))
     .pipe(dest("docs/lib/packages"));
@@ -63,7 +64,7 @@ const { graphlib } = dagre;
 
 function installSearchReferences_d_ts() {
   return src("es-search-references/dist/core-host/runSearchesInGuestEngine.d.ts")
-    .pipe(replace("@magic-works/engine262", "./engine262.mjs"))
+    .pipe(replace("@engine262/engine262", "./engine262.mjs"))
     .pipe(replace("@dagrejs/graphlib", "./dagre-imports.js"))
     .pipe(dest("source/lib/packages"));
 }

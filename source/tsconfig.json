@@ -2,13 +2,14 @@
   "compilerOptions": {
     "lib": [
       "ES2024",
+      "ESNext.AsyncIterable",
+      "ESNext.Iterator",
       "DOM",
       "DOM.AsyncIterable",
       "ESNext.Array",
       "WebWorker",
       "Webworker.Iterable",
       "WebWorker.AsyncIterable",
-      
     ],
     "module": "NodeNext",
     "target": "ES2024",
@@ -19,7 +20,11 @@
 
     "baseUrl": ".",
     "rootDir": ".",
-    "outDir": "../docs"
+    "outDir": "../docs",
+    "types": [
+      "jasmine",
+      "node"
+    ]
   },
 
   "include": [
@@ -27,5 +32,5 @@
     "tests/**/*.ts"
   ],
 
-  "extends": "@tsconfig/node22/tsconfig.json"
+  "extends": "@tsconfig/node24/tsconfig.json"
 }
