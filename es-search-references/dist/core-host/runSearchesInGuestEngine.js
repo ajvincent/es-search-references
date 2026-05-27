@@ -651,15 +651,16 @@ class ObjectGraphImpl {
         }
     }
     #removeCycles() {
-        const allCycles = graphlib.alg.findCycles(this.#graph);
-        for (const cycle of allCycles) {
-            let wNodeId = cycle.pop();
-            if (wNodeId === this.#heldValuesId)
-                wNodeId = cycle.pop() ?? wNodeId;
-            const vNodeId = cycle.pop() ?? wNodeId;
-            for (const edge of this.#graph.inEdges(vNodeId, wNodeId)) {
-                this.#graph.removeEdge(edge);
+        let allCycles = graphlib.alg.findCycles(this.#graph);
+        while (allCycles.length) {
+            for (const cycle of allCycles) {
+                const wNodeId = cycle.pop();
+                const vNodeId = cycle.pop() ?? wNodeId;
+                for (const edge of this.#graph.inEdges(vNodeId, wNodeId)) {
+                    this.#graph.removeEdge(edge);
+                }
             }
+            allCycles = graphlib.alg.findCycles(this.#graph);
         }
     }
     #summarizeGraphToTarget(edgeIdToJointOwnersMap) {
@@ -1421,6 +1422,8 @@ class GraphBuilder {
     *#addMapData(mapObject, slotName) {
         const elements = Reflect.get(mapObject, slotName);
         for (const { Key, Value } of elements) {
+            if (Key === undefined)
+                continue;
             if (Key.type !== "Object" && Value.type !== "Object") {
                 continue;
             }
@@ -1440,6 +1443,8 @@ class GraphBuilder {
     *#addSetData(parentObject, slotName) {
         const elements = Reflect.get(parentObject, slotName);
         for (const value of elements) {
+            if (value === undefined)
+                continue;
             if (value.type === "Object" || value.type === "Symbol") {
                 yield* this.#defineGraphNode(value, false, "set value");
                 const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.SetElement);
@@ -1661,6 +1666,7 @@ function runInRealm(inputs) {
         onDebugger() {
             // eslint-disable-next-line no-debugger
             debugger;
+            agent.resumeEvaluate({});
         },
         // ensureCanCompileStrings() {},
         // hasSourceTextAvailable() {},
@@ -1856,7 +1862,7 @@ class NodeAndEdge {
     }
 }
 function pathsToTarget(graph) {
-    if (graph === null)
+    if (graph === null || graph.nodeCount() === 0)
         return [];
     if (alg.isAcyclic(graph) === false)
         throw new Error("graph has a cycle");
@@ -1889,8 +1895,8 @@ async function runSearchesInGuestEngine(inputs, searchConfiguration) {
     const graphs = new Map;
     const realmInputs = new SearchGuestRealmInputs(inputs, graphs, searchConfiguration);
     const outputs = await runInRealm(realmInputs);
-    if (outputs.succeeded === false) {
-        throw new Error("evaluating module in guest engine failed");
+    if (!outputs?.succeeded) {
+        throw new Error("evaluating module in guest engine failed: " + inputs.startingSpecifier);
     }
     return graphs;
 }
