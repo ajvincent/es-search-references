@@ -916,7 +916,7 @@ class GuestObjectGraphImpl {
         return this.#hostGraph.defineScopeValue(this.#substitution.getHostObject(functionObject), identifier, this.#substitution.getHostWeakKey(objectValue), metadata);
     }
     defineInternalSlot(parentObject, slotName, childObject, isStrongReference, metadata) {
-        return this.#hostGraph.defineInternalSlot(this.#substitution.getHostObject(parentObject), slotName, this.#substitution.getHostObject(childObject), isStrongReference, metadata);
+        return this.#hostGraph.defineInternalSlot(this.#substitution.getHostObject(parentObject), slotName, this.#substitution.getHostWeakKey(childObject), isStrongReference, metadata);
     }
     defineMapKeyValueTuple(map, key, value, isStrongReferenceToKey, keyMetadata, valueMetadata) {
         return this.#hostGraph.defineMapKeyValueTuple(this.#substitution.getHostObject(map), this.#substitution.getHostValue(key), this.#substitution.getHostValue(value), isStrongReferenceToKey, keyMetadata, valueMetadata);
@@ -1006,6 +1006,9 @@ class GraphBuilder {
         }
         return false;
     }
+    static #isWeakKey(guestValue) {
+        return guestValue?.type === "Object" || guestValue?.type === "Symbol";
+    }
     #guestObjectGraph;
     #currentNodeId;
     #intrinsicToBuiltInNameMap;
@@ -1036,7 +1039,7 @@ class GraphBuilder {
     *defineInstanceGetter(guestInstance, getterKey) {
         const guestKey = (typeof getterKey === "object" ? getterKey : GuestEngine.Value(getterKey.toString()));
         const guestValue = yield* EnsureTypeOrThrow(GuestEngine.GetV(guestInstance, guestKey));
-        if (guestValue.type === "Object" || guestValue.type === "Symbol") {
+        if (_a.#isWeakKey(guestValue)) {
             const details = "instance: key=" + (guestKey.type === "String" ? guestKey.stringValue() : "(symbol)");
             yield* this.#defineGraphNode(guestValue, false, details);
             this.#addObjectPropertyOrGetter(guestInstance, guestKey, guestValue, true);
@@ -1057,8 +1060,8 @@ class GraphBuilder {
             if (this.#searchConfiguration?.enterNodeIdTrap)
                 this.#searchConfiguration.enterNodeIdTrap(this.#currentNodeId);
             if (GuestEngine.isProxyExoticObject(guestObject)) {
-                yield* this.#addInternalSlotIfObject(guestObject, "ProxyTarget", true, true);
-                yield* this.#addInternalSlotIfObject(guestObject, "ProxyHandler", false, true);
+                yield* this.#addInternalSlotIfWeakKey(guestObject, "ProxyTarget", true, true);
+                yield* this.#addInternalSlotIfWeakKey(guestObject, "ProxyHandler", false, true);
             }
             else {
                 yield* this.#addObjectProperties(guestObject);
@@ -1226,7 +1229,7 @@ class GraphBuilder {
             }
             if (this.#intrinsics.has(childGuestValue))
                 continue;
-            if (childGuestValue.type === "Object" || childGuestValue.type === "Symbol") {
+            if (_a.#isWeakKey(childGuestValue)) {
                 let details = `addObjectProperties: `;
                 if (typeof key !== "object") {
                     details += "key=" + key;
@@ -1280,7 +1283,7 @@ class GraphBuilder {
                 GuestEngine.Assert(Value !== undefined);
                 guestValue = Value;
             }
-            if (guestValue.type !== "Object" && guestValue.type !== "Symbol")
+            if (!_a.#isWeakKey(guestValue))
                 continue;
             yield* this.#defineGraphNode(guestValue, false, "addPrivateFields: key=" + privateKey);
             const privateNameMetadata = _a.#buildChildEdgeType(ChildReferenceEdgeType.PrivateClassKey);
@@ -1294,18 +1297,18 @@ class GraphBuilder {
             if (kind === "derived") {
                 const proto = Reflect.get(guestObject, "Prototype");
                 if (proto.type !== "Null" && this.#intrinsics.has(proto) === false) {
-                    yield* this.#addInternalSlotIfObject(guestObject, "Prototype", false, true);
+                    yield* this.#addInternalSlotIfWeakKey(guestObject, "Prototype", false, true);
                     yield* this.#instanceGetterTracking.addBaseClass(guestObject, proto);
                 }
             }
         }
         const internalSlots = new Set(guestObject.internalSlotsList);
         if (internalSlots.has("RevocableProxy")) {
-            yield* this.#addInternalSlotIfObject(guestObject, "RevocableProxy", false, true);
+            yield* this.#addInternalSlotIfWeakKey(guestObject, "RevocableProxy", false, true);
             return;
         }
         if (internalSlots.has("WeakRefTarget")) {
-            yield* this.#addInternalSlotIfObject(guestObject, "WeakRefTarget", false, false);
+            yield* this.#addInternalSlotIfWeakKey(guestObject, "WeakRefTarget", false, false);
             return;
         }
         if (internalSlots.has("CleanupCallback")) {
@@ -1340,16 +1343,16 @@ class GraphBuilder {
             return;
         }
         if (internalSlots.has("BoundTargetFunction")) {
-            yield* this.#addInternalSlotIfObject(guestObject, "BoundTargetFunction", false, true);
+            yield* this.#addInternalSlotIfWeakKey(guestObject, "BoundTargetFunction", false, true);
             if (internalSlots.has("BoundThis"))
-                yield* this.#addInternalSlotIfObject(guestObject, "BoundThis", false, true);
+                yield* this.#addInternalSlotIfWeakKey(guestObject, "BoundThis", false, true);
             if (internalSlots.has("BoundArguments")) {
                 yield* this.#addInternalSlotIfList(guestObject, "BoundArguments");
             }
             return;
         }
         if (internalSlots.has("PromiseResult")) {
-            yield* this.#addInternalSlotIfObject(guestObject, "PromiseResult", false, true);
+            yield* this.#addInternalSlotIfWeakKey(guestObject, "PromiseResult", false, true);
             yield* this.#addInternalPromiseRecordsList(guestObject, "PromiseFulfillReactions");
             yield* this.#addInternalPromiseRecordsList(guestObject, "PromiseRejectReactions");
         }
@@ -1366,9 +1369,9 @@ class GraphBuilder {
             yield* this.#instanceGetterTracking.addInstance(guestObject, guestObject.ConstructedBy[guestObject.ConstructedBy.length - 1]);
         }
     }
-    *#addInternalSlotIfObject(parentObject, slotName, excludeFromSearches, isStrongReference) {
+    *#addInternalSlotIfWeakKey(parentObject, slotName, excludeFromSearches, isStrongReference) {
         const slotObject = Reflect.get(parentObject, slotName);
-        if (slotObject.type !== "Object")
+        if (!_a.#isWeakKey(slotObject))
             return;
         yield* this.#defineGraphNode(slotObject, excludeFromSearches, `internal slot object: ${slotName}`);
         const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.InternalSlot);
@@ -1406,7 +1409,7 @@ class GraphBuilder {
     }
     *#addInternalFinalizationCell(registry, cell) {
         let WeakRefTarget;
-        if (cell.WeakRefTarget?.type === "Object" || cell.WeakRefTarget?.type === "Symbol")
+        if (_a.#isWeakKey(cell.WeakRefTarget))
             WeakRefTarget = cell.WeakRefTarget;
         else
             return;
@@ -1415,7 +1418,7 @@ class GraphBuilder {
         if (cell.UnregisterToken?.type === "Object" || cell.UnregisterToken?.type === "Symbol")
             UnregisterToken = cell.UnregisterToken;
         yield* this.#defineGraphNode(WeakRefTarget, false, "finalization cell target");
-        if (HeldValue.type === "Object" || HeldValue.type === "Symbol")
+        if (_a.#isWeakKey(HeldValue))
             yield* this.#defineGraphNode(HeldValue, false, "finalization cell heldValue");
         if (UnregisterToken)
             yield* this.#defineGraphNode(UnregisterToken, false, "finalization cell unregisterToken");
@@ -1426,16 +1429,16 @@ class GraphBuilder {
         for (const { Key, Value } of elements) {
             if (Key === undefined)
                 continue;
-            if (Key.type !== "Object" && Value.type !== "Object") {
+            if (!_a.#isWeakKey(Key) && !_a.#isWeakKey(Value)) {
                 continue;
             }
             let keyRelationship;
             let valueRelationship;
-            if (Key.type === "Object" || Key.type === "Symbol") {
+            if (_a.#isWeakKey(Key)) {
                 yield* this.#defineGraphNode(Key, false, "map key");
                 keyRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.MapKey);
             }
-            if (Value.type === "Object" || Value.type === "Symbol") {
+            if (_a.#isWeakKey(Value)) {
                 yield* this.#defineGraphNode(Value, false, "map value");
                 valueRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.MapValue);
             }
@@ -1447,7 +1450,7 @@ class GraphBuilder {
         for (const value of elements) {
             if (value === undefined)
                 continue;
-            if (value.type === "Object" || value.type === "Symbol") {
+            if (_a.#isWeakKey(value)) {
                 yield* this.#defineGraphNode(value, false, "set value");
                 const edgeRelationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.SetElement);
                 this.#guestObjectGraph.defineSetValue(parentObject, value, slotName === "SetData", edgeRelationship);
@@ -1485,13 +1488,13 @@ class GraphBuilder {
             // here be dragons: not sure if `this` will be the right value for a given module
             thisValue ??= GuestEngine.surroundingAgent.currentRealmRecord.GlobalObject;
             const result = yield* EnsureTypeOrThrow(guestFunction.Call(thisValue, []));
-            if (result.type === "Object" || result.type === "Symbol") {
+            if (_a.#isWeakKey(result)) {
                 yield* this.#buildFunctionValueReference(guestFunction, `[[return value]]`, result);
             }
         }
     }
     *#buildFunctionValueReference(guestFunction, nameOfValue, guestValue) {
-        if (guestValue.type !== "Object" && guestValue.type !== "Symbol")
+        if (!_a.#isWeakKey(guestValue))
             return;
         yield* this.#defineGraphNode(guestValue, false, "function reference: " + nameOfValue);
         const relationship = _a.#buildChildEdgeType(ChildReferenceEdgeType.ScopeValue);
