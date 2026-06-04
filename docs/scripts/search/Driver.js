@@ -9,9 +9,18 @@ export class SearchDriver {
     constructor(fileMap) {
         this.#fileMap = fileMap;
     }
-    run(pathsToRun) {
+    async run(pathsToRun) {
         const map = new AwaitedMap(pathsToRun.map(pathToFile => [pathToFile, this.#runURL(pathToFile)]));
-        return map.allResolved();
+        try {
+            return await map.allResolved();
+        }
+        catch (ex) {
+            for (const [location, error] of ex.errorMap) {
+                console.log("failed pathToRun: " + location);
+                console.error(error);
+            }
+            throw ex;
+        }
     }
     async #runURL(pathToFile) {
         const config = new SearchLogsConfiguration;

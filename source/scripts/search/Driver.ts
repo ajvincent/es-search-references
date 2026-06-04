@@ -7,7 +7,8 @@ import {
 } from "../../lib/packages/runSearchesInGuestEngine.js";
 
 import {
-  AwaitedMap
+  AwaitedMap,
+  type AwaitedMapError
 } from "../utilities/AwaitedMap.js";
 
 import {
@@ -35,14 +36,23 @@ export class SearchDriver {
     this.#fileMap = fileMap;
   }
 
-  run(
+  async run(
     pathsToRun: readonly string[]
   ): Promise<ReadonlyMap<string, ReadonlyMap<string, SearchResults>>>
   {
     const map = new AwaitedMap<string, ReadonlyMap<string, SearchResults>>(pathsToRun.map(
       pathToFile => [pathToFile, this.#runURL(pathToFile)]
     ));
-    return map.allResolved();
+    try {
+      return await map.allResolved();
+    }
+    catch (ex) {
+      for (const [location, error] of (ex as AwaitedMapError<string>).errorMap) {
+        console.log("failed pathToRun: " + location);
+        console.error(error);
+      }
+      throw ex;
+    }
   }
 
   async #runURL(pathToFile: string): Promise<ReadonlyMap<string, SearchResults>>
