@@ -102,6 +102,9 @@ export class SVGGraphNodeView {
         const classElement = this.#popup.querySelector(".className");
         if (this.#node.metadata) {
             classElement.append(this.#node.metadata.derivedClassName);
+            const { symbolDescription } = this.#node.metadata;
+            if (typeof symbolDescription === "string")
+                classElement.append("(" + symbolDescription + ")");
             if (this.#node.metadata.classSpecifier) {
                 classElement.classList.add("isClassLink");
                 classElement.onclick = event => this.#handleClassNameClick(event);
