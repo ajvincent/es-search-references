@@ -213,6 +213,7 @@ function createValueDescription(value, objectGraph) {
             return {
                 valueType: ValueDiscrimant.Symbol,
                 symbolId: objectGraph.getWeakKeyId(value),
+                description: value.description,
             };
         case "boolean":
         case "number":
@@ -358,6 +359,7 @@ class ObjectGraphImpl {
                 description,
                 classSpecifier: null,
                 classLineNumber: null,
+                symbolDescription: null,
             }
         };
         this.#graph.setNode(nodeId, nodeMetadata);
@@ -836,7 +838,9 @@ class HostValueSubstitution {
     getHostSymbol(guestSymbol) {
         let hostSymbol = this.#symbolMap.get(guestSymbol);
         if (!hostSymbol) {
-            hostSymbol = Symbol();
+            const { Description } = guestSymbol;
+            const hostDescription = (Description.type === "String") ? Description.stringValue() : undefined;
+            hostSymbol = Symbol(hostDescription);
             this.#symbolMap.set(guestSymbol, hostSymbol);
         }
         return hostSymbol;
@@ -939,6 +943,7 @@ function buildObjectMetadata(builtInJSTypeName, derivedClassName) {
         derivedClassName,
         classSpecifier: null,
         classLineNumber: null,
+        symbolDescription: null,
     };
 }
 
@@ -1044,8 +1049,8 @@ class GraphBuilder {
         }
     }
     *run(targetValue, heldValues) {
-        const targetMetadata = buildObjectMetadata(...yield* this.#getCollectionAndClassName(targetValue));
-        const heldValuesMetadata = buildObjectMetadata(...yield* this.#getCollectionAndClassName(heldValues));
+        const targetMetadata = yield* this.#buildGraphWeakKeyMetadata(targetValue);
+        const heldValuesMetadata = yield* this.#buildGraphWeakKeyMetadata(heldValues);
         this.#guestObjectGraph.defineTargetAndHeldValues(targetValue, targetMetadata, heldValues, heldValuesMetadata);
         if (targetValue.type === "Object")
             this.#objectsToExcludeFromSearch.add(targetValue);
@@ -1092,7 +1097,7 @@ class GraphBuilder {
             if (excludeFromSearch) {
                 this.#throwInternalError(new Error("excludeFromSearch must not be true for a symbol!"));
             }
-            this.#defineGraphSymbolNode(guestWeakKey);
+            yield* this.#defineGraphSymbolNode(guestWeakKey);
         }
         const weakKey = this.#guestObjectGraph.getWeakKeyId(guestWeakKey);
         if (this.#searchConfiguration?.defineNodeTrap) {
@@ -1102,8 +1107,7 @@ class GraphBuilder {
     }
     *#defineGraphObjectNode(guestObject, excludeFromSearch) {
         if (this.#guestObjectGraph.hasObject(guestObject) === false) {
-            const collectionAndClass = yield* this.#getCollectionAndClassName(guestObject);
-            const objectMetadata = buildObjectMetadata(...collectionAndClass);
+            const objectMetadata = yield* this.#buildGraphWeakKeyMetadata(guestObject);
             if (guestObject.ConstructedBy.length > 0) {
                 const classObject = guestObject.ConstructedBy[guestObject.ConstructedBy.length - 1];
                 const slots = new Set(classObject.internalSlotsList);
@@ -1136,11 +1140,21 @@ class GraphBuilder {
             this.#objectQueue.add(guestObject);
         }
     }
-    #defineGraphSymbolNode(guestSymbol) {
+    *#defineGraphSymbolNode(guestSymbol) {
         if (this.#guestObjectGraph.hasSymbol(guestSymbol) === false) {
-            const objectMetadata = buildObjectMetadata(BuiltInJSTypeName.Symbol, BuiltInJSTypeName.Symbol);
+            const objectMetadata = yield* this.#buildGraphWeakKeyMetadata(guestSymbol);
             this.#guestObjectGraph.defineSymbol(guestSymbol, objectMetadata);
         }
+    }
+    *#buildGraphWeakKeyMetadata(guestValue) {
+        const collectionAndClass = yield* this.#getCollectionAndClassName(guestValue);
+        const objectMetadata = buildObjectMetadata(...collectionAndClass);
+        if (guestValue.type === "Symbol") {
+            const { Description } = guestValue;
+            const hostDescription = Description.type === "String" ? Description.stringValue() : undefined;
+            objectMetadata.symbolDescription = hostDescription ?? null;
+        }
+        return objectMetadata;
     }
     *#getCollectionAndClassName(guestValue) {
         if (guestValue.type === "Symbol") {
@@ -1181,7 +1195,7 @@ class GraphBuilder {
         GuestEngine.Assert(Array.isArray(OwnKeys));
         for (const guestKey of OwnKeys) {
             if (guestKey.type === "Symbol") {
-                this.#defineGraphSymbolNode(guestKey);
+                yield* this.#defineGraphSymbolNode(guestKey);
             }
             const descriptor = yield* guestObject.GetOwnProperty(guestKey);
             GuestEngine.Assert(descriptor instanceof GuestEngine.Descriptor);

@@ -102,11 +102,12 @@ declare namespace constants {
   };
 }
 
-interface GraphObjectMetadata extends JsonObject {
+interface GraphWeakKeyMetadata extends JsonObject {
   readonly builtInJSTypeName: BuiltInJSTypeName;
   readonly derivedClassName: string;
   classSpecifier: string | null;
   classLineNumber: number | null;
+  symbolDescription: string | null;
 }
 
 interface GraphRelationshipMetadata extends JsonObject {
@@ -130,6 +131,7 @@ interface ObjectValueDescription {
 interface SymbolValueDescription {
   readonly valueType: ValueDiscrimant.Symbol;
   readonly symbolId: SymbolId,
+  readonly description: string | undefined;
 }
 
 interface BigIntValueDescription {
@@ -164,7 +166,7 @@ interface GraphEdgeWithMetadata<RelationshipMetadata extends JsonObject | null> 
 
 type SearchGraph = Graph<
   unknown,
-  GraphNodeWithMetadata<GraphObjectMetadata | null>,
+  GraphNodeWithMetadata<GraphWeakKeyMetadata | null>,
   GraphEdgeWithMetadata<GraphRelationshipMetadata | null>
 >;
 
@@ -260,7 +262,7 @@ declare function pathsToTarget(graph: SearchGraph | null): readonly (readonly No
 
 declare function runSearchesInGuestEngine(inputs: GuestRealmInputs, searchConfiguration?: SearchConfiguration): Promise<ReadonlyMap<string, SearchGraph | null>>;
 
-type JSGraphNode = ReadonlyDeep<GraphNodeWithMetadata<GraphObjectMetadata>>;
+type JSGraphNode = ReadonlyDeep<GraphNodeWithMetadata<GraphWeakKeyMetadata>>;
 type JSGraphEdge = ReadonlyDeep<GraphEdgeWithMetadata<GraphRelationshipMetadata>>;
 
 export { constants as JSGraphConstants, LoggingConfiguration, pathsToTarget, runSearchesInGuestEngine };
