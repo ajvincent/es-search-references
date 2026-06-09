@@ -56,3 +56,7 @@ await fs.cp(
   path.join(projectRoot, "reference-spec/searchReferences.d.ts")
 ).then(() => console.log("searchReferences.d.ts updated"));
 
+await fs.cp(
+  path.join(coreRoot, "dist/guest/print.d.ts"),
+  path.join(projectRoot, "reference-spec/print.d.ts")
+).then(() => console.log("print.d.ts updated"));

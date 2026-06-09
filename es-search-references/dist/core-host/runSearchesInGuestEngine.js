@@ -1617,6 +1617,16 @@ function* extractSearchParameters(guestArguments) {
     };
 }
 
+function* definePrintFunction(realm) {
+    // eslint-disable-next-line require-yield
+    yield* defineBuiltInFunction(realm, "print", function* print(guestThisArg, guestArguments, guestNewTarget) {
+        void (guestThisArg);
+        void (guestNewTarget);
+        console.log(guestArguments.map((tmp) => GuestEngine.inspect(tmp)));
+        return GuestEngine.Value(undefined);
+    });
+}
+
 /** @deprecated use `Promise.withResolvers()` instead. */
 class Deferred {
     resolve;
@@ -1937,6 +1947,7 @@ class SearchGuestRealmInputs {
     }
     *defineBuiltIns(realm) {
         yield* defineSearchReferences(realm, this.#graphs, this.#searchConfiguration);
+        yield* definePrintFunction(realm);
     }
 }
 

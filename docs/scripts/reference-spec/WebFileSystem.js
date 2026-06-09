@@ -71,7 +71,8 @@ const ReferenceSpecRecord = {
             "targetIsSymbolKeyOfHeldObject.js": "import \"es-search-references/guest\";\nconst target = Symbol(\"target symbol\");\nconst isTailValue = { isTailValue: true };\nconst objectHoldingTarget = { [target]: isTailValue };\nconst heldValues = [\n    objectHoldingTarget,\n];\nsearchReferences(\"target is symbol key of held object\", target, heldValues, true);\n",
             "targetUnreachable.js": "import \"es-search-references/guest\";\nconst target = { isTarget: true };\nconst isFirstValue = { isFirstValue: true };\nconst isLastValue = { isLastValue: true };\nconst heldValues = [\n    isFirstValue,\n    isLastValue,\n];\nsearchReferences(\"targetUnreachable\", target, heldValues, true);\n",
             "weakRefToTarget.js": "import \"es-search-references/guest\";\n{\n    const target = { isTarget: true };\n    const weakRef = new WeakRef(target);\n    const heldValues = [\n        weakRef,\n    ];\n    searchReferences(\"WeakRef to target object does not hold strongly\", target, heldValues, true);\n    searchReferences(\"WeakRef to target object holds weakly\", target, heldValues, false);\n}\n{\n    const target = Symbol(\"target symbol\");\n    const weakRef = new WeakRef(target);\n    const heldValues = [\n        weakRef,\n    ];\n    searchReferences(\"WeakRef to target symbol does not hold strongly\", target, heldValues, true);\n    searchReferences(\"WeakRef to target symbol holds weakly\", target, heldValues, false);\n}\n"
-          }
+          },
+          "typeof-print.js": "import \"es-search-references/guest\";\nconst target = {};\nif (typeof print === \"function\")\n    searchReferences(\"pass\", target, [target], true);\nelse\n    searchReferences(\"pass\", target, [], true);\n"
         }
       }
     }
