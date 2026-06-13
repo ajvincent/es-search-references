@@ -18,7 +18,6 @@
     "sourceMap": false,
     "declaration": false,
 
-    "baseUrl": ".",
     "rootDir": ".",
     "outDir": "../docs",
     "types": [

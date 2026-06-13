@@ -72,10 +72,12 @@ export class OutputController {
     }
     addResults(resultsMap) {
         for (const [pathToFile, innerMap] of resultsMap) {
+            const scriptLogResults = innerMap.get("");
             for (const [searchKey, results] of innerMap) {
                 this.#filePathsAndSearchKeys.getDefault(pathToFile).add(searchKey);
                 this.#addRawGraphPanel(pathToFile, searchKey, results);
-                this.#addLogPanel(pathToFile, searchKey, results);
+                this.#addSearchLogPanel(pathToFile, searchKey, results);
+                this.#addScriptLogPanel(pathToFile, searchKey, scriptLogResults);
                 this.#addLayoutPanel(pathToFile, searchKey, results);
                 this.#addGraphPanel(pathToFile, searchKey, results);
                 this.selectTabKey("svg-graph");
@@ -87,9 +89,13 @@ export class OutputController {
         const view = _a.#createPreformattedView(serializedGraph);
         this.#addPanel(pathToFile, searchKey, "searchResults", view);
     }
-    #addLogPanel(pathToFile, searchKey, results) {
+    #addSearchLogPanel(pathToFile, searchKey, results) {
         const view = _a.#createPreformattedView(results.logs.join("\n"));
         this.#addPanel(pathToFile, searchKey, "searchLog", view);
+    }
+    #addScriptLogPanel(pathToFile, searchKey, scriptLogResults) {
+        const view = _a.#createPreformattedView(scriptLogResults.logs.join("\n"));
+        this.#addPanel(pathToFile, searchKey, "scriptLog", view);
     }
     #addLayoutPanel(pathToFile, searchKey, results) {
         let view;

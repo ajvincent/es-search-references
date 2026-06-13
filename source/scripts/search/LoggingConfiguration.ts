@@ -62,4 +62,15 @@ export class SearchLogsConfiguration implements Required<SearchConfiguration> {
     message = "  ".repeat(indentLevel) + message;
     this.#currentLogs!.push(message);
   }
+
+  printToScriptLog(message: string): void {
+    if (this.logsMap.has("") === false) {
+      this.logsMap.set("", []);
+    }
+    this.logsMap.get("")!.push(message);
+  }
+
+  public retrieveScriptLog(): readonly string[] {
+    return this.logsMap.get("") ?? [];
+  }
 }

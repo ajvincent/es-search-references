@@ -110,11 +110,13 @@ export class OutputController {
   ): void
   {
     for (const [pathToFile, innerMap] of resultsMap) {
+      const scriptLogResults: SearchResults = innerMap.get("")!;
       for (const [searchKey, results] of innerMap) {
         this.#filePathsAndSearchKeys.getDefault(pathToFile).add(searchKey);
 
         this.#addRawGraphPanel(pathToFile, searchKey, results);
-        this.#addLogPanel(pathToFile, searchKey, results);
+        this.#addSearchLogPanel(pathToFile, searchKey, results);
+        this.#addScriptLogPanel(pathToFile, searchKey, scriptLogResults);
         this.#addLayoutPanel(pathToFile, searchKey, results);
         this.#addGraphPanel(pathToFile, searchKey, results);
 
@@ -134,7 +136,7 @@ export class OutputController {
     this.#addPanel(pathToFile, searchKey, "searchResults", view);
   }
 
-  #addLogPanel(
+  #addSearchLogPanel(
     pathToFile: string,
     searchKey: string,
     results: SearchResults
@@ -145,6 +147,18 @@ export class OutputController {
     );
 
     this.#addPanel(pathToFile, searchKey, "searchLog", view);
+  }
+
+  #addScriptLogPanel(
+    pathToFile: string,
+    searchKey: string,
+    scriptLogResults: SearchResults
+  ): void {
+    const view: BaseView = OutputController.#createPreformattedView(
+      scriptLogResults.logs.join("\n")
+    );
+
+    this.#addPanel(pathToFile, searchKey, "scriptLog", view);
   }
 
   #addLayoutPanel(

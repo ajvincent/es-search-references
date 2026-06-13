@@ -40,4 +40,13 @@ export class SearchLogsConfiguration {
         message = "  ".repeat(indentLevel) + message;
         this.#currentLogs.push(message);
     }
+    printToScriptLog(message) {
+        if (this.logsMap.has("") === false) {
+            this.logsMap.set("", []);
+        }
+        this.logsMap.get("").push(message);
+    }
+    retrieveScriptLog() {
+        return this.logsMap.get("") ?? [];
+    }
 }

@@ -188,6 +188,9 @@ interface SearchConfiguration {
   /** Ye olde log function. */
   log?(message: string, indentLevel?: number): void;
 
+  /** for print statements and beginSearch/endSearch tracing. */
+  printToScriptLog?(...values: readonly string[]): void;
+
   enterNodeIdTrap?: (nodeId: string) => void;
   leaveNodeIdTrap?: (nodeId: string) => void;
 
@@ -245,13 +248,15 @@ declare class LoggingConfiguration implements Required<SearchConfiguration> {
     endSearch(sourceSpecifier: string, resultsKey: string): void;
     internalErrorTrap(): void;
     log(message: string, indentLevel?: number): void;
+    printToScriptLog(message: string): void;
     enterNodeIdTrap(nodeId: string): void;
     leaveNodeIdTrap(nodeId: string): void;
     defineNodeTrap(parentId: string, weakKey: string, details: string): void;
     defineEdgeTrap(parentId: string, edgeId: string, childId: string, secondParentId: string | undefined, isStrongReference: boolean): void;
     defineWeakKeyTrap(weakKey: string): void;
     markStrongNodeTrap(nodeId: string): void;
-    retrieveLogs(sourceSpecifier: string, resultsKey: string): readonly string[] | undefined;
+    retrieveLogs(sourceSpecifier: string, resultsKey: string): (readonly string[]) | undefined;
+    retrieveScriptLog(sourceSpecifier: string): (readonly string[]) | undefined;
 }
 
 interface NodeAndEdgeLabels {
@@ -260,7 +265,7 @@ interface NodeAndEdgeLabels {
 }
 declare function pathsToTarget(graph: SearchGraph | null): readonly (readonly NodeAndEdgeLabels[])[];
 
-declare function runSearchesInGuestEngine(inputs: GuestRealmInputs, searchConfiguration?: SearchConfiguration): Promise<ReadonlyMap<string, SearchGraph | null>>;
+declare function runSearchesInGuestEngine(inputs: GuestRealmInputs, searchConfiguration: SearchConfiguration): Promise<ReadonlyMap<string, SearchGraph | null>>;
 
 type JSGraphNode = ReadonlyDeep<GraphNodeWithMetadata<GraphWeakKeyMetadata>>;
 type JSGraphEdge = ReadonlyDeep<GraphEdgeWithMetadata<GraphRelationshipMetadata>>;

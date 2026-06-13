@@ -1538,6 +1538,9 @@ class SearchDriver {
         this.#searchReferences = hostGraphImpl;
     }
     *run() {
+        if (this.#searchConfiguration?.printToScriptLog) {
+            this.#searchConfiguration.printToScriptLog(`searchReferences enter: ${this.#graphBuilder.resultsKey}`);
+        }
         if (this.#searchConfiguration?.beginSearch) {
             this.#searchConfiguration.beginSearch(this.#graphBuilder.sourceSpecifier, this.#graphBuilder.resultsKey);
         }
@@ -1555,6 +1558,9 @@ class SearchDriver {
         finally {
             if (this.#searchConfiguration?.endSearch) {
                 this.#searchConfiguration.endSearch(this.#graphBuilder.sourceSpecifier, this.#graphBuilder.resultsKey);
+            }
+            if (this.#searchConfiguration?.printToScriptLog) {
+                this.#searchConfiguration.printToScriptLog(`searchReferences leave: ${this.#graphBuilder.resultsKey}`);
             }
         }
     }
@@ -1598,6 +1604,9 @@ function* extractSearchParameters(guestArguments) {
     if (resultsKeyGuest?.type !== "String") {
         throw GuestEngine.Throw.TypeError("resultsKey is not a string");
     }
+    const resultsKey = resultsKeyGuest.stringValue();
+    if (resultsKey.length === 0)
+        throw GuestEngine.Throw.Error("resultsKey can not be empty");
     if (targetValue?.type !== "Object" && targetValue?.type !== "Symbol") {
         throw GuestEngine.Throw.TypeError("$1 is not an object or a symbol", targetValue);
     }
@@ -1612,19 +1621,21 @@ function* extractSearchParameters(guestArguments) {
     if (strongRefsGuest?.type !== "Boolean")
         throw GuestEngine.Throw.TypeError("strongReferencesOnly is not a boolean");
     return {
-        resultsKey: resultsKeyGuest.stringValue(),
+        resultsKey,
         targetValue,
         heldValuesArray: heldValuesArrayGuest,
         strongReferencesOnly: strongRefsGuest.booleanValue(),
     };
 }
 
-function* definePrintFunction(realm) {
+function* definePrintFunction(realm, searchConfiguration) {
     // eslint-disable-next-line require-yield
     yield* defineBuiltInFunction(realm, "print", function* print(guestThisArg, guestArguments, guestNewTarget) {
         void (guestThisArg);
         void (guestNewTarget);
-        console.log(guestArguments.map((tmp) => GuestEngine.inspect(tmp)));
+        const values = guestArguments.map((tmp) => GuestEngine.inspect(tmp));
+        if (searchConfiguration.printToScriptLog)
+            searchConfiguration.printToScriptLog(...values);
         return GuestEngine.Value(undefined);
     });
 }
@@ -1820,19 +1831,22 @@ class RealmResults {
 
 class LoggingConfiguration {
     static #hashSpecifierAndKey(referenceSpec, resultsKey) {
-        return referenceSpec + ": " + resultsKey;
+        return JSON.stringify({ referenceSpec, resultsKey });
     }
     #logsMap = new Map;
+    #currentSpecifier = "";
     #tracingHash = "";
     //#region SearchConfiguration
     noFunctionEnvironment = false;
     beginSearch(sourceSpecifier, resultsKey) {
+        this.#currentSpecifier = sourceSpecifier;
         this.#tracingHash = LoggingConfiguration.#hashSpecifierAndKey(sourceSpecifier, resultsKey);
         this.log("enter " + this.#tracingHash, 0);
     }
     endSearch(sourceSpecifier, resultsKey) {
         this.log("leave " + this.#tracingHash, 0);
         this.#tracingHash = "";
+        this.#currentSpecifier = "";
     }
     internalErrorTrap() {
         // eslint-disable-next-line no-debugger
@@ -1844,6 +1858,12 @@ class LoggingConfiguration {
             this.#logsMap.set(this.#tracingHash, []);
         }
         this.#logsMap.get(this.#tracingHash).push(message);
+    }
+    printToScriptLog(message) {
+        if (this.#logsMap.has(this.#currentSpecifier) === false) {
+            this.#logsMap.set(this.#currentSpecifier, []);
+        }
+        this.#logsMap.get(this.#currentSpecifier).push(message);
     }
     enterNodeIdTrap(nodeId) {
         this.log("enter search nodeId: " + nodeId, 1);
@@ -1868,6 +1888,9 @@ class LoggingConfiguration {
     retrieveLogs(sourceSpecifier, resultsKey) {
         const tracingHash = LoggingConfiguration.#hashSpecifierAndKey(sourceSpecifier, resultsKey);
         return this.#logsMap.get(tracingHash);
+    }
+    retrieveScriptLog(sourceSpecifier) {
+        return this.#logsMap.get(sourceSpecifier);
     }
 }
 
@@ -1949,7 +1972,7 @@ class SearchGuestRealmInputs {
     }
     *defineBuiltIns(realm) {
         yield* defineSearchReferences(realm, this.#graphs, this.#searchConfiguration);
-        yield* definePrintFunction(realm);
+        yield* definePrintFunction(realm, this.#searchConfiguration);
     }
 }
 
