@@ -5,6 +5,7 @@ interface GuestRealmInputs {
   readonly startingSpecifier: string;
   readonly contentsGetter: (specifier: string) => string;
   readonly resolveSpecifier: (targetSpecifier: string, sourceSpecifier: string) => string;
+  readonly printToScriptLog: (...values: readonly string[]) => void;
 }
 
 declare enum ValueDiscrimant {

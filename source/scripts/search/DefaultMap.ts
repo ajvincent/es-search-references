@@ -11,11 +11,10 @@ export class DefaultMap<K, V> extends Map<K, V>
   }
 
   getDefault(key: K): V {
-    let value = this.get(key);
-    if (!value) {
-      value = this.#builder();
-      this.set(key, value);
+    const hasKey = this.has(key);
+    if (!hasKey) {
+      this.set(key, this.#builder());
     }
-    return value;
+    return this.get(key)!;
   }
 }

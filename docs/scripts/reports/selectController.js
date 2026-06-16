@@ -23,10 +23,12 @@ export class ReportSelectController {
         const map = new FileSystemMap(0);
         this.#fileSystemView = new FileSystemView(BaseDirectoryRowView, BaseFileRowView, true, this.#rootElement.treeRows, index, map, (fullPath) => this.#outputController.filePathsAndSearchKeys.has(fullPath));
         for (const [fullPath, view] of this.#fileSystemView.descendantFileViews()) {
-            const searchKeysIterator = this.#outputController.filePathsAndSearchKeys.get(fullPath);
-            if (!searchKeysIterator)
+            const searchKeysSet = this.#outputController.filePathsAndSearchKeys.get(fullPath);
+            if (!searchKeysSet)
                 continue;
-            for (const searchKey of searchKeysIterator) {
+            for (const searchKey of searchKeysSet) {
+                if (searchKeysSet.size > 1 && searchKey === "")
+                    continue;
                 this.#addSearchKeyRow(fullPath, searchKey, view);
             }
         }

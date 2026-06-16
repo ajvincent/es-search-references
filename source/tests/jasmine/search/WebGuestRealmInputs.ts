@@ -1,3 +1,4 @@
+import { SearchLogsConfiguration } from "../../../scripts/search/LoggingConfiguration.js";
 import {
   WebGuestRealmInputs
 } from "../../../scripts/search/WebGuestRealmInputs.js";
@@ -6,7 +7,8 @@ describe("WebGuestRealmInputs", () => {
   void WebGuestRealmInputs;
 
   it(".resolveSpecifier returns correct values from URL's", () => {
-    const inputs = new WebGuestRealmInputs("virtual://one/two/three.js", new Map);
+    const config = new SearchLogsConfiguration;
+    const inputs = new WebGuestRealmInputs("virtual://one/two/three.js", new Map, config);
     const three_js = "virtual://one/two/three.js";
     expect(
       inputs.resolveSpecifier("es-search-references/guest", three_js)
@@ -34,7 +36,8 @@ describe("WebGuestRealmInputs", () => {
   });
 
   it(".resolveSpecifier only goes so many levels up in a URL", () => {
-    const inputs = new WebGuestRealmInputs("virtual://one/two/three.js", new Map);
+    const config = new SearchLogsConfiguration;
+    const inputs = new WebGuestRealmInputs("virtual://one/two/three.js", new Map, config);
     const three_js = "virtual://one/two/three.js";
 
     expect(
@@ -43,7 +46,8 @@ describe("WebGuestRealmInputs", () => {
   });
 
   it(".resolveSpecifier returns correct values from packages", () => {
-    const inputs = new WebGuestRealmInputs("one/two/three.js", new Map);
+    const config = new SearchLogsConfiguration;
+    const inputs = new WebGuestRealmInputs("one/two/three.js", new Map, config);
     const three_js = "one/two/three.js";
     expect(
       inputs.resolveSpecifier("es-search-references/guest", three_js)

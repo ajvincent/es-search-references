@@ -23,4 +23,14 @@ export class SearchKeyRowView extends TreeRowView {
   clearSelected(): void {
     this.rowElement.classList.remove("selected");
   }
+
+  protected buildPrimaryLabelElement(): HTMLLabelElement {
+    const label = super.buildPrimaryLabelElement();
+    if (this.primaryLabel === "") {
+      const em = document.createElement("em");
+      em.append("(script log)");
+      label.replaceChildren(em);
+    }
+    return label;
+  }
 }

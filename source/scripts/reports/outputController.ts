@@ -109,20 +109,25 @@ export class OutputController {
     resultsMap: ReadonlyMap<string, ReadonlyMap<string, SearchResults>>
   ): void
   {
+    let tabKey: string = "scriptLog";
     for (const [pathToFile, innerMap] of resultsMap) {
       const scriptLogResults: SearchResults = innerMap.get("")!;
       for (const [searchKey, results] of innerMap) {
         this.#filePathsAndSearchKeys.getDefault(pathToFile).add(searchKey);
+        this.#addScriptLogPanel(pathToFile, searchKey, scriptLogResults);
+        if (searchKey === "")
+          continue;
 
         this.#addRawGraphPanel(pathToFile, searchKey, results);
         this.#addSearchLogPanel(pathToFile, searchKey, results);
-        this.#addScriptLogPanel(pathToFile, searchKey, scriptLogResults);
         this.#addLayoutPanel(pathToFile, searchKey, results);
         this.#addGraphPanel(pathToFile, searchKey, results);
 
-        this.selectTabKey("svg-graph");
+        tabKey = "svg-graph";
       }
     }
+
+    this.selectTabKey(tabKey);
   }
 
   #addRawGraphPanel(

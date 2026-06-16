@@ -58,7 +58,7 @@ export class SearchDriver {
   async #runURL(pathToFile: string): Promise<ReadonlyMap<string, SearchResults>>
   {
     const config = new SearchLogsConfiguration;
-    const inputs = new WebGuestRealmInputs(pathToFile, this.#fileMap);
+    const inputs = new WebGuestRealmInputs(pathToFile, this.#fileMap, config);
 
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const allSearches: ReadonlyMap<string, dagre.graphlib.Graph | null> = await runSearchesInGuestEngine(inputs, config);

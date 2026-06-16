@@ -1,14 +1,32 @@
 import type {
-  GuestRealmInputs
+  GuestRealmInputs,
+  SearchConfiguration
 } from "../../lib/packages/runSearchesInGuestEngine.js";
 
 export class WebGuestRealmInputs implements GuestRealmInputs {
+  static readonly #packageURLPrefix = "package://package/";
+
+  static #parseURL(sourceSpecifier: string, baseURL: URL | undefined): [URL, boolean] {
+    const url = URL.parse(sourceSpecifier, baseURL);
+    if (url)
+      return [url, false];
+
+    return [URL.parse(WebGuestRealmInputs.#packageURLPrefix + sourceSpecifier)!, true];
+  }
+
   readonly startingSpecifier: string;
   readonly #filesMap: ReadonlyMap<string, string>;
+  readonly #config: Required<SearchConfiguration>;
 
-  constructor(startingSpecifier: string, filesMap: ReadonlyMap<string, string>) {
+  constructor(
+    startingSpecifier: string,
+    filesMap: ReadonlyMap<string, string>,
+    config: Required<SearchConfiguration>
+  )
+  {
     this.startingSpecifier = startingSpecifier;
     this.#filesMap = filesMap;
+    this.#config = config;
   }
 
   contentsGetter(specifier: string): string {
@@ -43,13 +61,7 @@ export class WebGuestRealmInputs implements GuestRealmInputs {
     return targetSpecifier;
   }
 
-  static readonly #packageURLPrefix = "package://package/";
-
-  static #parseURL(sourceSpecifier: string, baseURL: URL | undefined): [URL, boolean] {
-    const url = URL.parse(sourceSpecifier, baseURL);
-    if (url)
-      return [url, false];
-
-    return [URL.parse(WebGuestRealmInputs.#packageURLPrefix + sourceSpecifier)!, true];
+  printToScriptLog(...values: readonly string[]): void {
+    this.#config.printToScriptLog(...values);
   }
 }

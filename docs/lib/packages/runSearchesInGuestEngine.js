@@ -1718,23 +1718,35 @@ function runInRealm(inputs) {
                     GuestEngine.FinishLoadingImportedModule(referrer, moduleRequest, payload, moduleOrThrow);
                     return;
                 }
+                inputs.printToScriptLog("HostLoadImportedModule: expected SourceTextModuleRecord for specifier " + moduleRequest.Specifier);
                 throw new Error("uh, what do we do here?");
             },
-            /*
             HostPromiseRejectionTrackers: new Set([
-              (promise: GuestEngine.PromiseObject, operation: "reject" | "handle") => {
-                realmDriver.hostDefined.promiseRejectionTracker(promise, operation);
-              }
+                (promise, operation) => {
+                    if (operation === "reject") {
+                        try {
+                            inputs.printToScriptLog("promise rejected:", GuestEngine.inspect(promise));
+                            /*
+                            realmDriver.hostDefined.promiseRejectionTracker(promise, operation);
+                            */
+                        }
+                        catch (ex) {
+                            console.error(ex);
+                        }
+                    }
+                }
             ]),
-            */
         },
-        /*
         uncaughtExceptionTrackers: new Set([
-          (error: GuestEngine.Value) => {
-            void error;
-          }
+            (error) => {
+                try {
+                    inputs.printToScriptLog(GuestEngine.inspect(error));
+                }
+                catch (ex) {
+                    console.error(ex);
+                }
+            }
         ]),
-        */
         // onNodeEvaluation() {},
         // features: [],
     });
@@ -1945,10 +1957,18 @@ function* yieldPaths(graph, nextNodeId, stack) {
 
 async function runSearchesInGuestEngine(inputs, searchConfiguration) {
     const graphs = new Map;
-    const realmInputs = new SearchGuestRealmInputs(inputs, graphs, searchConfiguration);
-    const outputs = await runInRealm(realmInputs);
-    if (!outputs?.succeeded) {
-        throw new Error("evaluating module in guest engine failed: " + inputs.startingSpecifier);
+    try {
+        const realmInputs = new SearchGuestRealmInputs(inputs, graphs, searchConfiguration);
+        const outputs = await runInRealm(realmInputs);
+        if (!outputs?.succeeded) {
+            throw new Error("evaluating module in guest engine failed: " + inputs.startingSpecifier);
+        }
+    }
+    catch (ex) {
+        if (searchConfiguration.printToScriptLog)
+            searchConfiguration.printToScriptLog(String(ex));
+        else
+            throw ex;
     }
     return graphs;
 }
@@ -1965,10 +1985,30 @@ class SearchGuestRealmInputs {
         return this.#baseInputs.startingSpecifier;
     }
     contentsGetter(specifier) {
-        return this.#baseInputs.contentsGetter(specifier);
+        try {
+            const contents = this.#baseInputs.contentsGetter(specifier);
+            this.printToScriptLog(`retrieved contents from "${specifier}"`);
+            return contents;
+        }
+        catch (ex) {
+            this.printToScriptLog(`error retrieving contents from "${specifier}"`);
+            throw ex;
+        }
     }
     resolveSpecifier(targetSpecifier, sourceSpecifier) {
-        return this.#baseInputs.resolveSpecifier(targetSpecifier, sourceSpecifier);
+        try {
+            const resultSpecifier = this.#baseInputs.resolveSpecifier(targetSpecifier, sourceSpecifier);
+            this.printToScriptLog(`resolved with target "${targetSpecifier}" and source "${sourceSpecifier}", result: "${resultSpecifier}"`);
+            return resultSpecifier;
+        }
+        catch (ex) {
+            this.printToScriptLog(`resolveSpecifier failed with target "${targetSpecifier}" and source "${sourceSpecifier}"`);
+            throw ex;
+        }
+    }
+    printToScriptLog(...values) {
+        if (this.#searchConfiguration.printToScriptLog)
+            this.#searchConfiguration.printToScriptLog(...values);
     }
     *defineBuiltIns(realm) {
         yield* defineSearchReferences(realm, this.#graphs, this.#searchConfiguration);

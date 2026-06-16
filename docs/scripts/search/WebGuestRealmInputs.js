@@ -1,9 +1,18 @@
 export class WebGuestRealmInputs {
+    static #packageURLPrefix = "package://package/";
+    static #parseURL(sourceSpecifier, baseURL) {
+        const url = URL.parse(sourceSpecifier, baseURL);
+        if (url)
+            return [url, false];
+        return [URL.parse(WebGuestRealmInputs.#packageURLPrefix + sourceSpecifier), true];
+    }
     startingSpecifier;
     #filesMap;
-    constructor(startingSpecifier, filesMap) {
+    #config;
+    constructor(startingSpecifier, filesMap, config) {
         this.startingSpecifier = startingSpecifier;
         this.#filesMap = filesMap;
+        this.#config = config;
     }
     contentsGetter(specifier) {
         const contents = this.#filesMap.get(specifier);
@@ -33,11 +42,7 @@ export class WebGuestRealmInputs {
         }
         return targetSpecifier;
     }
-    static #packageURLPrefix = "package://package/";
-    static #parseURL(sourceSpecifier, baseURL) {
-        const url = URL.parse(sourceSpecifier, baseURL);
-        if (url)
-            return [url, false];
-        return [URL.parse(WebGuestRealmInputs.#packageURLPrefix + sourceSpecifier), true];
+    printToScriptLog(...values) {
+        this.#config.printToScriptLog(...values);
     }
 }

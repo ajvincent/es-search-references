@@ -22,6 +22,7 @@
       </li>
       <li><a href="#search-results">The upper half: viewing the search results</a>
         <ul>
+          <li><a href="#report-panels">Report panels</a></li>
           <li><a href="#internal-tuples">Internal tuples</a></li>
           <li><a href="#navigation">Navigation</a></li>
         </ul>
@@ -140,6 +141,9 @@ available in the upper half, which I organize first by file, then by search key.
 Clicking on one will show the graph in the first tab.  If there are no direct
 references, the graph tab will simply say <code>(null)</code>.</p>
 
+    <p><em>When there's an error</em> which prevents running of any searches in
+a script, the file tree here will show a special row, <em>"(script log)"</em>.</p>
+
     <p>Objects appear as nodes in this graph, and the references are edges.  I
 illustrate strong references via solid black arrows in the directed graph, and
 weak references by dashed gray arrows.  The weak reference arrows are most
@@ -158,6 +162,32 @@ values array always has the key <code>heldValues:1</code>.  You may note these
 are also the only nodes with double outlines, as the start and end states of the
 graph.  Other real objects in the graph are circular nodes.</p>
 
+  </section>
+
+  <section id="report-panels">
+    <h3>Report panels</h3>
+    <p>There are five report panels I provide.
+    </p>
+    <ul>
+      <li><em>Graph</em> is the rendered SVG graph.  This is the one you'll use most.</li>
+      <li><em>Script Log</em> gives a general log of operations including:
+        <ul>
+          <li>callbacks to the host resolving module imports</li>
+          <li>errors from running the script</li>
+          <li><code>print(...values: readonly string[]): void;</code> calls in the script</li>
+          <li>Entering and leaving <code>searchReferences()</code> calls</li>
+        </ul>
+      </li>
+      <li>For debugging:
+        <ul>
+          <li><em>Search Log</em> shows the raw output we crossed while invoking
+            <code>searchReferences()</code>.</li>
+          <li><em>Search results</em> is the transformation of the search log into a
+            <code>graphlib</code> graph.</li>
+          <li><em>Layout</em> is the same graph with dagre's computed layout.</li>
+        </ul>
+      </li>
+    </ul>
   </section>
 
   <section id="internal-tuples">

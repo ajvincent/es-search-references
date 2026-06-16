@@ -5,11 +5,10 @@ export class DefaultMap extends Map {
         this.#builder = builder;
     }
     getDefault(key) {
-        let value = this.get(key);
-        if (!value) {
-            value = this.#builder();
-            this.set(key, value);
+        const hasKey = this.has(key);
+        if (!hasKey) {
+            this.set(key, this.#builder());
         }
-        return value;
+        return this.get(key);
     }
 }
