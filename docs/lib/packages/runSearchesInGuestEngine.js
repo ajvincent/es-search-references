@@ -38,6 +38,7 @@ var ValueDiscrimant;
     ValueDiscrimant["Symbol"] = "Symbol";
     ValueDiscrimant["BigInt"] = "BigInt";
     ValueDiscrimant["Primitive"] = "Primitive";
+    ValueDiscrimant["PrivateKey"] = "PrivateKey";
 })(ValueDiscrimant || (ValueDiscrimant = {}));
 //#region nodes
 var BuiltInJSTypeName;
@@ -83,7 +84,6 @@ var ChildReferenceEdgeType;
     ChildReferenceEdgeType["PropertySymbol"] = "PropertySymbol";
     ChildReferenceEdgeType["SymbolKey"] = "SymbolKey";
     ChildReferenceEdgeType["ScopeValue"] = "ScopeValue";
-    ChildReferenceEdgeType["PrivateClassKey"] = "PrivateClassKey";
     ChildReferenceEdgeType["PrivateClassValue"] = "PrivateClassValue";
     ChildReferenceEdgeType["InternalSlot"] = "InternalSlot";
     ChildReferenceEdgeType["SetElement"] = "SetElement";
@@ -107,11 +107,8 @@ var EdgePrefix;
     EdgePrefix["FinalizationTargetToTuple"] = "finalizationTargetToTuple";
     EdgePrefix["FinalizationTupleToHeldValue"] = "finalizationTupleToHeldValue";
     EdgePrefix["FinalizationTupleToUnregisterToken"] = "finalizationTupleToUnregisterToken";
-    EdgePrefix["ObjectToPrivateKey"] = "objectToPrivateKey";
-    EdgePrefix["ObjectToPrivateTuple"] = "objectToPrivateTuple";
-    EdgePrefix["PrivateKeyToTuple"] = "privateKeyToTuple";
-    EdgePrefix["PrivateTupleToValue"] = "privateValue";
-    EdgePrefix["PrivateTupleToGetter"] = "privateGetter";
+    EdgePrefix["PrivatePropertyKey"] = "#privateProperty";
+    EdgePrefix["PrivateGetter"] = "#privateGetter";
 })(EdgePrefix || (EdgePrefix = {}));
 //#endregion edges
 
@@ -254,7 +251,7 @@ var ObjectGraphState;
     ObjectGraphState[ObjectGraphState["Summarized"] = 4] = "Summarized";
     ObjectGraphState[ObjectGraphState["Error"] = Infinity] = "Error";
 })(ObjectGraphState || (ObjectGraphState = {}));
-class ObjectGraphImpl {
+class HostObjectGraphImpl {
     static #NOT_APPLICABLE = Object.freeze({
         valueType: ValueDiscrimant.NotApplicable,
     });
@@ -263,6 +260,7 @@ class ObjectGraphImpl {
     #targetId;
     #heldValuesId;
     #defineTargetCalled = false;
+    #privateKeySet = new Set;
     #graph = new graphlib.Graph({ directed: true, multigraph: true });
     #nodeCounter = new StringCounter;
     #edgeCounter = new StringCounter;
@@ -336,9 +334,9 @@ class ObjectGraphImpl {
         this.#assertDefineTargetCalled();
         return this.#weakKeyToIdMap.has(symbol);
     }
-    hasPrivateName(object) {
+    hasPrivateName(privateName) {
         this.#assertDefineTargetCalled();
-        return this.#weakKeyToIdMap.has(object);
+        return this.#weakKeyToIdMap.has(privateName);
     }
     defineObject(object, metadata) {
         this.#defineWeakKey(object, metadata, NodePrefix.Object);
@@ -346,27 +344,17 @@ class ObjectGraphImpl {
     defineSymbol(symbol, metadata) {
         this.#defineWeakKey(symbol, metadata, NodePrefix.Symbol);
     }
-    definePrivateName(privateName, description) {
+    definePrivateName(privateName) {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
-        if (this.#weakKeyToIdMap.has(privateName)) {
-            this.#throwInternalError(new Error("privateName is already defined as a node in this graph, with id " + this.#weakKeyToIdMap.get(privateName)));
+        if (this.#privateKeySet.has(privateName)) {
+            this.#throwInternalError(new Error(`privateName ${privateName.description} is already defined in this graph`));
         }
-        const nodeId = this.#nodeCounter.next(NodePrefix.PrivateName);
-        this.#weakKeyToIdMap.set(privateName, nodeId);
-        this.#idToWeakKeyMap.set(nodeId, privateName);
-        const nodeMetadata = {
-            metadata: {
-                builtInJSTypeName: BuiltInJSTypeName.PrivateName,
-                derivedClassName: "",
-                description,
-                classSpecifier: null,
-                classLineNumber: null,
-                symbolDescription: null,
-            }
-        };
-        this.#graph.setNode(nodeId, nodeMetadata);
-        this.#ownershipSetsTracker.defineKey(nodeId);
-        this.#weakKeyHeldStronglyMap.set(privateName, false);
+        if (privateName.description === undefined)
+            this.#throwInternalError(new Error("privateName.description must start with #"));
+        if (privateName.description.startsWith("#") === false) {
+            this.#throwInternalError(new Error("privateName.description must start with #: " + privateName.description));
+        }
+        this.#privateKeySet.add(privateName);
     }
     #defineWeakKey(weakKey, metadata, prefix) {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
@@ -422,16 +410,16 @@ class ObjectGraphImpl {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
         const parentId = this.#requireWeakKeyId(parentObject, "parentObject");
         const relationshipId = this.#requireWeakKeyId(relationshipName, "childObject");
-        const edgeId = this.#defineEdge(relationshipName.description ?? "(symbol)", parentId, EdgePrefix.HasSymbolAsKey, ObjectGraphImpl.#NOT_APPLICABLE, keyEdgeMetadata, relationshipId, true, undefined);
+        const edgeId = this.#defineEdge(relationshipName.description ?? "(symbol)", parentId, EdgePrefix.HasSymbolAsKey, HostObjectGraphImpl.#NOT_APPLICABLE, keyEdgeMetadata, relationshipId, true, undefined);
         return edgeId;
     }
     #hasSymbolKeyEdge(edge) {
         return this.#graph.edge(edge).edgeType === EdgePrefix.HasSymbolAsKey;
     }
-    definePropertyOrGetter(parentObject, relationshipName, childObject, metadata, isGetter) {
+    definePropertyOrGetter(parentObject, relationshipName, childValue, metadata, isGetter) {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
         const parentId = this.#requireWeakKeyId(parentObject, "parentObject");
-        const childId = this.#requireWeakKeyId(childObject, "childObject");
+        const childId = this.#requireWeakKeyId(childValue, "childObject");
         if (typeof relationshipName === "symbol") {
             const symbolId = this.getWeakKeyId(relationshipName);
             const matchingEdges = this.#graph.outEdges(parentId, symbolId) ?? [];
@@ -492,11 +480,11 @@ class ObjectGraphImpl {
             mapToKeyEdgeId = this.#defineEdge("(map key)", mapId, EdgePrefix.MapKey, keyDescription, keyMetadata ?? null, keyId, isStrongReferenceToKey, undefined);
         }
         // map to tuple
-        const mapToTupleEdgeId = this.#defineEdge("(map tuple)", mapId, EdgePrefix.MapToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, keyId);
+        const mapToTupleEdgeId = this.#defineEdge("(map tuple)", mapId, EdgePrefix.MapToTuple, HostObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, keyId);
         // key to tuple
         let keyToTupleEdgeId;
         if (keyId) {
-            keyToTupleEdgeId = this.#defineEdge("(map key to tuple)", keyId, EdgePrefix.MapKeyToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, mapId);
+            keyToTupleEdgeId = this.#defineEdge("(map key to tuple)", keyId, EdgePrefix.MapKeyToTuple, HostObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, mapId);
         }
         // map value edge
         let tupleToValueEdgeId;
@@ -515,7 +503,7 @@ class ObjectGraphImpl {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
         const setId = this.#requireWeakKeyId(set, "set");
         const valueId = this.#requireWeakKeyId(value, "value");
-        const edgeId = this.#defineEdge("(element)", setId, EdgePrefix.SetValue, ObjectGraphImpl.#NOT_APPLICABLE, metadata, valueId, isStrongReferenceToValue, undefined);
+        const edgeId = this.#defineEdge("(element)", setId, EdgePrefix.SetValue, HostObjectGraphImpl.#NOT_APPLICABLE, metadata, valueId, isStrongReferenceToValue, undefined);
         return edgeId;
     }
     defineFinalizationTuple(registry, target, heldValue, unregisterToken) {
@@ -535,8 +523,8 @@ class ObjectGraphImpl {
             this.#searchConfiguration.defineNodeTrap(registryId, tupleNodeId, "(new finalization tuple)");
         }
         const registryToTargetEdgeId = this.#defineEdge("(registry to target)", registryId, EdgePrefix.FinalizationRegistryToTarget, createValueDescription(target, this), null, targetId, false, undefined);
-        const registryToTupleEdgeId = this.#defineEdge("(registry to tuple)", registryId, EdgePrefix.FinalizationRegistryToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, targetId);
-        const registryTargetToTupleEdgeId = this.#defineEdge("(registry target to tuple)", targetId, EdgePrefix.FinalizationTargetToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, registryId);
+        const registryToTupleEdgeId = this.#defineEdge("(registry to tuple)", registryId, EdgePrefix.FinalizationRegistryToTuple, HostObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, targetId);
+        const registryTargetToTupleEdgeId = this.#defineEdge("(registry target to tuple)", targetId, EdgePrefix.FinalizationTargetToTuple, HostObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, registryId);
         let tupleToHeldValueEdgeId;
         if (heldValueId) {
             tupleToHeldValueEdgeId = this.#defineEdge("(held value)", tupleNodeId, EdgePrefix.FinalizationTupleToHeldValue, createValueDescription(heldValue, this), null, heldValueId, true, targetId);
@@ -554,28 +542,15 @@ class ObjectGraphImpl {
             tupleToUnregisterTokenEdgeId,
         };
     }
-    definePrivateField(parentObject, privateName, privateKey, childObject, privateNameMetadata, childMetadata, isGetter) {
+    definePrivateField(parentObject, privateName, childValue, childMetadata, isGetter) {
         this.#setNextState(ObjectGraphState.AcceptingDefinitions);
+        if (!this.#privateKeySet.has(privateName))
+            this.#throwInternalError(new Error("privateName not found"));
         const parentId = this.#requireWeakKeyId(parentObject, "parentObject");
-        const privateNameId = this.#requireWeakKeyId(privateName, "privateName");
-        if (privateNameId.startsWith(NodePrefix.PrivateName) === false)
-            throw new Error("privateName is not a registered private name!");
-        const childId = this.#requireWeakKeyId(childObject, "childObject");
-        const tupleNodeId = this.#defineWeakKey({}, null, NodePrefix.PrivateFieldTuple);
-        if (this.#searchConfiguration?.defineNodeTrap) {
-            this.#searchConfiguration.defineNodeTrap(parentId, tupleNodeId, "(new private field tuple)");
-        }
-        const objectToPrivateKeyEdgeId = this.#defineEdge("(private key)", parentId, EdgePrefix.ObjectToPrivateKey, ObjectGraphImpl.#NOT_APPLICABLE, privateNameMetadata, privateNameId, true, undefined);
-        const objectToTupleEdgeId = this.#defineEdge("(object to private tuple)", parentId, EdgePrefix.ObjectToPrivateTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, privateNameId);
-        const privateKeyToTupleEdgeId = this.#defineEdge("(private key to tuple)", privateNameId, EdgePrefix.PrivateKeyToTuple, ObjectGraphImpl.#NOT_APPLICABLE, null, tupleNodeId, true, parentId);
-        const tupleToValueEdgeId = this.#defineEdge(privateKey, tupleNodeId, isGetter ? EdgePrefix.PrivateTupleToGetter : EdgePrefix.PrivateTupleToValue, createValueDescription(privateKey, this), childMetadata, childId, true, parentId);
-        return {
-            tupleNodeId,
-            objectToPrivateKeyEdgeId,
-            objectToTupleEdgeId,
-            privateKeyToTupleEdgeId,
-            tupleToValueEdgeId
-        };
+        const childId = this.#requireWeakKeyId(childValue, "childObject");
+        const { description } = privateName;
+        const edgeId = this.#defineEdge(description, parentId, isGetter ? EdgePrefix.PrivateGetter : EdgePrefix.PrivatePropertyKey, { valueType: ValueDiscrimant.PrivateKey, description }, childMetadata, childId, true, undefined);
+        return edgeId;
     }
     getEdgeRelationship(edgeId) {
         this.#assertDefineTargetCalled();
@@ -850,7 +825,10 @@ class HostValueSubstitution {
     getHostPrivateName(guestKey) {
         let hostObject = this.#privateKeysMap.get(guestKey);
         if (!hostObject) {
-            hostObject = {};
+            const hostDescription = guestKey.Description.stringValue();
+            if (hostDescription.startsWith("#") === false)
+                throw new Error("expected description to start with #");
+            hostObject = Symbol(hostDescription);
             this.#privateKeysMap.set(guestKey, hostObject);
         }
         return hostObject;
@@ -897,8 +875,8 @@ class GuestObjectGraphImpl {
     defineSymbol(symbol, metadata) {
         return this.#hostGraph.defineSymbol(this.#substitution.getHostSymbol(symbol), metadata);
     }
-    definePrivateName(privateName, description) {
-        return this.#hostGraph.definePrivateName(this.#substitution.getHostPrivateName(privateName), description);
+    definePrivateName(privateName) {
+        return this.#hostGraph.definePrivateName(this.#substitution.getHostPrivateName(privateName));
     }
     defineAsSymbolKey(parentObject, relationshipName, keyEdgeMetadata) {
         return this.#hostGraph.defineAsSymbolKey(this.#substitution.getHostObject(parentObject), this.#substitution.getHostSymbol(relationshipName), keyEdgeMetadata);
@@ -931,8 +909,8 @@ class GuestObjectGraphImpl {
     defineFinalizationTuple(registry, target, heldValue, unregisterToken) {
         return this.#hostGraph.defineFinalizationTuple(this.#substitution.getHostObject(registry), this.#substitution.getHostWeakKey(target), this.#substitution.getHostValue(heldValue), unregisterToken ? this.#substitution.getHostWeakKey(unregisterToken) : undefined);
     }
-    definePrivateField(parentObject, privateName, privateKey, childObject, privateNameMetadata, childMetadata, isGetter) {
-        return this.#hostGraph.definePrivateField(this.#substitution.getHostObject(parentObject), this.#substitution.getHostPrivateName(privateName), privateKey, this.#substitution.getHostWeakKey(childObject), privateNameMetadata, childMetadata, isGetter);
+    definePrivateField(parentObject, privateName, childObject, childMetadata, isGetter) {
+        return this.#hostGraph.definePrivateField(this.#substitution.getHostObject(parentObject), this.#substitution.getHostPrivateName(privateName), this.#substitution.getHostWeakKey(childObject), childMetadata, isGetter);
     }
     getEdgeRelationship(edgeId) {
         return this.#hostGraph.getEdgeRelationship(edgeId);
@@ -1283,7 +1261,7 @@ class GraphBuilder {
             const privateKey = Key.Description.stringValue();
             GuestEngine.Assert(privateKey.startsWith("#"));
             if (this.#guestObjectGraph.hasPrivateName(Key) === false) {
-                this.#guestObjectGraph.definePrivateName(Key, privateKey);
+                this.#guestObjectGraph.definePrivateName(Key);
             }
             let guestValue;
             if (Kind === "accessor") {
@@ -1300,9 +1278,8 @@ class GraphBuilder {
             if (!_a.#isWeakKey(guestValue))
                 continue;
             yield* this.#defineGraphNode(guestValue, false, "addPrivateFields: key=" + privateKey);
-            const privateNameMetadata = _a.#buildChildEdgeType(ChildReferenceEdgeType.PrivateClassKey);
             const privateValueMetadata = _a.#buildChildEdgeType(ChildReferenceEdgeType.PrivateClassValue);
-            this.#guestObjectGraph.definePrivateField(guestObject, Key, privateKey, guestValue, privateNameMetadata, privateValueMetadata, Kind === "accessor");
+            this.#guestObjectGraph.definePrivateField(guestObject, Key, guestValue, privateValueMetadata, Kind === "accessor");
         }
     }
     *#lookupAndAddInternalSlots(guestObject) {
@@ -1532,7 +1509,7 @@ class SearchDriver {
         this.#heldValues = heldValues;
         this.#strongReferencesOnly = strongReferencesOnly;
         this.#searchConfiguration = searchConfiguration;
-        const hostGraphImpl = new ObjectGraphImpl(searchConfiguration);
+        const hostGraphImpl = new HostObjectGraphImpl(searchConfiguration);
         this.#graphBuilder = new GraphBuilder(realm, hostGraphImpl, resultsKey, searchConfiguration);
         this.#cloneableGraph = hostGraphImpl;
         this.#searchReferences = hostGraphImpl;

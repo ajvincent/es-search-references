@@ -13,7 +13,8 @@ declare enum ValueDiscrimant {
     Object = "Object",
     Symbol = "Symbol",
     BigInt = "BigInt",
-    Primitive = "Primitive"
+    Primitive = "Primitive",
+    PrivateKey = "PrivateKey"
 }
 declare enum BuiltInJSTypeName {
     Symbol = "Symbol",
@@ -53,7 +54,6 @@ declare enum ChildReferenceEdgeType {
     PropertySymbol = "PropertySymbol",
     SymbolKey = "SymbolKey",
     ScopeValue = "ScopeValue",
-    PrivateClassKey = "PrivateClassKey",
     PrivateClassValue = "PrivateClassValue",
     InternalSlot = "InternalSlot",
     SetElement = "SetElement",
@@ -76,11 +76,8 @@ declare enum EdgePrefix {
     FinalizationTargetToTuple = "finalizationTargetToTuple",
     FinalizationTupleToHeldValue = "finalizationTupleToHeldValue",
     FinalizationTupleToUnregisterToken = "finalizationTupleToUnregisterToken",
-    ObjectToPrivateKey = "objectToPrivateKey",
-    ObjectToPrivateTuple = "objectToPrivateTuple",
-    PrivateKeyToTuple = "privateKeyToTuple",
-    PrivateTupleToValue = "privateValue",
-    PrivateTupleToGetter = "privateGetter"
+    PrivatePropertyKey = "#privateProperty",
+    PrivateGetter = "#privateGetter"
 }
 
 type constants_BuiltInJSTypeName = BuiltInJSTypeName;
@@ -145,12 +142,18 @@ interface PrimitiveValueDescription {
   readonly primitiveValue: boolean | number | string | undefined | null;
 }
 
+interface PrivateKeyDescription {
+  readonly valueType: ValueDiscrimant.PrivateKey;
+  readonly description: string;
+}
+
 type ValueDescription = (
   NotApplicableValueDescription |
   ObjectValueDescription |
   SymbolValueDescription |
   BigIntValueDescription |
-  PrimitiveValueDescription
+  PrimitiveValueDescription |
+  PrivateKeyDescription
 );
 
 interface GraphNodeWithMetadata<ObjectMetadata extends JsonObject | null> {
