@@ -59,6 +59,13 @@ const { graphlib } = dagre;
 const { alg } = graphlib;
       `.trim() + "\n"
     ))
+    .pipe(replace(
+      `import * as graphlib from '@dagrejs/graphlib';\n`,
+      `
+import { dagre } from "./dagre-imports.js";
+const { graphlib } = dagre;
+      `.trim() + "\n"
+    ))
     .pipe(dest("docs/lib/packages"));
 }
 

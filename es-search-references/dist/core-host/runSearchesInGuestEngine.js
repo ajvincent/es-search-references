@@ -1,6 +1,5 @@
 import * as GuestEngine from '@engine262/engine262';
 import * as graphlib from '@dagrejs/graphlib';
-import { alg } from '@dagrejs/graphlib';
 
 function* EnsureTypeOrThrow(guestEvaluator) {
     const guestType = yield* guestEvaluator;
@@ -628,17 +627,20 @@ class HostObjectGraphImpl {
         }
     }
     #removeCycles() {
-        let allCycles = graphlib.alg.findCycles(this.#graph);
+        /*
+        let allCycles: string[][] = graphlib.alg.findCycles(this.#graph);
         while (allCycles.length) {
-            for (const cycle of allCycles) {
-                const wNodeId = cycle.pop();
-                const vNodeId = cycle.pop() ?? wNodeId;
-                for (const edge of this.#graph.inEdges(vNodeId, wNodeId)) {
-                    this.#graph.removeEdge(edge);
-                }
+          for (const cycle of allCycles) {
+            const wNodeId: string = cycle.pop()!;
+            const vNodeId: string = cycle.pop() ?? wNodeId;
+    
+            for (const edge of this.#graph.inEdges(vNodeId, wNodeId)!) {
+              this.#graph.removeEdge(edge);
             }
-            allCycles = graphlib.alg.findCycles(this.#graph);
+          }
+          allCycles = graphlib.alg.findCycles(this.#graph);
         }
+        */
     }
     #summarizeGraphToTarget(edgeIdToJointOwnersMap) {
         const summaryGraph = new graphlib.Graph({ directed: true, multigraph: true });
@@ -1881,55 +1883,6 @@ class LoggingConfiguration {
     }
 }
 
-class NodeAndEdge {
-    static comparator(a, b) {
-        let diff = a.length - b.length;
-        for (let i = 0; diff === 0 && i < a.length; i++) {
-            const aIndex = a[i].nodeIndex, bIndex = b[i].nodeIndex;
-            diff = aIndex - bIndex;
-        }
-        return diff;
-    }
-    nodeIndex;
-    nextEdgeLabel;
-    constructor(nodeIndex) {
-        this.nodeIndex = nodeIndex;
-    }
-    clone() {
-        const { nodeIndex, nextEdgeLabel } = this;
-        return nextEdgeLabel === undefined ? { nodeIndex } : { nodeIndex, nextEdgeLabel };
-    }
-}
-function pathsToTarget(graph) {
-    if (graph === null || graph.nodeCount() === 0)
-        return [];
-    if (alg.isAcyclic(graph) === false)
-        throw new Error("graph has a cycle");
-    const nodeStack = [];
-    const values = Array.from(yieldPaths(graph, "heldValues:1", nodeStack));
-    values.sort(NodeAndEdge.comparator);
-    return values;
-}
-function* yieldPaths(graph, nextNodeId, stack) {
-    const id = parseInt(/:(\d+)$/.exec(nextNodeId)[1]);
-    const next = new NodeAndEdge(id);
-    stack.push(next);
-    if (nextNodeId === "target:0") {
-        const result = stack.map(n => n.clone());
-        result.shift();
-        yield result;
-    }
-    else {
-        for (const edge of graph.outEdges(nextNodeId)) {
-            const edgeLabel = graph.edge(edge);
-            next.nextEdgeLabel = edgeLabel.label;
-            yield* yieldPaths(graph, edge.w, stack);
-            next.nextEdgeLabel = undefined;
-        }
-    }
-    stack.pop();
-}
-
 async function runSearchesInGuestEngine(inputs, searchConfiguration) {
     const graphs = new Map;
     try {
@@ -1991,4 +1944,4 @@ class SearchGuestRealmInputs {
     }
 }
 
-export { constants as JSGraphConstants, LoggingConfiguration, pathsToTarget, runSearchesInGuestEngine };
+export { constants as JSGraphConstants, LoggingConfiguration, runSearchesInGuestEngine };

@@ -263,16 +263,10 @@ declare class LoggingConfiguration implements Required<SearchConfiguration> {
     retrieveScriptLog(sourceSpecifier: string): (readonly string[]) | undefined;
 }
 
-interface NodeAndEdgeLabels {
-    nodeIndex: number;
-    nextEdgeLabel?: string;
-}
-declare function pathsToTarget(graph: SearchGraph | null): readonly (readonly NodeAndEdgeLabels[])[];
-
 declare function runSearchesInGuestEngine(inputs: GuestRealmInputs, searchConfiguration: SearchConfiguration): Promise<ReadonlyMap<string, SearchGraph | null>>;
 
 type JSGraphNode = ReadonlyDeep<GraphNodeWithMetadata<GraphWeakKeyMetadata>>;
 type JSGraphEdge = ReadonlyDeep<GraphEdgeWithMetadata<GraphRelationshipMetadata>>;
 
-export { constants as JSGraphConstants, LoggingConfiguration, pathsToTarget, runSearchesInGuestEngine };
-export type { GuestRealmInputs, JSGraphEdge, JSGraphNode, NodeAndEdgeLabels, SearchConfiguration, SearchGraph };
+export { constants as JSGraphConstants, LoggingConfiguration, runSearchesInGuestEngine };
+export type { GuestRealmInputs, JSGraphEdge, JSGraphNode, SearchConfiguration, SearchGraph };
