@@ -612,7 +612,6 @@ class HostObjectGraphImpl {
                 edgeIdToJointOwnersMap = this.#edgeIdToJointOwnersMap_Weak;
             }
             if (edgeIdToJointOwnersMap) {
-                this.#removeCycles();
                 this.#summarizeGraphToTarget(edgeIdToJointOwnersMap);
                 this.#summarizeGraphFromHeldValues();
             }
@@ -625,22 +624,6 @@ class HostObjectGraphImpl {
             this.#state = ObjectGraphState.Error;
             throw ex;
         }
-    }
-    #removeCycles() {
-        /*
-        let allCycles: string[][] = graphlib.alg.findCycles(this.#graph);
-        while (allCycles.length) {
-          for (const cycle of allCycles) {
-            const wNodeId: string = cycle.pop()!;
-            const vNodeId: string = cycle.pop() ?? wNodeId;
-    
-            for (const edge of this.#graph.inEdges(vNodeId, wNodeId)!) {
-              this.#graph.removeEdge(edge);
-            }
-          }
-          allCycles = graphlib.alg.findCycles(this.#graph);
-        }
-        */
     }
     #summarizeGraphToTarget(edgeIdToJointOwnersMap) {
         const summaryGraph = new graphlib.Graph({ directed: true, multigraph: true });
@@ -1883,6 +1866,73 @@ class LoggingConfiguration {
     }
 }
 
+function pathsToTarget(graph) {
+    if (graph === null || graph.nodeCount() === 0)
+        return [];
+    const traversal = new GraphTraversal(graph);
+    const values = Array.from(traversal.getPaths());
+    values.sort(NodeAndEdge.comparator);
+    return values;
+}
+class GraphTraversal {
+    #graph;
+    #currentNodeStack = new Set;
+    #currentStack = [];
+    /* We could speed things up by memoizing paths from each visited node to the target,
+    and then concatting them with an existing path leading to a visited node.
+    We're dealing for O(n^2 * m) for n nodes and m edges... as long as n and m remain small,
+    we're probably okay.
+    */
+    constructor(graph) {
+        this.#graph = graph;
+    }
+    *getPaths() {
+        yield* this.#yieldPaths("heldValues:1");
+    }
+    *#yieldPaths(nextNodeId) {
+        const id = parseInt(/:(\d+)$/.exec(nextNodeId)[1]);
+        const next = new NodeAndEdge(id);
+        this.#currentNodeStack.add(nextNodeId);
+        this.#currentStack.push(next);
+        if (nextNodeId === "target:0") {
+            const result = this.#currentStack.map(n => n.clone());
+            result.shift();
+            yield result;
+        }
+        else {
+            for (const edge of this.#graph.outEdges(nextNodeId)) {
+                if (this.#currentNodeStack.has(edge.w))
+                    continue;
+                const edgeLabel = this.#graph.edge(edge);
+                next.nextEdgeLabel = edgeLabel.label;
+                yield* this.#yieldPaths(edge.w);
+                next.nextEdgeLabel = undefined;
+            }
+        }
+        this.#currentStack.pop();
+        this.#currentNodeStack.delete(nextNodeId);
+    }
+}
+class NodeAndEdge {
+    static comparator(a, b) {
+        let diff = a.length - b.length;
+        for (let i = 0; diff === 0 && i < a.length; i++) {
+            const aIndex = a[i].nodeIndex, bIndex = b[i].nodeIndex;
+            diff = aIndex - bIndex;
+        }
+        return diff;
+    }
+    nodeIndex;
+    nextEdgeLabel;
+    constructor(nodeIndex) {
+        this.nodeIndex = nodeIndex;
+    }
+    clone() {
+        const { nodeIndex, nextEdgeLabel } = this;
+        return nextEdgeLabel === undefined ? { nodeIndex } : { nodeIndex, nextEdgeLabel };
+    }
+}
+
 async function runSearchesInGuestEngine(inputs, searchConfiguration) {
     const graphs = new Map;
     try {
@@ -1944,4 +1994,4 @@ class SearchGuestRealmInputs {
     }
 }
 
-export { constants as JSGraphConstants, LoggingConfiguration, runSearchesInGuestEngine };
+export { constants as JSGraphConstants, LoggingConfiguration, pathsToTarget, runSearchesInGuestEngine };
