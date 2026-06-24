@@ -8,6 +8,7 @@ export class GraphControlsView {
     #collapseImage = document.createElement("img");
     #zoomLevelElement = document.getElementById("zoom-level");
     #scrollToNodeSelect = document.getElementById("scroll-to-node");
+    #pathsSelect = document.getElementById("select-path");
     #currentGraphView;
     constructor() {
         this.#toggleCollapseButton.onclick = event => this.#handleToggleCollapse(event);
@@ -15,6 +16,7 @@ export class GraphControlsView {
         this.#collapseImage.src = "./images/button-collapse.svg";
         this.#zoomLevelElement.onchange = event => this.#handleZoomChange(event);
         this.#scrollToNodeSelect.onchange = event => this.#handleNodeSelect(event);
+        this.#pathsSelect.onchange = event => this.#handlePathsSelect(event);
     }
     dispose() {
         throw new Error("this is not implemented, on a singleton");
@@ -27,13 +29,22 @@ export class GraphControlsView {
     set currentGraphView(view) {
         this.#currentGraphView = view;
         if (view) {
-            this.#zoomLevelElement.valueAsNumber = view.getZoomLevel();
-            this.displayElement.classList.remove("hidden");
-            const options = [
-                this.#scrollToNodeSelect.options[0], // empty option
-                ...this.#currentGraphView.getNodeIds().map(GraphControlsView.#getGraphNodeOption)
-            ];
-            this.#scrollToNodeSelect.replaceChildren(...options);
+            void view.promiseInitialized.then(() => {
+                this.#zoomLevelElement.valueAsNumber = view.getZoomLevel();
+                this.displayElement.classList.remove("hidden");
+                let options = [
+                    this.#scrollToNodeSelect.options[0], // empty option
+                    ...this.#currentGraphView.getNodeIds().map(GraphControlsView.#getGraphNodeOption)
+                ];
+                this.#scrollToNodeSelect.replaceChildren(...options);
+                options = Array.from(this.#pathsSelect.options);
+                const { pathsCount } = this.#currentGraphView;
+                while (options.length <= pathsCount) {
+                    options.push(GraphControlsView.#getGraphNodeOption("paths:" + (options.length - 1)));
+                }
+                options.length = pathsCount + 1;
+                this.#pathsSelect.replaceChildren(...options);
+            });
         }
         else {
             this.displayElement.classList.add("hidden");
@@ -48,5 +59,9 @@ export class GraphControlsView {
     #handleNodeSelect(event) {
         event.stopPropagation();
         this.#currentGraphView.selectNode(this.#scrollToNodeSelect.value);
+    }
+    #handlePathsSelect(event) {
+        event?.stopPropagation();
+        this.#currentGraphView.selectPath(this.#pathsSelect.value);
     }
 }

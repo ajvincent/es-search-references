@@ -35,6 +35,10 @@
   justify-self: center;
 }
 
+#graph-legend > .select-path-controls {
+  padding-left: 5px;
+}
+
 #graph-legend > .long-name-icon {
   grid-column-start: 1;
 }

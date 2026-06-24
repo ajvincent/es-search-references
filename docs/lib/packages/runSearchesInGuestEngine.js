@@ -1872,7 +1872,7 @@ function pathsToTarget(graph) {
         return [];
     const traversal = new GraphTraversal(graph);
     const values = Array.from(traversal.getPaths());
-    values.sort(NodeAndEdge.comparator);
+    values.sort(EdgeImpl.comparator);
     return values;
 }
 class GraphTraversal {
@@ -1891,46 +1891,46 @@ class GraphTraversal {
         yield* this.#yieldPaths("heldValues:1");
     }
     *#yieldPaths(nextNodeId) {
-        const id = parseInt(/:(\d+)$/.exec(nextNodeId)[1]);
-        const next = new NodeAndEdge(id);
         this.#currentNodeStack.add(nextNodeId);
-        this.#currentStack.push(next);
-        if (nextNodeId === "target:0") {
-            const result = this.#currentStack.map(n => n.clone());
-            result.shift();
-            yield result;
-        }
-        else {
-            for (const edge of this.#graph.outEdges(nextNodeId)) {
-                if (this.#currentNodeStack.has(edge.w))
-                    continue;
-                const edgeLabel = this.#graph.edge(edge);
-                next.nextEdgeLabel = edgeLabel.label;
-                yield* this.#yieldPaths(edge.w);
-                next.nextEdgeLabel = undefined;
+        for (const edge of this.#graph.outEdges(nextNodeId)) {
+            const next = new EdgeImpl(edge);
+            this.#currentStack.push(next);
+            const { w } = edge;
+            if (w === "target:0") {
+                yield this.#currentStack.map(e => e.cloneWithRegistration());
             }
+            else {
+                if (this.#currentNodeStack.has(w) === false)
+                    yield* this.#yieldPaths(w);
+            }
+            this.#currentStack.pop();
         }
-        this.#currentStack.pop();
         this.#currentNodeStack.delete(nextNodeId);
     }
 }
-class NodeAndEdge {
+class EdgeImpl {
+    v;
+    w;
+    name;
+    static #edgeMap = new WeakMap;
     static comparator(a, b) {
         let diff = a.length - b.length;
         for (let i = 0; diff === 0 && i < a.length; i++) {
-            const aIndex = a[i].nodeIndex, bIndex = b[i].nodeIndex;
+            const aIndex = EdgeImpl.#edgeMap.get(a[i]), bIndex = EdgeImpl.#edgeMap.get(b[i]);
             diff = aIndex - bIndex;
         }
         return diff;
     }
-    nodeIndex;
-    nextEdgeLabel;
-    constructor(nodeIndex) {
-        this.nodeIndex = nodeIndex;
+    constructor(edge) {
+        this.v = edge.v;
+        this.w = edge.w;
+        this.name = edge.name;
     }
-    clone() {
-        const { nodeIndex, nextEdgeLabel } = this;
-        return nextEdgeLabel === undefined ? { nodeIndex } : { nodeIndex, nextEdgeLabel };
+    cloneWithRegistration() {
+        const { v, w, name } = this;
+        const clone = { v, w, name };
+        EdgeImpl.#edgeMap.set(clone, parseInt(/:(\d+)$/.exec(clone.v)[1]));
+        return clone;
     }
 }
 

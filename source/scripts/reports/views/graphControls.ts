@@ -22,6 +22,7 @@ export class GraphControlsView implements BaseView {
   readonly #collapseImage = document.createElement("img");
   readonly #zoomLevelElement = document.getElementById("zoom-level") as HTMLInputElement;
   readonly #scrollToNodeSelect = document.getElementById("scroll-to-node") as HTMLSelectElement;
+  readonly #pathsSelect = document.getElementById("select-path") as HTMLSelectElement;
 
   #currentGraphView: SVGGraphView | undefined;
 
@@ -32,6 +33,7 @@ export class GraphControlsView implements BaseView {
 
     this.#zoomLevelElement.onchange = event => this.#handleZoomChange(event);
     this.#scrollToNodeSelect.onchange = event => this.#handleNodeSelect(event);
+    this.#pathsSelect.onchange = event => this.#handlePathsSelect(event);
   }
 
   dispose(): void {
@@ -47,14 +49,24 @@ export class GraphControlsView implements BaseView {
   set currentGraphView(view: SVGGraphView | undefined) {
     this.#currentGraphView = view;
     if (view) {
-      this.#zoomLevelElement.valueAsNumber = view.getZoomLevel();
-      this.displayElement.classList.remove("hidden");
+      void view.promiseInitialized.then((): void => {
+        this.#zoomLevelElement.valueAsNumber = view.getZoomLevel();
+        this.displayElement.classList.remove("hidden");
 
-      const options: HTMLOptionElement[] = [
-        this.#scrollToNodeSelect.options[0], // empty option
-        ...this.#currentGraphView!.getNodeIds().map(GraphControlsView.#getGraphNodeOption)
-      ];
-      this.#scrollToNodeSelect.replaceChildren(...options);
+        let options: HTMLOptionElement[] = [
+          this.#scrollToNodeSelect.options[0], // empty option
+          ...this.#currentGraphView!.getNodeIds().map(GraphControlsView.#getGraphNodeOption)
+        ];
+        this.#scrollToNodeSelect.replaceChildren(...options);
+
+        options = Array.from(this.#pathsSelect.options);
+        const { pathsCount } = this.#currentGraphView!;
+        while (options.length <= pathsCount) {
+          options.push(GraphControlsView.#getGraphNodeOption("paths:" + (options.length - 1)));
+        }
+        options.length = pathsCount + 1;
+        this.#pathsSelect.replaceChildren(...options);
+      });
     } else {
       this.displayElement.classList.add("hidden");
       if (this.#scrollToNodeSelect.childElementCount > 1)
@@ -70,5 +82,10 @@ export class GraphControlsView implements BaseView {
   #handleNodeSelect(event: Event): void {
     event.stopPropagation();
     this.#currentGraphView!.selectNode(this.#scrollToNodeSelect.value);
+  }
+
+  #handlePathsSelect(event?: Event): void {
+    event?.stopPropagation();
+    this.#currentGraphView!.selectPath(this.#pathsSelect.value);
   }
 }

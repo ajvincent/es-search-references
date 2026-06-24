@@ -2,6 +2,7 @@ import {
   d3,
   dagre,
   render as RenderCtor,
+  type graphlib,
 } from "../../../lib/packages/dagre-imports.js";
 
 import type {
@@ -18,6 +19,15 @@ import type {
   SVGGraphViewIfc
 } from "../types/SVGGraphViewIfc.js";
 
+import {
+  buildCustomStylesheet
+} from "../../utilities/customStylesheet.js";
+
+import {
+  type PathsArray,
+  pathsToTarget
+} from "../../../lib/packages/runSearchesInGuestEngine.js";
+
 export class SVGGraphView implements BaseView, SVGGraphViewIfc {
   static readonly #templateNode: DocumentFragment = (document.getElementById("svg-graph-base") as HTMLTemplateElement).content;
   static #idCounter = 0;
@@ -33,10 +43,15 @@ export class SVGGraphView implements BaseView, SVGGraphViewIfc {
   readonly #graphicsElement: SVGGraphicsElement;
   readonly popupsParent: SVGGElement = document.createElementNS("http://www.w3.org/2000/svg", "g");
 
+  #stylesheet?: CSSStyleSheet;
+  #pathsRule?: CSSStyleRule;
+  #pathsCount: number = NaN;
+
   readonly #nodeIdToViewMap = new Map<string, SVGGraphNodeView>;
   #selectedId: string = "";
 
-  handleActivated: () => void;
+  readonly handleActivated: () => void;
+  readonly promiseInitialized: Promise<void>;
 
   #zoomLevel = 0;
 
@@ -56,7 +71,7 @@ export class SVGGraphView implements BaseView, SVGGraphViewIfc {
     const { promise, resolve } = Promise.withResolvers<void>();
     this.handleActivated = resolve;
 
-    void promise.then(() => this.#createRenderGraph());
+    this.promiseInitialized = promise.then(() => this.#createRenderGraph());
   }
 
   dispose(): void {
@@ -124,6 +139,7 @@ export class SVGGraphView implements BaseView, SVGGraphViewIfc {
     );
 
     this.#graphicsElement.querySelector(".output")!.append(this.popupsParent);
+    this.#stylesheet = buildCustomStylesheet(this.displayElement);
 
     this.graph.nodes().forEach((nodeId: string): void => {
       const node = this.graph.node(nodeId) as unknown as GraphNode;
@@ -131,6 +147,66 @@ export class SVGGraphView implements BaseView, SVGGraphViewIfc {
       this.#nodeIdToViewMap.set(nodeId, view);
     });
 
+    const nodeToPathsMap = this.#getEdgeToPathsMap();
+    this.graph.edges().forEach((e: graphlib.Edge): void => {
+      const hash = SVGGraphView.#hashEdge(e as Required<graphlib.Edge>);
+      const edge = this.graph.edge(e) as dagre.GraphEdge & Record<"elem", SVGGElement>;
+      const { elem } = edge;
+      const paths = nodeToPathsMap.get(hash);
+      if (elem && paths)
+        elem.dataset.paths = paths;
+    });
+
     this.selectNode("heldValues:1");
+  }
+
+  static #hashEdge(edge: Record<"v" | "w" | "name", string>): string {
+    const { v, w, name } = edge;
+    return JSON.stringify({v, w, name});
+  }
+
+  #getEdgeToPathsMap(): ReadonlyMap<string, string> {
+    const paths: PathsArray = pathsToTarget(this.graph);
+    this.#pathsCount = paths.length;
+
+    const edgeToPathsMap = new Map<string, Set<string>>;
+    let pathCounter = 0;
+
+    for (const path of paths) {
+      const pathHash = "paths:" + pathCounter;
+
+      for (const e of path) {
+        const edgeHash = SVGGraphView.#hashEdge(e);
+        if (!edgeToPathsMap.has(edgeHash))
+          edgeToPathsMap.set(edgeHash, new Set);
+        edgeToPathsMap.get(edgeHash)!.add(pathHash);
+      }
+
+      pathCounter++;
+    }
+
+    const edgeHashMap: ReadonlyMap<string, string> = new Map(edgeToPathsMap.entries().map(
+      ([hash, value]) => [hash, Array.from(value).sort().join(" ")]
+    ));
+
+    return edgeHashMap;
+  }
+
+  public get pathsCount(): number {
+    return this.#pathsCount;
+  }
+
+  public selectPath(path: string): void {
+    if (!this.#pathsRule) {
+      this.#stylesheet!.insertRule(`
+        #${this.displayElement.id} g[data-paths~="${path}"] > path {
+          stroke: blue;
+          stroke-width: 3px;
+        }`
+      );
+      this.#pathsRule = this.#stylesheet!.cssRules[0] as CSSStyleRule;
+    }
+
+    this.#pathsRule.selectorText = `#${this.displayElement.id} g[data-paths~="${path}"] > path`;
   }
 }
