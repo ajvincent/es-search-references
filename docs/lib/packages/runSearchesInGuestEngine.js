@@ -334,7 +334,7 @@ class HostObjectGraphImpl {
     }
     hasPrivateName(privateName) {
         this.#assertDefineTargetCalled();
-        return this.#weakKeyToIdMap.has(privateName);
+        return this.#privateKeySet.has(privateName);
     }
     defineObject(object, metadata) {
         this.#defineWeakKey(object, metadata, NodePrefix.Object);
